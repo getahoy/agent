@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export const HELPER_PROTOCOL_VERSION = 1;
-
 const rectSchema = z.object({
   x: z.number(),
   y: z.number(),
@@ -55,7 +53,6 @@ export type HelperVerb = keyof typeof outputSchemaByVerb;
 export type Modifier = "command" | "shift" | "option" | "control";
 export type Rect = z.infer<typeof rectSchema>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
-export type SnapshotElement = z.infer<typeof snapshotElementSchema>;
 
 export type HelperArgs = {
   snapshot: Record<string, never>;
@@ -126,4 +123,4 @@ export type HelperOutcome<Verb extends HelperVerb> =
   | { ok: true; output: HelperOutput<Verb> }
   | { ok: false; error: { code: HelperErrorCode; message: string } };
 
-export type HelperEvent = "ready" | "displaysChanged";
+export type HelperEvent = "ready" | "displaysChanged" | "exited";

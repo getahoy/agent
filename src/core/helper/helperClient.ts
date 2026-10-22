@@ -128,6 +128,7 @@ export class HelperClient {
     if (this.#process !== exited) return;
     this.#process = null;
     this.#failPending();
+    this.#options.onEvent("exited");
     if (this.#stopped) return;
     const delays = this.#options.restartDelaysMs;
     const delay =
