@@ -1,41 +1,56 @@
-import path from "node:path";
-import { app, BrowserWindow } from "electron";
-import started from "electron-squirrel-startup";
+import { spawn } from "node:child_process";
+import { app, powerMonitor } from "electron";
+import { HelperClient } from "./core/helper/helperClient.ts";
+import { MacosPlatform } from "./platform/macos/macosPlatform.ts";
+import { AgentController } from "./shell/agentController.ts";
+import { AgentTray } from "./shell/agentTray.ts";
+import { registerBridge } from "./shell/bridgeIpc.ts";
+import { MainWindow } from "./shell/mainWindow.ts";
+import { readSettings } from "./shell/settingsStore.ts";
 
-if (started) {
-  app.quit();
+const HELPER_REQUEST_TIMEOUT_MS = 10_000;
+const HELPER_RESTART_DELAYS_MS = [250, 1000, 5000] as const;
+
+async function startAgent(): Promise<void> {
+  const platform = new MacosPlatform();
+  platform.lifecycle.hideWindowSurface();
+  const settings = await readSettings(platform.settingsFilePath());
+  const controller = new AgentController(platform, settings);
+  const binary = platform.helperBinary();
+  const helper = new HelperClient({
+    spawnHelper: () =>
+      spawn(binary.path, [...binary.args], {
+        stdio: ["pipe", "pipe", "inherit"],
+      }),
+    requestTimeoutMs: HELPER_REQUEST_TIMEOUT_MS,
+    restartDelaysMs: HELPER_RESTART_DELAYS_MS,
+    onEvent: (event) => controller.handleHelperEvent(event),
+  });
+  const mainWindow = new MainWindow(platform.lifecycle);
+  const tray = new AgentTray({
+    openWindow: () => mainWindow.show(),
+    quit: () => app.quit(),
+  });
+
+  tray.render(controller.state());
+  controller.onChange((state) => tray.render(state));
+  registerBridge(controller, platform, mainWindow);
+  powerMonitor.on("lock-screen", () => controller.setScreenLocked(true));
+  powerMonitor.on("unlock-screen", () => controller.setScreenLocked(false));
+  app.on("second-instance", () => mainWindow.show());
+  app.on("before-quit", () => {
+    controller.stopPermissionPolling();
+    helper.stop();
+  });
+
+  helper.start();
+  controller.startPermissionPolling();
+  if (controller.state().onboardingStep !== "done") mainWindow.show();
 }
 
-const createWindow = () => {
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
-    },
-  });
-
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
-  }
-};
-
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("window-all-closed", () => undefined);
+  void app.whenReady().then(startAgent);
+}
