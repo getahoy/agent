@@ -1,23 +1,29 @@
+import { execFileSync } from "node:child_process";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
-import { MakerDeb } from "@electron-forge/maker-deb";
-import { MakerRpm } from "@electron-forge/maker-rpm";
-import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
+const HELPER_PACKAGE = "native/macos-helper";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    extendInfo: { LSUIElement: true, LSAppNapIsDisabled: true },
+    extraResource: [`${HELPER_PACKAGE}/.build/release/ahoyHelper`],
+  },
+  hooks: {
+    prePackage: async () => {
+      execFileSync(
+        "swift",
+        ["build", "-c", "release", "--package-path", HELPER_PACKAGE],
+        { stdio: "inherit" },
+      );
+    },
   },
   rebuildConfig: {},
-  makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ["darwin"]),
-    new MakerRpm({}),
-    new MakerDeb({}),
-  ],
+  makers: [new MakerZIP({}, ["darwin"])],
   plugins: [
     new VitePlugin({
       build: [
