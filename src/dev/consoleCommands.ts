@@ -5,8 +5,8 @@ import { printOutcome, printSnapshot } from "./printOutcome.ts";
 
 const MS_PER_SECOND = 1000;
 
-export type ConsoleSettings = { delaySeconds: number };
-export type ConsoleContext = {
+type ConsoleSettings = { delaySeconds: number };
+type ConsoleContext = {
   client: HelperClient;
   settings: ConsoleSettings;
 };

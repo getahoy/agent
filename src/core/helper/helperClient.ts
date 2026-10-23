@@ -11,14 +11,14 @@ import {
   outputParsers,
 } from "./helperProtocol.ts";
 
-export type HelperProcess = {
+type HelperProcess = {
   stdin: Writable;
   stdout: Readable;
   kill: () => boolean;
   once: (event: "exit" | "error", listener: () => void) => unknown;
 };
 
-export type HelperClientOptions = {
+type HelperClientOptions = {
   spawnHelper: () => HelperProcess;
   requestTimeoutMs: number;
   restartDelaysMs: readonly number[];

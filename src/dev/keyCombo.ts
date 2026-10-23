@@ -12,7 +12,7 @@ const modifierAliases: Record<string, Modifier> = {
   control: "control",
 };
 
-export type KeyCombo = { key: string; modifiers: Modifier[] };
+type KeyCombo = { key: string; modifiers: Modifier[] };
 
 export function parseKeyCombo(text: string): KeyCombo | null {
   const parts = text.split("+").filter((part) => part.length > 0);
