@@ -7,5 +7,6 @@ export function useAgentActions() {
     openPermissionSettings: (permission: Permission) =>
       window.ahoy.openPermissionSettings(permission),
     relaunch: () => window.ahoy.relaunch(),
+    startPairing: () => window.ahoy.startPairing(),
   };
 }

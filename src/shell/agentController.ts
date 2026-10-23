@@ -3,9 +3,12 @@ import {
   type AgentState,
   agentState,
   type OnboardingStep,
+  type PhoneSummary,
   stepAfter,
 } from "../core/appState/appState.ts";
 import type { HelperEvent } from "../core/helper/helperProtocol.ts";
+import type { PairedPhone } from "../core/pairing/pairedPhone.ts";
+import type { PairingStatus } from "../core/pairing/pairingStatus.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import { type Settings, writeSettings } from "./settingsStore.ts";
 
@@ -13,19 +16,36 @@ const PERMISSION_POLL_MS = 2000;
 
 type StateListener = (state: AgentState) => void;
 
+function summarise(phones: readonly PairedPhone[]): PhoneSummary[] {
+  return phones.map(({ displayName, accountEmail }) => ({
+    displayName,
+    accountEmail,
+  }));
+}
+
 export class AgentController {
   readonly #platform: PlatformAdapter;
   readonly #listeners = new Set<StateListener>();
+  #settings: Settings;
   #facts: AgentFacts;
   #pollTimer: NodeJS.Timeout | null = null;
 
-  constructor(platform: PlatformAdapter, settings: Settings) {
+  constructor(
+    platform: PlatformAdapter,
+    settings: Settings,
+    pairedPhones: readonly PairedPhone[],
+  ) {
     this.#platform = platform;
+    this.#settings = settings;
     this.#facts = {
       onboardingStep: settings.onboardingStep,
       permissions: platform.permissions.read(),
       helper: "starting",
       screenLocked: false,
+      pairing: { kind: "idle" },
+      pairedPhones: summarise(pairedPhones),
+      lanEnabled: settings.lanEnabled,
+      connectedPhones: [],
     };
   }
 
@@ -60,8 +80,22 @@ export class AgentController {
   async completeStep(step: OnboardingStep): Promise<void> {
     if (step !== this.#facts.onboardingStep) return;
     const onboardingStep = stepAfter(step);
-    await writeSettings(this.#platform.settingsFilePath(), { onboardingStep });
+    await this.#saveSettings({ onboardingStep });
     this.#update({ onboardingStep });
+  }
+
+  async setLanEnabled(lanEnabled: boolean): Promise<void> {
+    await this.#saveSettings({ lanEnabled });
+    this.#update({ lanEnabled, connectedPhones: [] });
+  }
+
+  setPairing(pairing: PairingStatus, pairedPhones: readonly PairedPhone[]) {
+    this.#update({ pairing, pairedPhones: summarise(pairedPhones) });
+  }
+
+  setConnectedPhones(phones: readonly PairedPhone[]): void {
+    const connectedPhones = phones.map((phone) => phone.displayName);
+    this.#update({ connectedPhones });
   }
 
   handleHelperEvent(event: HelperEvent): void {
@@ -71,6 +105,11 @@ export class AgentController {
 
   setScreenLocked(screenLocked: boolean): void {
     this.#update({ screenLocked });
+  }
+
+  async #saveSettings(change: Partial<Settings>): Promise<void> {
+    this.#settings = { ...this.#settings, ...change };
+    await writeSettings(this.#platform.settingsFilePath(), this.#settings);
   }
 
   #update(change: Partial<AgentFacts>): void {

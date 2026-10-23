@@ -8,6 +8,8 @@ export const bridgeChannels = {
   completeStep: "agent:complete-step",
   openPermissionSettings: "agent:open-permission-settings",
   relaunch: "agent:relaunch",
+  startPairing: "agent:start-pairing",
+  stopPairing: "agent:stop-pairing",
 } as const;
 
 export const permissionSchema = z.enum(["accessibility", "screenRecording"]);
@@ -18,4 +20,6 @@ export type AgentBridge = {
   completeStep: (step: OnboardingStep) => Promise<void>;
   openPermissionSettings: (permission: Permission) => Promise<void>;
   relaunch: () => Promise<void>;
+  startPairing: () => Promise<void>;
+  stopPairing: () => Promise<void>;
 };

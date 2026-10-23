@@ -8,10 +8,16 @@ const WINDOW_HEIGHT = 560;
 
 export class MainWindow {
   readonly #lifecycle: LifecycleController;
+  readonly #onClosed: () => void;
   #window: BrowserWindow | null = null;
 
-  constructor(lifecycle: LifecycleController) {
+  constructor(lifecycle: LifecycleController, onClosed: () => void) {
     this.#lifecycle = lifecycle;
+    this.#onClosed = onClosed;
+  }
+
+  close(): void {
+    this.#window?.close();
   }
 
   show(): void {
@@ -46,6 +52,7 @@ export class MainWindow {
     window.on("closed", () => {
       this.#window = null;
       this.#lifecycle.hideWindowSurface();
+      this.#onClosed();
     });
     return window;
   }

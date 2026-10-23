@@ -10,6 +10,9 @@
   --primary-foreground: #ffffff;
   --success: #248a3d;
   --destructive: #d70015;
+  --qr-foreground: #1d1d1f;
+  --qr-background: #ffffff;
+  --qr-eye: #0071e3;
 }
 
 @media (prefers-color-scheme: dark) {

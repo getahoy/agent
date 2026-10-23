@@ -1,13 +1,19 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from "node:fs/promises";
+import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
 
-const settingsSchema = z.object({ onboardingStep: onboardingStepSchema });
+const settingsSchema = z.object({
+  onboardingStep: onboardingStepSchema,
+  lanEnabled: z.boolean().default(true),
+});
 
 export type Settings = z.infer<typeof settingsSchema>;
 
-const defaultSettings: Settings = { onboardingStep: "welcome" };
+const defaultSettings: Settings = {
+  onboardingStep: "welcome",
+  lanEnabled: true,
+};
 
 function parseJson(text: string): unknown {
   try {
@@ -28,8 +34,5 @@ export async function writeSettings(
   filePath: string,
   settings: Settings,
 ): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  const pendingPath = `${filePath}.pending`;
-  await writeFile(pendingPath, JSON.stringify(settings));
-  await rename(pendingPath, filePath);
+  await writeFileAtomic(filePath, JSON.stringify(settings));
 }

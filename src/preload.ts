@@ -25,6 +25,12 @@ const bridge: AgentBridge = {
   relaunch: async () => {
     await ipcRenderer.invoke(bridgeChannels.relaunch);
   },
+  startPairing: async () => {
+    await ipcRenderer.invoke(bridgeChannels.startPairing);
+  },
+  stopPairing: async () => {
+    await ipcRenderer.invoke(bridgeChannels.stopPairing);
+  },
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);
