@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { VitePlugin } from "@electron-forge/plugin-vite";
@@ -10,8 +11,10 @@ const HELPER_PACKAGE = "native/macos-helper";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    appBundleId: "com.getahoy.agent",
     extendInfo: { LSUIElement: true, LSAppNapIsDisabled: true },
     extraResource: [`${HELPER_PACKAGE}/.build/release/ahoyHelper`],
+    osxSign: { type: "development", identity: "Apple Development" },
   },
   hooks: {
     prePackage: async () => {
@@ -23,7 +26,7 @@ const config: ForgeConfig = {
     },
   },
   rebuildConfig: {},
-  makers: [new MakerZIP({}, ["darwin"])],
+  makers: [new MakerDMG({}), new MakerZIP({}, ["darwin"])],
   plugins: [
     new VitePlugin({
       build: [
