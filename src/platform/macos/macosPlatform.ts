@@ -1,6 +1,7 @@
 import path from "node:path";
 import { app, shell, systemPreferences } from "electron";
 import type {
+  DeviceIdentity,
   HelperBinary,
   LifecycleController,
   Permission,
@@ -9,8 +10,10 @@ import type {
   PlatformAdapter,
 } from "../../ports/platform.ts";
 import { macosHelperBinary, packagedHelperBinary } from "./helperBinary.ts";
+import { macosDeviceIdentity } from "./macosDevice.ts";
 
 const SETTINGS_FILE_NAME = "settings.json";
+const IDENTITY_FILE_NAME = "identity.bin";
 
 const privacySettingsLinks: Record<Permission, string> = {
   accessibility:
@@ -61,5 +64,13 @@ export class MacosPlatform implements PlatformAdapter {
 
   settingsFilePath(): string {
     return path.join(app.getPath("userData"), SETTINGS_FILE_NAME);
+  }
+
+  identityFilePath(): string {
+    return path.join(app.getPath("userData"), IDENTITY_FILE_NAME);
+  }
+
+  deviceIdentity(): Promise<DeviceIdentity> {
+    return macosDeviceIdentity();
   }
 }
