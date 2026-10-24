@@ -24,7 +24,10 @@ export function PairScreen({ state }: PairScreenProps) {
         onFinish={() => void finish()}
         onRetry={() => void actions.startPairing()}
       />
-      <PairedPhoneList phones={state.pairedPhones} />
+      <PairedPhoneList
+        phones={state.pairedPhones}
+        onRemove={(publicKey) => void actions.unpairPhone(publicKey)}
+      />
     </ScreenLayout>
   );
 }

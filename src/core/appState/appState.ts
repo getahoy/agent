@@ -15,6 +15,7 @@ export const onboardingStepSchema = z.enum([
 const helperStatusSchema = z.enum(["starting", "running", "stopped"]);
 const windowScreenSchema = z.enum(["welcome", "permissions", "pair"]);
 const phoneSummarySchema = z.object({
+  publicKey: z.string(),
   displayName: z.string(),
   accountEmail: z.string(),
 });

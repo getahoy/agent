@@ -10,6 +10,7 @@ export const bridgeChannels = {
   relaunch: "agent:relaunch",
   startPairing: "agent:start-pairing",
   stopPairing: "agent:stop-pairing",
+  unpairPhone: "agent:unpair-phone",
 } as const;
 
 export const permissionSchema = z.enum(["accessibility", "screenRecording"]);
@@ -22,4 +23,5 @@ export type AgentBridge = {
   relaunch: () => Promise<void>;
   startPairing: () => Promise<void>;
   stopPairing: () => Promise<void>;
+  unpairPhone: (publicKey: string) => Promise<void>;
 };

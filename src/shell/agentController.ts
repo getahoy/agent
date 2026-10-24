@@ -17,7 +17,8 @@ const PERMISSION_POLL_MS = 2000;
 type StateListener = (state: AgentState) => void;
 
 function summarise(phones: readonly PairedPhone[]): PhoneSummary[] {
-  return phones.map(({ displayName, accountEmail }) => ({
+  return phones.map(({ publicKey, displayName, accountEmail }) => ({
+    publicKey,
     displayName,
     accountEmail,
   }));
@@ -91,6 +92,10 @@ export class AgentController {
 
   setPairing(pairing: PairingStatus, pairedPhones: readonly PairedPhone[]) {
     this.#update({ pairing, pairedPhones: summarise(pairedPhones) });
+  }
+
+  setPairedPhones(pairedPhones: readonly PairedPhone[]): void {
+    this.#update({ pairedPhones: summarise(pairedPhones) });
   }
 
   setConnectedPhones(phones: readonly PairedPhone[]): void {

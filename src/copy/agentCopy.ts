@@ -37,6 +37,11 @@ export const agentCopy = {
   "pair.done": "Done",
   "pair.another": "Pair another phone",
   "pair.pairedPhones": "Paired phones",
+  "remove.title": "Remove",
+  "remove.body":
+    "This Mac stops trusting the phone right away and the link is removed from your account. Scan a new code on the phone to pair again.",
+  "remove.confirm": "Remove",
+  "remove.cancel": "Cancel",
   "helper.starting": "Screen helper starting",
   "helper.running": "Screen helper running",
   "helper.stopped": "Screen helper stopped, restarting",

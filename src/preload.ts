@@ -31,6 +31,9 @@ const bridge: AgentBridge = {
   stopPairing: async () => {
     await ipcRenderer.invoke(bridgeChannels.stopPairing);
   },
+  unpairPhone: async (publicKey) => {
+    await ipcRenderer.invoke(bridgeChannels.unpairPhone, publicKey);
+  },
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);

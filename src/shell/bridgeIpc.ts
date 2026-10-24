@@ -1,3 +1,4 @@
+import { bytes32Schema } from "@getahoy/protocol";
 import { ipcMain } from "electron";
 import {
   bridgeChannels,
@@ -14,10 +15,11 @@ type BridgeParts = {
   platform: PlatformAdapter;
   mainWindow: MainWindow;
   pairing: PairingSession;
+  unpairPhone: (publicKey: string) => Promise<void>;
 };
 
 export function registerBridge(parts: BridgeParts): void {
-  const { controller, platform, mainWindow, pairing } = parts;
+  const { controller, platform, mainWindow, pairing, unpairPhone } = parts;
   ipcMain.handle(bridgeChannels.getState, () => controller.state());
   ipcMain.handle(bridgeChannels.completeStep, async (_event, step: unknown) => {
     const parsed = onboardingStepSchema.safeParse(step);
@@ -33,5 +35,9 @@ export function registerBridge(parts: BridgeParts): void {
   ipcMain.handle(bridgeChannels.relaunch, () => platform.lifecycle.relaunch());
   ipcMain.handle(bridgeChannels.startPairing, () => pairing.start());
   ipcMain.handle(bridgeChannels.stopPairing, () => pairing.stop());
+  ipcMain.handle(bridgeChannels.unpairPhone, async (_event, key: unknown) => {
+    const parsed = bytes32Schema.safeParse(key);
+    if (parsed.success) await unpairPhone(parsed.data);
+  });
   controller.onChange((state) => mainWindow.send(bridgeChannels.state, state));
 }

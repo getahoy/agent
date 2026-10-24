@@ -8,5 +8,6 @@ export function useAgentActions() {
       window.ahoy.openPermissionSettings(permission),
     relaunch: () => window.ahoy.relaunch(),
     startPairing: () => window.ahoy.startPairing(),
+    unpairPhone: (publicKey: string) => window.ahoy.unpairPhone(publicKey),
   };
 }

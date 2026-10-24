@@ -100,6 +100,20 @@ export class IdentityStore {
     return phones.find((phone) => phone.publicKey === encoded) ?? null;
   }
 
+  sessionToken(): string | null {
+    return this.#identity.sessionToken;
+  }
+
+  async removePhone(publicKey: string): Promise<void> {
+    this.#identity = {
+      ...this.#identity,
+      pairedPhones: this.#identity.pairedPhones.filter(
+        (phone) => phone.publicKey !== publicKey,
+      ),
+    };
+    await this.#save();
+  }
+
   async completePairing(pairing: CompletedPairing): Promise<void> {
     const others = this.#identity.pairedPhones.filter(
       (phone) => phone.publicKey !== pairing.phone.publicKey,

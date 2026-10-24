@@ -115,9 +115,10 @@ export class PairingSession {
   async #complete(open: OpenCode, sessionToken: string): Promise<RoundEnd> {
     const { apiUrl, identity, device, logger } = this.#options;
     const desktop = device();
-    const completed = await completePairing(apiUrl, sessionToken, {
-      userCode: open.code.userCode,
-      device: desktop,
+    const completed = await completePairing({
+      apiUrl,
+      sessionToken,
+      body: { userCode: open.code.userCode, device: desktop },
     });
     if (completed.code === "error") {
       return this.#fail(pairingFailure(completed.error));

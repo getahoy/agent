@@ -21,6 +21,7 @@ import { PhoneLink } from "./shell/lan/phoneLink.ts";
 import { MainWindow } from "./shell/mainWindow.ts";
 import { createDeviceAuthClient } from "./shell/pairing/deviceFlow.ts";
 import { PairingSession } from "./shell/pairing/pairingSession.ts";
+import { unpairPhone } from "./shell/pairing/unpairPhone.ts";
 import { readSettings } from "./shell/settingsStore.ts";
 
 const HELPER_REQUEST_TIMEOUT_MS = 10_000;
@@ -41,6 +42,7 @@ type ShellParts = {
   helper: HelperClient;
   phoneLink: PhoneLink;
   pairing: PairingSession;
+  unpair: (publicKey: string) => Promise<void>;
 };
 
 function createHelper(platform: PlatformAdapter, controller: AgentController) {
@@ -97,7 +99,9 @@ function createLinks({ env, logger, identity, device, controller }: LinkParts) {
     onStatus: (status) =>
       controller.setPairing(status, identity.pairedPhones()),
   });
-  return { phoneLink, pairing };
+  const unpairParts = { apiUrl, identity, phoneLink, controller, logger };
+  const unpair = (publicKey: string) => unpairPhone(unpairParts, publicKey);
+  return { phoneLink, pairing, unpair };
 }
 
 function announceMenubarWhenOnboarded(
@@ -117,7 +121,7 @@ function announceMenubarWhenOnboarded(
 }
 
 function wireShell(parts: ShellParts): MainWindow {
-  const { platform, controller, helper, phoneLink, pairing } = parts;
+  const { platform, controller, helper, phoneLink, pairing, unpair } = parts;
   const mainWindow = new MainWindow(platform.lifecycle, () => pairing.stop());
   const setLanEnabled = async (enabled: boolean) => {
     await controller.setLanEnabled(enabled);
@@ -132,11 +136,18 @@ function wireShell(parts: ShellParts): MainWindow {
   });
   tray.render(controller.state());
   controller.onChange((state) => tray.render(state));
-  registerBridge({ controller, platform, mainWindow, pairing });
+  registerBridge({
+    controller,
+    platform,
+    mainWindow,
+    pairing,
+    unpairPhone: unpair,
+  });
   announceMenubarWhenOnboarded(controller, mainWindow);
   powerMonitor.on("lock-screen", () => controller.setScreenLocked(true));
   powerMonitor.on("unlock-screen", () => controller.setScreenLocked(false));
   app.on("second-instance", () => mainWindow.show());
+  app.on("activate", () => mainWindow.show());
   app.on("before-quit", () => {
     controller.stopPermissionPolling();
     pairing.stop();
@@ -159,13 +170,12 @@ async function startAgent(): Promise<void> {
   const controller = new AgentController(platform, settings, pairedPhones);
   const helper = createHelper(platform, controller);
   const linkParts = { env, logger, identity, device, controller };
-  const { phoneLink, pairing } = createLinks(linkParts);
-  const shellParts = { platform, controller, helper, phoneLink, pairing };
-  const mainWindow = wireShell(shellParts);
+  const links = createLinks(linkParts);
+  const mainWindow = wireShell({ platform, controller, helper, ...links });
   helper.start();
   controller.startPermissionPolling();
-  if (settings.lanEnabled) phoneLink.start();
-  if (settings.onboardingStep !== "done") mainWindow.show();
+  if (settings.lanEnabled) links.phoneLink.start();
+  if (!app.getLoginItemSettings().wasOpenedAtLogin) mainWindow.show();
 }
 
 if (!app.requestSingleInstanceLock()) {

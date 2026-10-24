@@ -1,9 +1,12 @@
 import { agentCopy } from "../../copy/agentCopy.ts";
 import type { PhoneSummary } from "../../core/appState/appState.ts";
 
-type PairedPhoneListProps = { phones: PhoneSummary[] };
+type PairedPhoneListProps = {
+  phones: PhoneSummary[];
+  onRemove: (publicKey: string) => void;
+};
 
-export function PairedPhoneList({ phones }: PairedPhoneListProps) {
+export function PairedPhoneList({ phones, onRemove }: PairedPhoneListProps) {
   if (phones.length === 0) return null;
   return (
     <section className="flex flex-col gap-2 border-border border-t pt-4">
@@ -11,11 +14,21 @@ export function PairedPhoneList({ phones }: PairedPhoneListProps) {
       <ul className="flex flex-col gap-1">
         {phones.map((phone) => (
           <li
-            key={`${phone.displayName}-${phone.accountEmail}`}
-            className="text-sm"
+            key={phone.publicKey}
+            className="flex items-center justify-between gap-3 text-sm"
           >
-            {phone.displayName}
-            <span className="text-muted"> · {phone.accountEmail}</span>
+            <span>
+              {phone.displayName}
+              <span className="text-muted"> · {phone.accountEmail}</span>
+            </span>
+            <button
+              type="button"
+              aria-label={`${agentCopy["remove.title"]} ${phone.displayName}`}
+              onClick={() => onRemove(phone.publicKey)}
+              className="rounded-control px-2 py-1 text-destructive"
+            >
+              {agentCopy["remove.confirm"]}
+            </button>
           </li>
         ))}
       </ul>

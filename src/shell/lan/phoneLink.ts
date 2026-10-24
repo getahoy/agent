@@ -38,6 +38,12 @@ export class PhoneLink {
     this.#listener.stop();
   }
 
+  disconnect(publicKey: string): void {
+    for (const [stream, phone] of this.#connected) {
+      if (phone.publicKey === publicKey) stream.close();
+    }
+  }
+
   #accept(stream: FrameStream): void {
     const { identity, localHello, logger } = this.#options;
     new PhoneSession({

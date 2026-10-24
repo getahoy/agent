@@ -1,21 +1,28 @@
 import { request } from "@getahoy/lib";
 import {
   type PairingCompleteRequest,
+  type PairingUnlinkRequest,
   pairingCompleteSchema,
+  pairingUnlinkSchema,
 } from "@getahoy/protocol";
 
-const COMPLETE_PATH = "/api/pairing/complete";
+type SessionCall<Body> = { apiUrl: string; sessionToken: string; body: Body };
 
-export function completePairing(
-  apiUrl: string,
-  sessionToken: string,
-  body: PairingCompleteRequest,
-) {
-  return request({
-    url: new URL(COMPLETE_PATH, apiUrl).toString(),
-    method: "POST",
-    body,
-    headers: { authorization: `Bearer ${sessionToken}` },
-    schema: pairingCompleteSchema,
-  });
+function sessionRequest(call: SessionCall<unknown>, path: string) {
+  return {
+    url: new URL(path, call.apiUrl).toString(),
+    method: "POST" as const,
+    body: call.body,
+    headers: { authorization: `Bearer ${call.sessionToken}` },
+  };
+}
+
+export function completePairing(call: SessionCall<PairingCompleteRequest>) {
+  const options = sessionRequest(call, "/api/pairing/complete");
+  return request({ ...options, schema: pairingCompleteSchema });
+}
+
+export function unlinkPairing(call: SessionCall<PairingUnlinkRequest>) {
+  const options = sessionRequest(call, "/api/pairing/unlink");
+  return request({ ...options, schema: pairingUnlinkSchema });
 }
