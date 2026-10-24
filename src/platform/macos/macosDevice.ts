@@ -4,7 +4,7 @@ import { promisify } from "node:util";
 import { type NativeImage, nativeImage } from "electron";
 import type { DeviceIdentity, MenubarStatus } from "../../ports/platform.ts";
 
-const MENUBAR_POINT_SIZE = 15;
+const MENUBAR_ICON_HEIGHT = 18;
 const HELPER_CAPABILITIES = ["snapshot", "click", "key", "type", "capture"];
 
 const menubarSymbols: Record<MenubarStatus, string> = {
@@ -34,9 +34,9 @@ export async function macosDeviceIdentity(): Promise<DeviceIdentity> {
 }
 
 export function macosMenubarIcon(status: MenubarStatus): NativeImage {
-  const icon = nativeImage.createFromNamedImage(menubarSymbols[status], {
-    pointSize: MENUBAR_POINT_SIZE,
-  });
+  const icon = nativeImage
+    .createFromNamedImage(menubarSymbols[status])
+    .resize({ height: MENUBAR_ICON_HEIGHT });
   icon.setTemplateImage(true);
   return icon;
 }
