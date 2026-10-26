@@ -2,12 +2,19 @@ import type { OnboardingStep } from "../../core/appState/appState.ts";
 import type { Permission } from "../../ports/platform.ts";
 
 export function useAgentActions() {
+  const { ahoy } = window;
   return {
-    completeStep: (step: OnboardingStep) => window.ahoy.completeStep(step),
+    completeStep: (step: OnboardingStep) => ahoy.completeStep(step),
     openPermissionSettings: (permission: Permission) =>
-      window.ahoy.openPermissionSettings(permission),
-    relaunch: () => window.ahoy.relaunch(),
-    startPairing: () => window.ahoy.startPairing(),
-    unpairPhone: (publicKey: string) => window.ahoy.unpairPhone(publicKey),
+      ahoy.openPermissionSettings(permission),
+    relaunch: () => ahoy.relaunch(),
+    startPairing: () => ahoy.startPairing(),
+    unpairPhone: (publicKey: string) => ahoy.unpairPhone(publicKey),
+    signOut: () => ahoy.signOut(),
+    requestNewPhone: () => ahoy.requestNewPhone(),
+    cancelNewPhone: () => ahoy.cancelNewPhone(),
+    finishPairing: () => ahoy.finishPairing(),
+    dismissNotice: () => ahoy.dismissNotice(),
+    setLanEnabled: (enabled: boolean) => ahoy.setLanEnabled(enabled),
   };
 }

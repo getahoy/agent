@@ -6,17 +6,11 @@ import { PairingSucceeded } from "./pairingSucceeded.tsx";
 
 type PairingPanelProps = {
   status: PairingStatus;
-  finishLabel: string;
   onFinish: () => void;
   onRetry: () => void;
 };
 
-export function PairingPanel({
-  status,
-  finishLabel,
-  onFinish,
-  onRetry,
-}: PairingPanelProps) {
+export function PairingPanel({ status, onFinish, onRetry }: PairingPanelProps) {
   switch (status.kind) {
     case "idle":
     case "starting":
@@ -41,7 +35,7 @@ export function PairingPanel({
         <PairingSucceeded
           phoneName={status.phoneName}
           accountEmail={status.accountEmail}
-          finishLabel={finishLabel}
+          finishLabel={agentCopy["pair.done"]}
           onFinish={onFinish}
         />
       );

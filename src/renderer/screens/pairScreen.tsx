@@ -1,6 +1,7 @@
 import { agentCopy } from "../../copy/agentCopy.ts";
+import { homeCopy } from "../../copy/homeCopy.ts";
 import type { AgentState } from "../../core/appState/appState.ts";
-import { PairedPhoneList } from "../components/pairedPhoneList.tsx";
+import { ActionButton } from "../components/actionButton.tsx";
 import { PairingPanel } from "../components/pairingPanel.tsx";
 import { ScreenLayout } from "../components/screenLayout.tsx";
 import { useAgentActions } from "../hooks/useAgentActions.ts";
@@ -11,23 +12,35 @@ type PairScreenProps = { state: AgentState };
 export function PairScreen({ state }: PairScreenProps) {
   usePairingSession();
   const actions = useAgentActions();
-  const firstRun = state.onboardingStep === "pair";
-  const finish = firstRun
-    ? () => actions.completeStep("pair")
-    : () => actions.startPairing();
+  const [currentPhone] = state.pairedPhones;
+  const replacing = state.pairingNewPhone && currentPhone !== undefined;
+  const offering = state.pairing.kind !== "paired";
 
   return (
-    <ScreenLayout title={agentCopy["pair.title"]} helper={state.helper}>
+    <ScreenLayout
+      title={agentCopy[state.pairingNewPhone ? "pair.newTitle" : "pair.title"]}
+      helper={state.helper}
+    >
+      {replacing && offering ? (
+        <p className="text-muted text-sm">
+          {homeCopy.newPhoneHint(currentPhone.displayName)}
+        </p>
+      ) : null}
       <PairingPanel
         status={state.pairing}
-        finishLabel={agentCopy[firstRun ? "pair.done" : "pair.another"]}
-        onFinish={() => void finish()}
+        onFinish={() => void actions.finishPairing()}
         onRetry={() => void actions.startPairing()}
       />
-      <PairedPhoneList
-        phones={state.pairedPhones}
-        onRemove={(publicKey) => void actions.unpairPhone(publicKey)}
-      />
+      {state.pairingNewPhone && offering ? (
+        <div>
+          <ActionButton
+            tone="plain"
+            onPress={() => void actions.cancelNewPhone()}
+          >
+            {agentCopy["pair.cancel"]}
+          </ActionButton>
+        </div>
+      ) : null}
     </ScreenLayout>
   );
 }

@@ -1,5 +1,6 @@
 import { agentCopy } from "../copy/agentCopy.ts";
 import { useAgentState } from "./hooks/useAgentState.ts";
+import { HomeScreen } from "./screens/homeScreen.tsx";
 import { PairScreen } from "./screens/pairScreen.tsx";
 import { PermissionsScreen } from "./screens/permissionsScreen.tsx";
 import { WelcomeScreen } from "./screens/welcomeScreen.tsx";
@@ -21,6 +22,8 @@ export function AgentApp() {
       return <PermissionsScreen state={state} />;
     case "pair":
       return <PairScreen state={state} />;
+    case "home":
+      return <HomeScreen state={state} />;
     default: {
       const unhandled: never = state.screen;
       return unhandled;
