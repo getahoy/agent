@@ -2,6 +2,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { randomSecret } from "@getahoy/crypto";
 import type { Logger } from "@getahoy/lib";
 import type { DeviceDescription } from "@getahoy/protocol";
+import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import {
   type PairingFailure,
   type PairingStatus,
@@ -34,6 +35,7 @@ type PairingSessionOptions = {
   lanListening: () => boolean;
   logger: Logger;
   onStatus: (status: PairingStatus) => void;
+  onReplaced: (phones: readonly PairedPhone[]) => void;
 };
 
 export class PairingSession {
@@ -134,7 +136,12 @@ export class PairingSession {
       return this.#fail("proofRejected");
     }
     const { desktopId } = completed.data;
-    await identity.completePairing({ desktopId, sessionToken, phone });
+    const replaced = await identity.completePairing({
+      desktopId,
+      sessionToken,
+      phone,
+    });
+    this.#options.onReplaced(replaced);
     logger.info("pairing", "Phone paired");
     const { displayName: phoneName, accountEmail } = phone;
     this.#emit({ kind: "paired", phoneName, accountEmail });

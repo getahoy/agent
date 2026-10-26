@@ -2,6 +2,7 @@ import {
   type AgentFacts,
   type AgentState,
   agentState,
+  type EndedNotice,
   type OnboardingStep,
   type PhoneSummary,
   stepAfter,
@@ -46,7 +47,11 @@ export class AgentController {
       pairing: { kind: "idle" },
       pairedPhones: summarise(pairedPhones),
       lanEnabled: settings.lanEnabled,
-      connectedPhones: [],
+      connectedPhoneKeys: [],
+      pausedPhoneKeys: [],
+      lastConnectedAt: null,
+      endedNotice: null,
+      pairingNewPhone: false,
     };
   }
 
@@ -87,7 +92,7 @@ export class AgentController {
 
   async setLanEnabled(lanEnabled: boolean): Promise<void> {
     await this.#saveSettings({ lanEnabled });
-    this.#update({ lanEnabled, connectedPhones: [] });
+    this.#update({ lanEnabled, connectedPhoneKeys: [] });
   }
 
   setPairing(pairing: PairingStatus, pairedPhones: readonly PairedPhone[]) {
@@ -98,9 +103,34 @@ export class AgentController {
     this.#update({ pairedPhones: summarise(pairedPhones) });
   }
 
-  setConnectedPhones(phones: readonly PairedPhone[]): void {
-    const connectedPhones = phones.map((phone) => phone.displayName);
-    this.#update({ connectedPhones });
+  setConnectedPhones(connectedPhoneKeys: string[]): void {
+    const pausedPhoneKeys = this.#facts.pausedPhoneKeys.filter(
+      (key) => !connectedPhoneKeys.includes(key),
+    );
+    const lastConnectedAt = Date.now();
+    this.#update({ connectedPhoneKeys, pausedPhoneKeys, lastConnectedAt });
+  }
+
+  setPhonePaused(publicKey: string): void {
+    const paused = new Set([...this.#facts.pausedPhoneKeys, publicKey]);
+    this.#update({ pausedPhoneKeys: [...paused] });
+  }
+
+  showEndedNotice(endedNotice: EndedNotice): void {
+    this.#update({ endedNotice });
+  }
+
+  dismissEndedNotice(): void {
+    this.#update({ endedNotice: null });
+  }
+
+  setPairingNewPhone(pairingNewPhone: boolean): void {
+    this.#update({ pairingNewPhone });
+  }
+
+  async finishPairing(): Promise<void> {
+    this.#update({ pairingNewPhone: false, pairing: { kind: "idle" } });
+    await this.completeStep("pair");
   }
 
   handleHelperEvent(event: HelperEvent): void {

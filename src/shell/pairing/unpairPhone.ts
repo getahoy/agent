@@ -1,56 +1,41 @@
-import type { Logger } from "@getahoy/lib";
 import { dialog } from "electron";
 import { agentCopy } from "../../copy/agentCopy.ts";
-import type { AgentController } from "../agentController.ts";
-import type { IdentityStore } from "../identity/identityStore.ts";
-import type { PhoneLink } from "../lan/phoneLink.ts";
-import { unlinkPairing } from "./pairingApi.ts";
+import type { PairingParts } from "./pairingParts.ts";
 
-const REMOVE_BUTTON = 0;
+const CONFIRM_BUTTON = 0;
 const CANCEL_BUTTON = 1;
 
-type UnpairParts = {
-  apiUrl: string;
-  identity: IdentityStore;
-  phoneLink: PhoneLink;
-  controller: AgentController;
-  logger: Logger;
-};
+type Confirmation = { message: string; detail: string; confirm: string };
 
-async function confirmRemoval(phoneName: string): Promise<boolean> {
+export async function confirmed(confirmation: Confirmation): Promise<boolean> {
   const { response } = await dialog.showMessageBox({
     type: "warning",
-    message: `${agentCopy["remove.title"]} ${phoneName}?`,
-    detail: agentCopy["remove.body"],
-    buttons: [agentCopy["remove.confirm"], agentCopy["remove.cancel"]],
+    message: confirmation.message,
+    detail: confirmation.detail,
+    buttons: [confirmation.confirm, agentCopy["remove.cancel"]],
     defaultId: CANCEL_BUTTON,
     cancelId: CANCEL_BUTTON,
   });
-  return response === REMOVE_BUTTON;
+  return response === CONFIRM_BUTTON;
 }
 
 export async function unpairPhone(
-  parts: UnpairParts,
+  parts: PairingParts,
   publicKey: string,
 ): Promise<void> {
-  const { apiUrl, identity, phoneLink, controller, logger } = parts;
+  const { identity, phoneLink, controller, monitor, logger } = parts;
   const phone = identity.pairedPhones().find((p) => p.publicKey === publicKey);
-  if (!phone || !(await confirmRemoval(phone.displayName))) return;
-  await identity.removePhone(publicKey);
-  phoneLink.disconnect(publicKey);
+  if (!phone) return;
+  const remove = await confirmed({
+    message: `${agentCopy["remove.title"]} ${phone.displayName}?`,
+    detail: agentCopy["remove.body"],
+    confirm: agentCopy["remove.confirm"],
+  });
+  if (!remove) return;
+  phoneLink.end(publicKey, "removed");
+  await identity.endPhone(publicKey, "removed");
+  await identity.queueUnlink({ peerPublicKey: publicKey, reason: "removed" });
   controller.setPairedPhones(identity.pairedPhones());
   logger.info("pairing", "Phone removed");
-  const sessionToken = identity.sessionToken();
-  if (!sessionToken) return;
-  const unlinked = await unlinkPairing({
-    apiUrl,
-    sessionToken,
-    body: {
-      devicePublicKey: identity.encodedPublicKey(),
-      peerPublicKey: publicKey,
-    },
-  });
-  if (unlinked.code === "error") {
-    logger.warn("pairing", "Server unlink failed, phone removed on this Mac");
-  }
+  await monitor.flushUnlinks();
 }

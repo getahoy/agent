@@ -6,7 +6,7 @@ import {
   type KeyPair,
 } from "@getahoy/crypto";
 import type { Logger } from "@getahoy/lib";
-import { bytes32Schema } from "@getahoy/protocol";
+import { bytes32Schema, type EndReason } from "@getahoy/protocol";
 import { safeStorage } from "electron";
 import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
@@ -14,6 +14,13 @@ import {
   type PairedPhone,
   pairedPhoneSchema,
 } from "../../core/pairing/pairedPhone.ts";
+import {
+  endedPhoneSchema,
+  type PendingUnlink,
+  pendingUnlinkSchema,
+  recentEndedPhones,
+  withEndedPhones,
+} from "../../core/pairing/pairingRecords.ts";
 
 const OWNER_ONLY_FILE_MODE = 0o600;
 
@@ -23,6 +30,8 @@ const identitySchema = z.object({
   desktopId: z.uuid().nullable(),
   sessionToken: z.string().min(1).nullable(),
   pairedPhones: z.array(pairedPhoneSchema),
+  endedPhones: z.array(endedPhoneSchema).default([]),
+  pendingUnlinks: z.array(pendingUnlinkSchema).default([]),
 });
 
 type Identity = z.infer<typeof identitySchema>;
@@ -41,6 +50,8 @@ function freshIdentity(): Identity {
     desktopId: null,
     sessionToken: null,
     pairedPhones: [],
+    endedPhones: [],
+    pendingUnlinks: [],
   };
 }
 
@@ -49,7 +60,9 @@ function decryptIdentity(sealed: Buffer): Identity | null {
     const parsed = identitySchema.safeParse(
       JSON.parse(safeStorage.decryptString(sealed)),
     );
-    return parsed.success ? parsed.data : null;
+    if (!parsed.success) return null;
+    const endedPhones = recentEndedPhones(parsed.data.endedPhones, Date.now());
+    return { ...parsed.data, endedPhones };
   } catch {
     return null;
   }
@@ -90,6 +103,10 @@ export class IdentityStore {
     return this.#identity.publicKey;
   }
 
+  sessionToken(): string | null {
+    return this.#identity.sessionToken;
+  }
+
   pairedPhones(): readonly PairedPhone[] {
     return this.#identity.pairedPhones;
   }
@@ -100,30 +117,67 @@ export class IdentityStore {
     return phones.find((phone) => phone.publicKey === encoded) ?? null;
   }
 
-  sessionToken(): string | null {
-    return this.#identity.sessionToken;
+  endReason(publicKey: Uint8Array): EndReason | null {
+    const encoded = encodeBytes(publicKey);
+    const ended = this.#identity.endedPhones;
+    return ended.find((record) => record.publicKey === encoded)?.reason ?? null;
   }
 
-  async removePhone(publicKey: string): Promise<void> {
-    this.#identity = {
-      ...this.#identity,
-      pairedPhones: this.#identity.pairedPhones.filter(
-        (phone) => phone.publicKey !== publicKey,
-      ),
-    };
-    await this.#save();
+  pendingUnlinks(): readonly PendingUnlink[] {
+    return this.#identity.pendingUnlinks;
   }
 
-  async completePairing(pairing: CompletedPairing): Promise<void> {
-    const others = this.#identity.pairedPhones.filter(
+  async endPhone(publicKey: string, reason: EndReason): Promise<void> {
+    const { pairedPhones } = this.#identity;
+    const isEnding = (phone: PairedPhone) => phone.publicKey === publicKey;
+    await this.#update({
+      pairedPhones: pairedPhones.filter((phone) => !isEnding(phone)),
+      endedPhones: this.#ended(pairedPhones.filter(isEnding), reason),
+    });
+  }
+
+  async completePairing(pairing: CompletedPairing): Promise<PairedPhone[]> {
+    const replaced = this.#identity.pairedPhones.filter(
       (phone) => phone.publicKey !== pairing.phone.publicKey,
     );
-    this.#identity = {
-      ...this.#identity,
-      desktopId: pairing.desktopId,
-      sessionToken: pairing.sessionToken,
-      pairedPhones: [...others, pairing.phone],
-    };
+    const endedPhones = this.#ended(replaced, "replaced").filter(
+      (record) => record.publicKey !== pairing.phone.publicKey,
+    );
+    const { desktopId, sessionToken, phone } = pairing;
+    const pairedPhones = [phone];
+    await this.#update({ desktopId, sessionToken, pairedPhones, endedPhones });
+    return replaced;
+  }
+
+  async queueUnlink(unlink: PendingUnlink): Promise<void> {
+    const pendingUnlinks = [...this.#identity.pendingUnlinks, unlink];
+    await this.#update({ pendingUnlinks });
+  }
+
+  async settleUnlink(peerPublicKey: string): Promise<void> {
+    const pendingUnlinks = this.#identity.pendingUnlinks.filter(
+      (unlink) => unlink.peerPublicKey !== peerPublicKey,
+    );
+    await this.#update({ pendingUnlinks });
+  }
+
+  async signOut(): Promise<void> {
+    await this.#update({
+      desktopId: null,
+      sessionToken: null,
+      pairedPhones: [],
+      endedPhones: this.#ended(this.#identity.pairedPhones, "signed_out"),
+      pendingUnlinks: [],
+    });
+  }
+
+  #ended(phones: readonly PairedPhone[], reason: EndReason) {
+    const ended = this.#identity.endedPhones;
+    return withEndedPhones({ phones, ended, reason, now: Date.now() });
+  }
+
+  async #update(change: Partial<Identity>): Promise<void> {
+    this.#identity = { ...this.#identity, ...change };
     await this.#save();
   }
 

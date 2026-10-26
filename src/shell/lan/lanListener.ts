@@ -1,6 +1,7 @@
 import type { Logger } from "@getahoy/lib";
 import { WebSocketServer } from "ws";
 import type { FrameStream } from "../../ports/frameStream.ts";
+import { HandshakeRateLimit } from "./handshakeRateLimit.ts";
 import { lanAddresses } from "./lanAddresses.ts";
 import { WebSocketFrameStream } from "./webSocketFrameStream.ts";
 
@@ -17,6 +18,7 @@ type LanListenerOptions = {
 export class LanListener {
   readonly #options: LanListenerOptions;
   readonly #servers = new Map<string, WebSocketServer>();
+  readonly #rateLimit = new HandshakeRateLimit();
   #syncTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: LanListenerOptions) {
@@ -53,9 +55,14 @@ export class LanListener {
       maxPayload: MAXIMUM_FRAME_BYTES,
     });
     this.#servers.set(host, server);
-    server.on("connection", (socket) =>
-      onStream(new WebSocketFrameStream(socket)),
-    );
+    server.on("connection", (socket, request) => {
+      const address = request.socket.remoteAddress ?? "unknown";
+      if (!this.#rateLimit.allow(address)) {
+        socket.terminate();
+        return;
+      }
+      onStream(new WebSocketFrameStream(socket));
+    });
     server.on("error", (error) => {
       logger.error("lan", "Listener failed, retrying on next sync", error);
       this.#unbind(host);

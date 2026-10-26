@@ -18,13 +18,16 @@ type TrayActions = {
 function connectionLine(state: AgentState): string {
   if (state.screenLocked) return agentCopy["menubar.locked"];
   if (!state.lanEnabled) return agentCopy["menubar.off"];
-  const [connected] = state.connectedPhones;
-  if (connected) return `${agentCopy["menubar.connectedTo"]} ${connected}`;
-  const [paired] = state.pairedPhones;
-  if (paired) {
-    return `${paired.displayName} ${agentCopy["menubar.notConnected"]}`;
+  const [phone] = state.pairedPhones;
+  if (!phone) return agentCopy["menubar.noPhone"];
+  const name = phone.displayName;
+  if (state.connectedPhoneKeys.includes(phone.publicKey)) {
+    return `${agentCopy["menubar.connectedTo"]} ${name}`;
   }
-  return agentCopy["menubar.noPhone"];
+  if (state.pausedPhoneKeys.includes(phone.publicKey)) {
+    return `${name} ${agentCopy["menubar.paused"]}`;
+  }
+  return `${name} ${agentCopy["menubar.ready"]}`;
 }
 
 function statusLines(state: AgentState): string[] {

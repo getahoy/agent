@@ -3,6 +3,7 @@ import {
   type PairingCompleteRequest,
   type PairingUnlinkRequest,
   pairingCompleteSchema,
+  pairingLinksSchema,
   pairingUnlinkSchema,
 } from "@getahoy/protocol";
 
@@ -25,4 +26,14 @@ export function completePairing(call: SessionCall<PairingCompleteRequest>) {
 export function unlinkPairing(call: SessionCall<PairingUnlinkRequest>) {
   const options = sessionRequest(call, "/api/pairing/unlink");
   return request({ ...options, schema: pairingUnlinkSchema });
+}
+
+export function listPairingLinks(call: SessionCall<{ device: string }>) {
+  const url = new URL("/api/pairing/links", call.apiUrl);
+  url.searchParams.set("device", call.body.device);
+  return request({
+    url: url.toString(),
+    headers: { authorization: `Bearer ${call.sessionToken}` },
+    schema: pairingLinksSchema,
+  });
 }
