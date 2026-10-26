@@ -95,6 +95,9 @@ export class PhoneSession {
       case "audio.cancel":
       case "audio.received":
       case "audio.rejected":
+      case "command":
+      case "command.received":
+      case "command.result":
         return;
       default: {
         const unhandled: never = frame;
