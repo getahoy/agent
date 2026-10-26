@@ -1,4 +1,5 @@
 import type { Logger } from "@getahoy/lib";
+import { MAX_FRAME_BYTES } from "@getahoy/protocol";
 import { WebSocketServer } from "ws";
 import type { FrameStream } from "../../ports/frameStream.ts";
 import { HandshakeRateLimit } from "./handshakeRateLimit.ts";
@@ -7,7 +8,6 @@ import { WebSocketFrameStream } from "./webSocketFrameStream.ts";
 
 const LOOPBACK_HOST = "127.0.0.1";
 const ADDRESS_SYNC_MS = 5000;
-const MAXIMUM_FRAME_BYTES = 64 * 1024;
 
 type LanListenerOptions = {
   port: number;
@@ -52,7 +52,7 @@ export class LanListener {
     const server = new WebSocketServer({
       host,
       port,
-      maxPayload: MAXIMUM_FRAME_BYTES,
+      maxPayload: MAX_FRAME_BYTES,
     });
     this.#servers.set(host, server);
     server.on("connection", (socket, request) => {

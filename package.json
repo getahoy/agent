@@ -19,6 +19,7 @@
     "release": "electron-forge release",
     "helper:build": "swift build --package-path native/macos-helper",
     "helper": "pnpm helper:build && node src/dev/helperConsole.ts",
+    "test": "node --test \"src/core/**/*.test.ts\"",
     "lint": "biome ci --error-on-warnings .",
     "typecheck": "tsc --noEmit"
   },
