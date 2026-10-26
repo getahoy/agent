@@ -1,9 +1,6 @@
 import { z } from "zod";
 import type { MenubarStatus, PermissionState } from "../../ports/platform.ts";
-import {
-  type PairingStatus,
-  pairingStatusSchema,
-} from "../pairing/pairingStatus.ts";
+import { pairingStatusSchema } from "../pairing/pairingStatus.ts";
 
 export const onboardingStepSchema = z.enum([
   "welcome",
@@ -13,11 +10,15 @@ export const onboardingStepSchema = z.enum([
 ]);
 
 const helperStatusSchema = z.enum(["starting", "running", "stopped"]);
-const windowScreenSchema = z.enum(["welcome", "permissions", "pair"]);
+const windowScreenSchema = z.enum(["welcome", "permissions", "pair", "home"]);
 const phoneSummarySchema = z.object({
   publicKey: z.string(),
   displayName: z.string(),
   accountEmail: z.string(),
+});
+const endedNoticeSchema = z.object({
+  phoneName: z.string(),
+  reason: z.enum(["removed", "signed_out"]),
 });
 
 export const agentStateSchema = z.object({
@@ -31,7 +32,11 @@ export const agentStateSchema = z.object({
   pairing: pairingStatusSchema,
   pairedPhones: z.array(phoneSummarySchema),
   lanEnabled: z.boolean(),
-  connectedPhones: z.array(z.string()),
+  connectedPhoneKeys: z.array(z.string()),
+  pausedPhoneKeys: z.array(z.string()),
+  lastConnectedAt: z.int().nullable(),
+  endedNotice: endedNoticeSchema.nullable(),
+  pairingNewPhone: z.boolean(),
   screen: windowScreenSchema,
 });
 
@@ -39,18 +44,9 @@ export type OnboardingStep = z.infer<typeof onboardingStepSchema>;
 export type HelperStatus = z.infer<typeof helperStatusSchema>;
 type WindowScreen = z.infer<typeof windowScreenSchema>;
 export type PhoneSummary = z.infer<typeof phoneSummarySchema>;
+export type EndedNotice = z.infer<typeof endedNoticeSchema>;
 export type AgentState = z.infer<typeof agentStateSchema>;
-
-export type AgentFacts = {
-  onboardingStep: OnboardingStep;
-  permissions: PermissionState;
-  helper: HelperStatus;
-  screenLocked: boolean;
-  pairing: PairingStatus;
-  pairedPhones: PhoneSummary[];
-  lanEnabled: boolean;
-  connectedPhones: string[];
-};
+export type AgentFacts = Omit<AgentState, "screen">;
 
 const nextStepAfter: Record<OnboardingStep, OnboardingStep> = {
   welcome: "permissions",
@@ -71,14 +67,15 @@ function windowScreen(facts: AgentFacts): WindowScreen {
   if (facts.onboardingStep === "welcome") return "welcome";
   if (facts.onboardingStep === "permissions") return "permissions";
   if (!allPermissionsGranted(facts.permissions)) return "permissions";
-  return "pair";
+  if (facts.onboardingStep === "pair" || facts.pairingNewPhone) return "pair";
+  return "home";
 }
 
 export function menubarStatus(facts: AgentFacts): MenubarStatus {
   if (facts.helper === "stopped") return "error";
   if (!allPermissionsGranted(facts.permissions)) return "error";
   if (!facts.lanEnabled) return "off";
-  return facts.connectedPhones.length > 0 ? "connected" : "disconnected";
+  return facts.connectedPhoneKeys.length > 0 ? "connected" : "disconnected";
 }
 
 export function agentState(facts: AgentFacts): AgentState {

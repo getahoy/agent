@@ -1,18 +1,27 @@
 import type { KeyPair, SecureChannel } from "@getahoy/crypto";
-import { frameSchema, type Hello } from "@getahoy/protocol";
+import {
+  type EndReason,
+  type Frame,
+  frameSchema,
+  type GoodbyeReason,
+  type Hello,
+} from "@getahoy/protocol";
 import type { FrameStream } from "../../ports/frameStream.ts";
 import type { PairedPhone } from "../pairing/pairedPhone.ts";
 import { acceptHandshake } from "./acceptHandshake.ts";
-import { decodeJson } from "./jsonBytes.ts";
+import { decodeJson, encodeJson } from "./jsonBytes.ts";
 
 type PhoneSessionOptions = {
   stream: FrameStream;
   localKeys: KeyPair;
   localHello: Hello;
   findPhone: (publicKey: Uint8Array) => PairedPhone | null;
+  findEnded: (publicKey: Uint8Array) => EndReason | null;
+  isLocked: () => boolean;
   handshakeTimeoutMs: number;
-  onConnected: (phone: PairedPhone) => void;
-  onDisconnected: (phone: PairedPhone) => void;
+  onConnected: (phone: PairedPhone, session: PhoneSession) => void;
+  onDisconnected: (phone: PairedPhone, session: PhoneSession) => void;
+  onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
 };
 
 type Phase =
@@ -35,39 +44,71 @@ export class PhoneSession {
     options.stream.onClose(() => this.#closed());
   }
 
+  end(reason: GoodbyeReason): void {
+    this.#send({ type: "goodbye", reason });
+    this.#options.stream.close();
+  }
+
+  sendStatus(locked: boolean): void {
+    this.#send({ type: "status", locked });
+  }
+
+  #send(frame: Frame): void {
+    const phase = this.#phase;
+    if (phase.kind !== "connected" && phase.kind !== "awaitingReady") return;
+    this.#options.stream.send(phase.channel.seal(encodeJson(frame)));
+  }
+
   #receive(frame: Uint8Array): void {
     const phase = this.#phase;
-    switch (phase.kind) {
-      case "awaitingHello":
-        this.#greet(frame);
+    if (phase.kind === "awaitingHello") {
+      this.#greet(frame);
+      return;
+    }
+    if (phase.kind === "closed") return;
+    const opened = phase.channel.open(frame);
+    const parsed = opened ? frameSchema.safeParse(decodeJson(opened)) : null;
+    if (!parsed?.success) {
+      this.#options.stream.close();
+      return;
+    }
+    this.#handle(parsed.data, phase.channel, phase.phone);
+  }
+
+  #handle(frame: Frame, channel: SecureChannel, phone: PairedPhone): void {
+    switch (frame.type) {
+      case "ready":
+        this.#markConnected(channel, phone);
         return;
-      case "awaitingReady":
-      case "connected":
-        this.#readFrame(phase.channel, phase.phone, frame);
+      case "goodbye":
+        this.#options.onGoodbye(phone, frame.reason);
+        this.#options.stream.close();
         return;
-      case "closed":
+      case "ping":
+        this.#send({ type: "pong" });
+        return;
+      case "status":
+      case "pong":
         return;
       default: {
-        const unhandled: never = phase;
-        throw new Error(`Unhandled session phase ${JSON.stringify(unhandled)}`);
+        const unhandled: never = frame;
+        throw new Error(`Unhandled frame ${JSON.stringify(unhandled)}`);
       }
     }
   }
 
   #greet(firstMessage: Uint8Array): void {
-    const { stream, localKeys, localHello, findPhone } = this.#options;
+    const { stream, localKeys, localHello, findPhone, findEnded } =
+      this.#options;
     const decision = acceptHandshake({
       firstMessage,
       localKeys,
       localHello,
       findPhone,
+      findEnded,
     });
-    if (decision.outcome === "dropped") {
-      stream.close();
-      return;
-    }
-    stream.send(decision.reply);
-    if (decision.outcome === "refused") {
+    if (decision.outcome !== "dropped") stream.send(decision.reply);
+    if (decision.outcome !== "accepted") {
       stream.close();
       return;
     }
@@ -75,39 +116,19 @@ export class PhoneSession {
     this.#phase = { kind: "awaitingReady", channel, phone };
   }
 
-  #readFrame(
-    channel: SecureChannel,
-    phone: PairedPhone,
-    sealed: Uint8Array,
-  ): void {
-    const opened = channel.open(sealed);
-    const frame = opened ? frameSchema.safeParse(decodeJson(opened)) : null;
-    if (!frame?.success) {
-      this.#options.stream.close();
-      return;
-    }
-    switch (frame.data.type) {
-      case "ready":
-        this.#markConnected(channel, phone);
-        return;
-      default: {
-        const unhandled: never = frame.data.type;
-        throw new Error(`Unhandled frame ${JSON.stringify(unhandled)}`);
-      }
-    }
-  }
-
   #markConnected(channel: SecureChannel, phone: PairedPhone): void {
     if (this.#phase.kind === "connected") return;
     clearTimeout(this.#handshakeTimer);
     this.#phase = { kind: "connected", channel, phone };
-    this.#options.onConnected(phone);
+    this.sendStatus(this.#options.isLocked());
+    this.#options.onConnected(phone, this);
   }
 
   #closed(): void {
     const phase = this.#phase;
     clearTimeout(this.#handshakeTimer);
     this.#phase = { kind: "closed" };
-    if (phase.kind === "connected") this.#options.onDisconnected(phase.phone);
+    if (phase.kind !== "connected") return;
+    this.#options.onDisconnected(phase.phone, this);
   }
 }
