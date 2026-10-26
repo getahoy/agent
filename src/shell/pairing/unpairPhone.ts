@@ -32,10 +32,10 @@ export async function unpairPhone(
     confirm: agentCopy["remove.confirm"],
   });
   if (!remove) return;
-  phoneLink.end(publicKey, "removed");
   await identity.endPhone(publicKey, "removed");
-  await identity.queueUnlink({ peerPublicKey: publicKey, reason: "removed" });
   controller.setPairedPhones(identity.pairedPhones());
+  phoneLink.end(publicKey, "removed");
+  await identity.queueUnlink({ peerPublicKey: publicKey, reason: "removed" });
   logger.info("pairing", "Phone removed");
   await monitor.flushUnlinks();
 }
