@@ -3,6 +3,7 @@ import type { GoodbyeReason, Hello } from "@getahoy/protocol";
 import { PhoneSession } from "../../core/connection/phoneSession.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { FrameStream } from "../../ports/frameStream.ts";
+import type { CommandReceiver } from "../commands/commandReceiver.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import { LanListener } from "./lanListener.ts";
 
@@ -16,6 +17,7 @@ type PhoneLinkOptions = {
   isLocked: () => boolean;
   onConnectedPhones: (publicKeys: string[]) => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
+  commands: CommandReceiver;
 };
 
 export class PhoneLink {
@@ -53,7 +55,8 @@ export class PhoneLink {
   }
 
   #accept(stream: FrameStream): void {
-    const { identity, localHello, logger, isLocked, onGoodbye } = this.#options;
+    const { identity, localHello, logger, isLocked, onGoodbye, commands } =
+      this.#options;
     new PhoneSession({
       stream,
       localKeys: identity.keyPair(),
@@ -75,6 +78,7 @@ export class PhoneLink {
         this.#emit();
       },
       onGoodbye,
+      onCommand: (command, reply) => commands.receive(command, reply),
     });
   }
 

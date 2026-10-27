@@ -7,6 +7,7 @@ import {
 import { app } from "electron";
 import type { DeviceIdentity } from "../../ports/platform.ts";
 import type { AgentController } from "../agentController.ts";
+import type { CommandReceiver } from "../commands/commandReceiver.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import { lanEndpoint } from "../lan/lanAddresses.ts";
 import { PhoneLink } from "../lan/phoneLink.ts";
@@ -25,6 +26,7 @@ type ServiceInput = {
   identity: IdentityStore;
   device: DeviceIdentity;
   controller: AgentController;
+  commands: CommandReceiver;
 };
 
 function localHello(device: DeviceIdentity): Hello {
@@ -71,7 +73,8 @@ function createPairingSession(
 }
 
 export function createPairingServices(input: ServiceInput) {
-  const { apiUrl, port, logger, identity, device, controller } = input;
+  const { apiUrl, port, logger, identity, device, controller, commands } =
+    input;
   const authClient = createDeviceAuthClient(apiUrl);
   const phoneLink = new PhoneLink({
     port,
@@ -81,6 +84,7 @@ export function createPairingServices(input: ServiceInput) {
     isLocked: () => controller.state().screenLocked,
     onConnectedPhones: (keys) => controller.setConnectedPhones(keys),
     onGoodbye: (phone, reason) => handlePhoneGoodbye(parts, phone, reason),
+    commands,
   });
   const monitor = new LinkMonitor({
     apiUrl,

@@ -37,6 +37,7 @@ export const agentStateSchema = z.object({
   lastConnectedAt: z.int().nullable(),
   endedNotice: endedNoticeSchema.nullable(),
   pairingNewPhone: z.boolean(),
+  lastHeard: z.string().nullable(),
   screen: windowScreenSchema,
 });
 

@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { createLogger } from "@getahoy/lib";
 import { app, Notification, powerMonitor } from "electron";
 import { agentCopy } from "./copy/agentCopy.ts";
+import { commandCopy } from "./copy/commandCopy.ts";
 import { HelperClient } from "./core/helper/helperClient.ts";
 import { parseAgentEnv } from "./env/agentEnv.ts";
 import { macosMenubarIcon } from "./platform/macos/macosDevice.ts";
@@ -10,6 +11,7 @@ import type { PlatformAdapter } from "./ports/platform.ts";
 import { AgentController } from "./shell/agentController.ts";
 import { AgentTray } from "./shell/agentTray.ts";
 import { registerBridge } from "./shell/bridgeIpc.ts";
+import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { MainWindow } from "./shell/mainWindow.ts";
 import {
@@ -128,6 +130,13 @@ async function startAgent(): Promise<void> {
   const pairedPhones = identity.pairedPhones();
   const controller = new AgentController(platform, settings, pairedPhones);
   const helper = createHelper(platform, controller);
+  const commands = new CommandReceiver({
+    isLocked: () => controller.state().screenLocked,
+    run: () =>
+      Promise.resolve({ status: "failed", message: commandCopy.cannotDoYet }),
+    onHeard: (text) => controller.showLastHeard(text),
+    logger,
+  });
   const services = createPairingServices({
     apiUrl: env.VITE_AHOY_API_URL,
     port: LAN_PORT,
@@ -135,6 +144,7 @@ async function startAgent(): Promise<void> {
     identity,
     device,
     controller,
+    commands,
   });
   const mainWindow = wireShell({ platform, controller, helper, services });
   helper.start();

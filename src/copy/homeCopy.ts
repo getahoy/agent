@@ -13,6 +13,7 @@ export const homeCopy = {
   dismiss: "Dismiss",
   ready: (phone: string) => `Not connected. Open Ahoy on ${phone} to connect.`,
   paused: (phone: string) => `${phone} paused the connection.`,
+  heard: (text: string) => `Heard: “${text}”`,
   removedBanner: (phone: string) => `${phone} removed this Mac.`,
   signedOutBanner: (phone: string) => `${phone} signed out of Ahoy.`,
   newPhoneHint: (phone: string) =>

@@ -52,6 +52,7 @@ export class AgentController {
       lastConnectedAt: null,
       endedNotice: null,
       pairingNewPhone: false,
+      lastHeard: null,
     };
   }
 
@@ -136,6 +137,10 @@ export class AgentController {
   handleHelperEvent(event: HelperEvent): void {
     if (event === "ready") this.#update({ helper: "running" });
     if (event === "exited") this.#update({ helper: "stopped" });
+  }
+
+  showLastHeard(lastHeard: string): void {
+    this.#update({ lastHeard });
   }
 
   setScreenLocked(screenLocked: boolean): void {
