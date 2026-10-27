@@ -1,5 +1,7 @@
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
+import { parseTabCommand } from "./parseTabCommand.ts";
+import { SITE_HOST } from "./siteHost.ts";
 
 type AppVerb = Extract<Intent, { app: string }>["kind"];
 
@@ -17,7 +19,7 @@ const HINGLISH_ENDINGS: readonly [string, string][] = [
   [" band karo", "close"],
 ];
 const SEARCH = /^(?:search for|search|google) (.+)$/;
-const SITE = /^open ((?:[a-z0-9-]+\.)+(?:com|in|org|net|io|dev|ai))$/;
+const SITE = new RegExp(`^open (${SITE_HOST})$`);
 const APP_VERBS: readonly [RegExp, AppVerb][] = [
   [/^(?:open|launch|start) (.+)$/, "open"],
   [/^(?:close|quit) (.+)$/, "quit"],
@@ -73,6 +75,8 @@ export function parseCommand(
   installedApps: readonly string[],
 ): ParsedCommand {
   const command = normaliseCommand(text);
+  const tab = parseTabCommand(command, installedApps);
+  if (tab) return tab;
   const query = SEARCH.exec(command)?.[1];
   if (query) return { kind: "intent", intent: { kind: "search", query } };
   const host = SITE.exec(command)?.[1];
