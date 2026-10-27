@@ -13,7 +13,7 @@ export function PairedHome({ state, phone }: PairedHomeProps) {
   return (
     <>
       <PhoneStatusCard state={state} phone={phone} />
-      {state.lastHeard ? <HeardBanner text={state.lastHeard} /> : null}
+      {state.lastHeard ? <HeardBanner text={state.lastHeard.text} /> : null}
       <div className="flex flex-wrap gap-2">
         <ActionButton
           tone="plain"

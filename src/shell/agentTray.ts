@@ -41,9 +41,19 @@ function statusLines(state: AgentState): string[] {
   return lines;
 }
 
+const HEARD_TITLE_MS = 5000;
+const HEARD_TITLE_CHARS = 40;
+
+function clipped(text: string): string {
+  if (text.length <= HEARD_TITLE_CHARS) return text;
+  return `${text.slice(0, HEARD_TITLE_CHARS)}…`;
+}
+
 export class AgentTray {
   readonly #actions: TrayActions;
   readonly #tray: Tray;
+  #heardAt = 0;
+  #heardTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(actions: TrayActions) {
     this.#actions = actions;
@@ -52,6 +62,7 @@ export class AgentTray {
   }
 
   render(state: AgentState): void {
+    this.#showHeard(state.lastHeard);
     const actions = this.#actions;
     this.#tray.setImage(actions.menubarIcon(menubarStatus(state)));
     const status: MenuItemConstructorOptions[] = statusLines(state).map(
@@ -72,5 +83,14 @@ export class AgentTray {
         { label: agentCopy["menubar.quit"], click: actions.quit },
       ]),
     );
+  }
+
+  #showHeard(heard: AgentState["lastHeard"]): void {
+    if (!heard || heard.at === this.#heardAt) return;
+    this.#heardAt = heard.at;
+    this.#tray.setTitle(` “${clipped(heard.text)}”`);
+    if (this.#heardTimer) clearTimeout(this.#heardTimer);
+    const clear = () => this.#tray.setTitle("");
+    this.#heardTimer = setTimeout(clear, HEARD_TITLE_MS);
   }
 }

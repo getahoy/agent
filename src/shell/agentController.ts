@@ -139,8 +139,8 @@ export class AgentController {
     if (event === "exited") this.#update({ helper: "stopped" });
   }
 
-  showLastHeard(lastHeard: string): void {
-    this.#update({ lastHeard });
+  showLastHeard(text: string): void {
+    this.#update({ lastHeard: { text, at: Date.now() } });
   }
 
   setScreenLocked(screenLocked: boolean): void {
