@@ -11,8 +11,9 @@ import { AgentController } from "./shell/agentController.ts";
 import { AgentTray } from "./shell/agentTray.ts";
 import { registerBridge } from "./shell/bridgeIpc.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
-import { runCommandText } from "./shell/commands/runCommandText.ts";
+import { createCommandRunner } from "./shell/commands/commandRunner.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
+import { createInterpreter } from "./shell/interpret/interpretApi.ts";
 import { MainWindow } from "./shell/mainWindow.ts";
 import {
   createPairingServices,
@@ -130,14 +131,16 @@ async function startAgent(): Promise<void> {
   const pairedPhones = identity.pairedPhones();
   const controller = new AgentController(platform, settings, pairedPhones);
   const helper = createHelper(platform, controller);
+  const apiUrl = env.VITE_AHOY_API_URL;
+  const interpret = createInterpreter({ apiUrl, identity });
   const commands = new CommandReceiver({
     isLocked: () => controller.state().screenLocked,
-    run: runCommandText,
+    run: createCommandRunner({ helper, interpret, logger }),
     onHeard: (text) => controller.showLastHeard(text),
     logger,
   });
   const services = createPairingServices({
-    apiUrl: env.VITE_AHOY_API_URL,
+    apiUrl,
     port: LAN_PORT,
     logger,
     identity,
