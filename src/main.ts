@@ -2,7 +2,6 @@ import { spawn } from "node:child_process";
 import { createLogger } from "@getahoy/lib";
 import { app, Notification, powerMonitor } from "electron";
 import { agentCopy } from "./copy/agentCopy.ts";
-import { commandCopy } from "./copy/commandCopy.ts";
 import { HelperClient } from "./core/helper/helperClient.ts";
 import { parseAgentEnv } from "./env/agentEnv.ts";
 import { macosMenubarIcon } from "./platform/macos/macosDevice.ts";
@@ -12,6 +11,7 @@ import { AgentController } from "./shell/agentController.ts";
 import { AgentTray } from "./shell/agentTray.ts";
 import { registerBridge } from "./shell/bridgeIpc.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
+import { runCommandText } from "./shell/commands/runCommandText.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { MainWindow } from "./shell/mainWindow.ts";
 import {
@@ -132,8 +132,7 @@ async function startAgent(): Promise<void> {
   const helper = createHelper(platform, controller);
   const commands = new CommandReceiver({
     isLocked: () => controller.state().screenLocked,
-    run: () =>
-      Promise.resolve({ status: "failed", message: commandCopy.cannotDoYet }),
+    run: runCommandText,
     onHeard: (text) => controller.showLastHeard(text),
     logger,
   });

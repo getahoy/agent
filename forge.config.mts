@@ -12,7 +12,12 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     appBundleId: "com.getahoy.agent",
-    extendInfo: { LSUIElement: true, LSAppNapIsDisabled: true },
+    extendInfo: {
+      LSUIElement: true,
+      LSAppNapIsDisabled: true,
+      NSAppleEventsUsageDescription:
+        "Ahoy controls apps you name, like quitting or hiding them, when you ask from your phone.",
+    },
     extraResource: [`${HELPER_PACKAGE}/.build/release/ahoyHelper`],
     osxSign: { type: "development", identity: "Apple Development" },
   },
