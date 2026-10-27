@@ -89,12 +89,6 @@ export class PhoneSession {
         return;
       case "status":
       case "pong":
-      case "audio.start":
-      case "audio.chunk":
-      case "audio.end":
-      case "audio.cancel":
-      case "audio.received":
-      case "audio.rejected":
       case "command":
       case "command.received":
       case "command.result":
