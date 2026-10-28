@@ -21,6 +21,14 @@ struct DisplaySummary: Encodable {
   let main: Bool
 }
 
+// Accessibility frames are global points with the origin at the main display's top left;
+// AppKit windows use points from its bottom left. Points need no Retina scaling.
+func cocoaRect(fromAccessibility rect: CGRect) -> CGRect {
+  let mainHeight = CGDisplayBounds(CGMainDisplayID()).height
+  return CGRect(
+    x: rect.minX, y: mainHeight - rect.maxY, width: rect.width, height: rect.height)
+}
+
 func activeDisplays() -> [DisplaySummary] {
   var count: UInt32 = 0
   CGGetActiveDisplayList(0, nil, &count)

@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 func shutDown() -> Never {
   releaseModifierKeys()
@@ -25,4 +25,6 @@ watchDisplayChanges()
 let signalSources = [stopOnSignal(SIGTERM), stopOnSignal(SIGINT)]
 writeLine(EventLine(event: "ready", protocolVersion: helperProtocolVersion))
 Thread.detachNewThread(readRequests)
-RunLoop.main.run()
+// The overlay draws windows, which need an app; accessory keeps it out of the Dock.
+NSApplication.shared.setActivationPolicy(.accessory)
+NSApplication.shared.run()

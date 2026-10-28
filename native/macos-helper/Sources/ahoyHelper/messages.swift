@@ -14,6 +14,7 @@ struct RequestArguments: Decodable {
   let modifiers: [String]?
   let text: String?
   let displayId: UInt32?
+  let marks: [OverlayMark]?
 }
 
 enum HelperError: Error {

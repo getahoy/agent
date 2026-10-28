@@ -18,6 +18,12 @@ const snapshotElementSchema = z.object({
   ref: z.string(),
   role: z.string(),
   label: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  help: z.string().optional(),
+  placeholder: z.string().optional(),
+  subrole: z.string().optional(),
+  enabled: z.boolean().default(true),
   actions: z.array(z.string()),
   frame: rectSchema.optional(),
 });
@@ -46,7 +52,7 @@ export const outputSchemaByVerb = {
     height: z.number(),
     displayId: z.number(),
   }),
-  overlay: z.object({}),
+  overlay: z.object({ shown: z.number() }),
 } as const;
 
 export type HelperVerb = keyof typeof outputSchemaByVerb;
@@ -102,6 +108,7 @@ const helperErrorCodeSchema = z.enum([
 export const helperLineSchema = z.union([
   z.object({ event: z.literal("ready"), protocolVersion: z.number() }),
   z.object({ event: z.literal("displaysChanged") }),
+  z.object({ event: z.literal("frontWindowChanged") }),
   z.object({ id: z.string(), ok: z.literal(true), output: z.unknown() }),
   z.object({
     id: z.string().optional(),
@@ -123,4 +130,8 @@ export type HelperOutcome<Verb extends HelperVerb> =
   | { ok: true; output: HelperOutput<Verb> }
   | { ok: false; error: { code: HelperErrorCode; message: string } };
 
-export type HelperEvent = "ready" | "displaysChanged" | "exited";
+export type HelperEvent =
+  | "ready"
+  | "displaysChanged"
+  | "frontWindowChanged"
+  | "exited";

@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 
 let maximumLabelLength = 200
@@ -14,6 +15,25 @@ enum Accessibility {
       let text = raw as? String, !text.isEmpty
     else { return nil }
     return text
+  }
+
+  static func strings(_ element: AXUIElement, _ attributes: [String]) -> [String?] {
+    var raw: CFArray?
+    let names = attributes as CFArray
+    guard AXUIElementCopyMultipleAttributeValues(element, names, [], &raw) == .success,
+      let values = raw as? [Any], values.count == attributes.count
+    else { return attributes.map { _ in nil } }
+    return values.map { value in
+      guard let text = value as? String, !text.isEmpty else { return nil }
+      return String(text.prefix(maximumLabelLength))
+    }
+  }
+
+  static func bool(_ element: AXUIElement, _ attribute: String) -> Bool? {
+    var raw: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, attribute as CFString, &raw) == .success
+    else { return nil }
+    return (raw as? NSNumber)?.boolValue
   }
 
   static func element(_ element: AXUIElement, _ attribute: String) -> AXUIElement? {
