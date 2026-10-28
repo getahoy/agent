@@ -11,11 +11,10 @@ export type ScreenState = {
   elements: readonly ScreenElement[];
 };
 
+// Live pages add and remove elements all the time, so only the app and window must hold still.
 export function sameScreen(before: ScreenState, after: ScreenState): boolean {
   return (
-    before.appPid === after.appPid &&
-    sameFrame(before.window, after.window) &&
-    before.elements.length === after.elements.length
+    before.appPid === after.appPid && sameFrame(before.window, after.window)
   );
 }
 

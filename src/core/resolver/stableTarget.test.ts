@@ -14,13 +14,13 @@ const save: ScreenElement = {
   frame: { x: 10, y: 10, width: 60, height: 20 },
 };
 
-test("the same app, window and element count is the same screen", () => {
+test("the same app and window is the same screen, whatever else changed", () => {
   const before = { appPid: 7, window: WINDOW, elements: [save] };
   assert.equal(sameScreen(before, { ...before }), true);
+  assert.equal(sameScreen(before, { ...before, elements: [] }), true);
   assert.equal(sameScreen(before, { ...before, appPid: 8 }), false);
   const moved = { ...WINDOW, x: 5 };
   assert.equal(sameScreen(before, { ...before, window: moved }), false);
-  assert.equal(sameScreen(before, { ...before, elements: [] }), false);
 });
 
 test("the target must keep its label and its place", () => {

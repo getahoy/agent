@@ -1,4 +1,5 @@
 import { normaliseLabel } from "./resolveTarget.ts";
+import { type ScreenElement, textsOf } from "./screenElement.ts";
 
 const DESTRUCTIVE_LABELS = [
   "Delete",
@@ -35,4 +36,9 @@ const DESTRUCTIVE_LABELS = [
 export function isDestructive(label: string): boolean {
   const words = ` ${normaliseLabel(label)} `;
   return DESTRUCTIVE_LABELS.some((danger) => words.includes(` ${danger} `));
+}
+
+// A plain title can hide a destructive description or tooltip, so every text counts.
+export function isDestructiveElement(element: ScreenElement): boolean {
+  return textsOf(element).some(isDestructive);
 }

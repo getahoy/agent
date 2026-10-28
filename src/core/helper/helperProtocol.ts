@@ -26,6 +26,7 @@ const snapshotElementSchema = z.object({
   enabled: z.boolean().default(true),
   actions: z.array(z.string()),
   frame: rectSchema.optional(),
+  clip: rectSchema.optional(),
 });
 
 const snapshotSchema = z.object({

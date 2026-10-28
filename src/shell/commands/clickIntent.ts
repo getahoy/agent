@@ -7,7 +7,7 @@ import {
   failed,
 } from "../../core/commands/commandLog.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
-import { isDestructive } from "../../core/resolver/destructiveLabels.ts";
+import { isDestructiveElement } from "../../core/resolver/destructiveLabels.ts";
 import { nearestTargets } from "../../core/resolver/nearestTargets.ts";
 import { resolveTarget } from "../../core/resolver/resolveTarget.ts";
 import {
@@ -71,9 +71,9 @@ async function offerTargets(
 }
 
 function clickOrConfirm(screen: Screen, target: ScreenElement) {
-  const label = labelText(target);
-  if (!isDestructive(label)) return clickSafely(screen, target);
-  return offerTargets(screen, [target], commandCopy.confirmTarget(label), true);
+  if (!isDestructiveElement(target)) return clickSafely(screen, target);
+  const message = commandCopy.confirmTarget(labelText(target));
+  return offerTargets(screen, [target], message, true);
 }
 
 export async function runClick(
