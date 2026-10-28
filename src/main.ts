@@ -3,6 +3,7 @@ import { createLogger } from "@getahoy/lib";
 import { app, Notification, powerMonitor } from "electron";
 import { agentCopy } from "./copy/agentCopy.ts";
 import { HelperClient } from "./core/helper/helperClient.ts";
+import type { HelperEvent } from "./core/helper/helperProtocol.ts";
 import { parseAgentEnv } from "./env/agentEnv.ts";
 import { macosMenubarIcon } from "./platform/macos/macosDevice.ts";
 import { MacosPlatform } from "./platform/macos/macosPlatform.ts";
@@ -10,6 +11,7 @@ import type { PlatformAdapter } from "./ports/platform.ts";
 import { AgentController } from "./shell/agentController.ts";
 import { AgentTray } from "./shell/agentTray.ts";
 import { registerBridge } from "./shell/bridgeIpc.ts";
+import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
@@ -33,7 +35,10 @@ type ShellParts = {
   services: PairingServices;
 };
 
-function createHelper(platform: PlatformAdapter, controller: AgentController) {
+function createHelper(
+  platform: PlatformAdapter,
+  onEvent: (event: HelperEvent) => void,
+) {
   const binary = platform.helperBinary();
   return new HelperClient({
     spawnHelper: () =>
@@ -42,7 +47,7 @@ function createHelper(platform: PlatformAdapter, controller: AgentController) {
       }),
     requestTimeoutMs: HELPER_REQUEST_TIMEOUT_MS,
     restartDelaysMs: HELPER_RESTART_DELAYS_MS,
-    onEvent: (event) => controller.handleHelperEvent(event),
+    onEvent,
   });
 }
 
@@ -130,13 +135,20 @@ async function startAgent(): Promise<void> {
   const device = await platform.deviceIdentity();
   const pairedPhones = identity.pairedPhones();
   const controller = new AgentController(platform, settings, pairedPhones);
-  const helper = createHelper(platform, controller);
+  const helper = createHelper(platform, (event) => {
+    controller.handleHelperEvent(event);
+    if (event === "frontWindowChanged") choices.expire();
+  });
+  const choices = new ChoiceBook({
+    clearOverlay: () => void helper.request("overlay", { marks: [] }),
+  });
   const apiUrl = env.VITE_AHOY_API_URL;
   const interpret = createInterpreter({ apiUrl, identity });
   const commands = new CommandReceiver({
     isLocked: () => controller.state().screenLocked,
     run: createCommandRunner({ helper, interpret, logger }),
     onHeard: (text) => controller.showLastHeard(text),
+    choices,
     logger,
   });
   const services = createPairingServices({

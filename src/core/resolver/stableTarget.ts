@@ -1,4 +1,3 @@
-import type { Resolution } from "./resolveTarget.ts";
 import {
   type Frame,
   labelOf,
@@ -21,12 +20,18 @@ export function sameScreen(before: ScreenState, after: ScreenState): boolean {
 }
 
 export function stillThere(
-  before: ScreenElement,
-  after: Resolution,
+  target: ScreenElement,
+  elements: readonly ScreenElement[],
 ): ScreenElement | null {
-  if (after.kind !== "one") return null;
-  const { target } = after;
-  if (labelOf(target) !== labelOf(before)) return null;
-  if (!target.frame || !before.frame) return null;
-  return sameFrame(target.frame, before.frame) ? target : null;
+  const label = labelOf(target);
+  const place = target.frame;
+  if (!place) return null;
+  const found = elements.find(
+    (element) =>
+      element.enabled &&
+      labelOf(element) === label &&
+      element.frame !== undefined &&
+      sameFrame(element.frame, place),
+  );
+  return found ?? null;
 }

@@ -1,9 +1,13 @@
 import { setTimeout as sleep } from "node:timers/promises";
+import { MAX_CHOICE_LABEL_CHARS, MAX_CHOICES } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
 import type { CommandOutcome } from "../../core/commands/commandLog.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import type { Snapshot } from "../../core/helper/helperProtocol.ts";
-import { resolveTarget } from "../../core/resolver/resolveTarget.ts";
+import {
+  missCandidates,
+  resolveTarget,
+} from "../../core/resolver/resolveTarget.ts";
 import {
   labelOf,
   type ScreenElement,
@@ -16,6 +20,8 @@ import {
 
 // Two snapshots this far apart must agree before anything is clicked.
 const SETTLE_MS = 100;
+
+type Offer = { message: string; confirm: boolean };
 
 function failed(message: string): CommandOutcome {
   return { status: "failed", message };
@@ -40,15 +46,38 @@ export async function clickSafely(
 ): Promise<CommandOutcome> {
   await sleep(SETTLE_MS);
   const after = await takeScreen(helper);
-  const label = labelOf(target) ?? "";
-  const again = after && resolveTarget(after.elements, after.window, label);
-  const current = again && stillThere(target, again);
+  const current = after && stillThere(target, after.elements);
   if (!after || !current || !sameScreen(before, after)) {
     return failed(commandCopy.screenChanged);
   }
   const clicked = await helper.request("click", { ref: current.ref });
   if (!clicked.ok) return failed(commandCopy.failed);
-  return { status: "done", message: commandCopy.clicked(label) };
+  const message = commandCopy.clicked(labelOf(target) ?? "");
+  return { status: "done", message };
+}
+
+export async function offerTargets(
+  helper: HelperClient,
+  before: ScreenState,
+  targets: readonly ScreenElement[],
+  offer: Offer,
+): Promise<CommandOutcome> {
+  const shown = targets.slice(0, MAX_CHOICES);
+  const marks = shown.flatMap((target, index) =>
+    target.frame ? [{ number: index + 1, frame: target.frame }] : [],
+  );
+  await helper.request("overlay", { marks });
+  const options = shown.map((target, index) => ({
+    number: index + 1,
+    label: (labelOf(target) ?? "").slice(0, MAX_CHOICE_LABEL_CHARS),
+  }));
+  const pick = (number: number) => {
+    const target = shown[number - 1];
+    if (!target) return Promise.resolve(failed(commandCopy.screenChanged));
+    return clickSafely(helper, before, target);
+  };
+  const choice = { options, confirm: offer.confirm, pick };
+  return { status: "needsChoice", message: offer.message, choice };
 }
 
 export async function runClick(
@@ -58,9 +87,13 @@ export async function runClick(
   const before = await takeScreen(helper);
   if (!before) return failed(commandCopy.noWindow);
   const found = resolveTarget(before.elements, before.window, label);
-  if (found.kind === "none") return failed(commandCopy.noTarget(label));
   if (found.kind === "many") {
-    return { status: "needsChoice", message: commandCopy.manyTargets(label) };
+    const offer = { message: commandCopy.manyTargets(label), confirm: false };
+    return offerTargets(helper, before, found.targets, offer);
   }
-  return clickSafely(helper, before, found.target);
+  if (found.kind === "one") return clickSafely(helper, before, found.target);
+  const near = missCandidates(before.elements, before.window, MAX_CHOICES);
+  if (near.length === 0) return failed(commandCopy.noTarget(label));
+  const message = commandCopy.missedTarget(label);
+  return offerTargets(helper, before, near, { message, confirm: false });
 }

@@ -78,7 +78,7 @@ export class PhoneLink {
         this.#emit();
       },
       onGoodbye,
-      onCommand: (command, reply) => commands.receive(command, reply),
+      onCommand: (request, reply) => commands.handle(request, reply),
     });
   }
 

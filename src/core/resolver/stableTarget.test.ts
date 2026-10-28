@@ -25,10 +25,17 @@ test("the same app, window and element count is the same screen", () => {
 
 test("the target must keep its label and its place", () => {
   const again = { ...save, ref: "e9" };
-  assert.equal(stillThere(save, { kind: "one", target: again }), again);
+  assert.equal(stillThere(save, [again]), again);
   const moved = { ...save, frame: { x: 11, y: 10, width: 60, height: 20 } };
-  assert.equal(stillThere(save, { kind: "one", target: moved }), null);
+  assert.equal(stillThere(save, [moved]), null);
   const renamed = { ...save, title: "Saved" };
-  assert.equal(stillThere(save, { kind: "one", target: renamed }), null);
-  assert.equal(stillThere(save, { kind: "none" }), null);
+  assert.equal(stillThere(save, [renamed]), null);
+  assert.equal(stillThere(save, [{ ...save, enabled: false }]), null);
+  assert.equal(stillThere(save, []), null);
+});
+
+test("one of two same-label elements is found by its place", () => {
+  const second = { ...save, ref: "e2", frame: { ...WINDOW, x: 300 } };
+  const found = stillThere(second, [save, { ...second, ref: "e5" }]);
+  assert.equal(found?.ref, "e5");
 });

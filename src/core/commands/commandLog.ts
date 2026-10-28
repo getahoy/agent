@@ -1,8 +1,18 @@
-import type { CommandStatus } from "@getahoy/protocol";
+import type { CommandChoice, CommandStatus } from "@getahoy/protocol";
 
 export const REMEMBERED_COMMANDS = 100;
 
-export type CommandOutcome = { status: CommandStatus; message: string };
+export type Choice = {
+  options: readonly CommandChoice[];
+  confirm: boolean;
+  pick: (number: number) => Promise<CommandOutcome>;
+};
+
+export type CommandOutcome = {
+  status: CommandStatus;
+  message: string;
+  choice?: Choice;
+};
 
 export type CommandLog = {
   done: ReadonlyMap<string, CommandOutcome>;

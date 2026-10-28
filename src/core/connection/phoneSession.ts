@@ -22,10 +22,12 @@ type PhoneSessionOptions = {
   onConnected: (phone: PairedPhone, session: PhoneSession) => void;
   onDisconnected: (phone: PairedPhone, session: PhoneSession) => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
-  onCommand: (command: IncomingCommand, reply: (frame: Frame) => void) => void;
+  onCommand: (command: PhoneRequest, reply: (frame: Frame) => void) => void;
 };
 
 export type IncomingCommand = Extract<Frame, { type: "command" }>;
+export type IncomingChoice = Extract<Frame, { type: "command.choose" }>;
+export type PhoneRequest = IncomingCommand | IncomingChoice;
 
 type Phase =
   | { kind: "awaitingHello" }
@@ -91,6 +93,7 @@ export class PhoneSession {
         this.#send({ type: "pong" });
         return;
       case "command":
+      case "command.choose":
         if (this.#phase.kind !== "connected") return;
         this.#options.onCommand(frame, (reply) => this.#send(reply));
         return;

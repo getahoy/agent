@@ -9,9 +9,21 @@ import {
   finishCommand,
   startCommand,
 } from "../../core/commands/commandLog.ts";
-import type { IncomingCommand } from "../../core/connection/phoneSession.ts";
+import type {
+  IncomingChoice,
+  IncomingCommand,
+  PhoneRequest,
+} from "../../core/connection/phoneSession.ts";
+import type { ChoiceBook } from "./choiceBook.ts";
 
 type Reply = (frame: Frame) => void;
+type Work = () => Promise<CommandOutcome>;
+type Queued = {
+  commandId: string;
+  reply: Reply;
+  work: Work;
+  heard: string | null;
+};
 
 function exitCode(error: unknown): string {
   if (error instanceof Error && "code" in error) return String(error.code);
@@ -27,6 +39,7 @@ type CommandReceiverOptions = {
   isLocked: () => boolean;
   run: (text: string) => Promise<CommandOutcome>;
   onHeard: (text: string) => void;
+  choices: ChoiceBook;
   logger: Logger;
 };
 
@@ -40,8 +53,26 @@ export class CommandReceiver {
     this.#options = options;
   }
 
-  receive(command: IncomingCommand, reply: Reply): void {
-    const { commandId } = command;
+  handle(request: PhoneRequest, reply: Reply): void {
+    if (request.type === "command") this.#receive(request, reply);
+    else this.#choose(request, reply);
+  }
+
+  #receive({ commandId, text }: IncomingCommand, reply: Reply): void {
+    const { choices, run } = this.#options;
+    const work = () => {
+      choices.expire();
+      return run(text);
+    };
+    this.#enqueue({ commandId, reply, work, heard: text });
+  }
+
+  #choose({ commandId, parentId, number }: IncomingChoice, reply: Reply) {
+    const work = () => this.#options.choices.pick(parentId, number);
+    this.#enqueue({ commandId, reply, work, heard: null });
+  }
+
+  #enqueue({ commandId, reply, work, heard }: Queued): void {
     reply({ type: "command.received", commandId });
     const decision = decideCommand(this.#log, commandId);
     if (decision.kind === "repeat") {
@@ -52,24 +83,25 @@ export class CommandReceiver {
     if (decision.kind === "running") return;
     this.#log = startCommand(this.#log, commandId);
     this.#queue = this.#queue
-      .then(() => this.#execute(command))
+      .then(() => this.#execute(commandId, work, heard))
       .catch(() => this.#options.logger.warn("command", `${commandId} broke`));
   }
 
-  async #execute({ commandId, text }: IncomingCommand): Promise<void> {
-    const outcome = await this.#outcomeFor(commandId, text);
+  async #execute(commandId: string, work: Work, heard: string | null) {
+    if (heard) this.#options.onHeard(heard);
+    const outcome = await this.#outcomeFor(commandId, work);
+    if (outcome.choice) this.#options.choices.offer(commandId, outcome.choice);
     this.#log = finishCommand(this.#log, commandId, outcome);
     this.#options.logger.info("command", `${commandId} ${outcome.status}`);
     this.#replies.get(commandId)?.(this.#resultFrame(commandId, outcome));
     this.#replies.delete(commandId);
   }
 
-  async #outcomeFor(commandId: string, text: string): Promise<CommandOutcome> {
-    const { isLocked, onHeard, run, logger } = this.#options;
+  async #outcomeFor(commandId: string, work: Work): Promise<CommandOutcome> {
+    const { isLocked, logger } = this.#options;
     try {
-      onHeard(text);
       if (isLocked()) return LOCKED;
-      return await run(text);
+      return await work();
     } catch (error) {
       logger.warn("command", `${commandId} failed, exit ${exitCode(error)}`);
       return { status: "failed", message: commandCopy.failed };
@@ -77,8 +109,17 @@ export class CommandReceiver {
   }
 
   #resultFrame(commandId: string, outcome: CommandOutcome): Frame {
-    const { status } = outcome;
+    const { status, choice } = outcome;
     const message = outcome.message.slice(0, MAX_RESULT_MESSAGE_CHARS);
-    return { type: "command.result", commandId, status, message };
+    const choices = choice ? [...choice.options] : [];
+    const confirm = choice?.confirm ?? false;
+    return {
+      type: "command.result",
+      commandId,
+      status,
+      message,
+      choices,
+      confirm,
+    };
   }
 }
