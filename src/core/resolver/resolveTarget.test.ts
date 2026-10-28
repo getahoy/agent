@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { missCandidates, resolveTarget } from "./resolveTarget.ts";
+import { resolveTarget } from "./resolveTarget.ts";
 import type { ScreenElement } from "./screenElement.ts";
 
 const WINDOW = { x: 0, y: 0, width: 800, height: 600 };
@@ -74,14 +74,4 @@ test("two real matches are returned, a nested copy collapses", () => {
     kind: "one",
     target: button,
   });
-});
-
-test("miss candidates are pressable, labelled and capped", () => {
-  const labelled = element({ title: "Open" });
-  const plain = element({});
-  const text = element({ title: "Hello", actions: [] });
-  const more = element({ title: "More" });
-  assert.deepEqual(missCandidates([labelled, plain, text, more], WINDOW, 1), [
-    labelled,
-  ]);
 });

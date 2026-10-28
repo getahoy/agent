@@ -5,10 +5,8 @@ import type { CommandOutcome } from "../../core/commands/commandLog.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import type { Snapshot } from "../../core/helper/helperProtocol.ts";
 import { isDestructive } from "../../core/resolver/destructiveLabels.ts";
-import {
-  missCandidates,
-  resolveTarget,
-} from "../../core/resolver/resolveTarget.ts";
+import { nearestTargets } from "../../core/resolver/nearestTargets.ts";
+import { resolveTarget } from "../../core/resolver/resolveTarget.ts";
 import {
   labelOf,
   type ScreenElement,
@@ -111,7 +109,7 @@ export async function runClick(
     }
     return clickSafely(helper, before, target);
   }
-  const near = missCandidates(before.elements, before.window, MAX_CHOICES);
+  const near = nearestTargets(before.elements, before.window, label);
   if (near.length === 0) return failed(commandCopy.noTarget(label));
   const message = commandCopy.missedTarget(label);
   return offerTargets(helper, before, near, { message, confirm: false });

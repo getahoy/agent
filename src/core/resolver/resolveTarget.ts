@@ -1,6 +1,5 @@
 import {
   type Frame,
-  labelOf,
   PRESS_ACTION,
   type ScreenElement,
 } from "./screenElement.ts";
@@ -50,7 +49,7 @@ export function usableElements(
   });
 }
 
-function fieldsOf(element: ScreenElement): string[] {
+export function fieldsOf(element: ScreenElement): string[] {
   const { title, description, help, placeholder, subrole } = element;
   return [title, description, help, placeholder, subrole]
     .flatMap((field) => (field ? [normaliseLabel(field)] : []))
@@ -92,14 +91,4 @@ export function resolveTarget(
     if (distinct.length > 1) return { kind: "many", targets: distinct };
   }
   return { kind: "none" };
-}
-
-export function missCandidates(
-  elements: readonly ScreenElement[],
-  window: Frame,
-  limit: number,
-): ScreenElement[] {
-  return usableElements(elements, window)
-    .filter((element) => pressable(element) && labelOf(element) !== null)
-    .slice(0, limit);
 }
