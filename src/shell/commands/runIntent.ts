@@ -2,6 +2,7 @@ import { commandCopy } from "../../copy/commandCopy.ts";
 import type { CommandOutcome } from "../../core/commands/commandLog.ts";
 import type { Intent } from "../../core/commands/intent.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
+import { runClick } from "./clickIntent.ts";
 import { pressKeys, typeText } from "./helperIntents.ts";
 import { openWith, osaScript } from "./osaScript.ts";
 import { runTabIntent } from "./tabIntents.ts";
@@ -112,7 +113,7 @@ export async function runIntent(
     case "switchTab":
       return runTabIntent(intent);
     case "click":
-      return failed(commandCopy.cannotDoYet);
+      return runClick(intent.label, helper);
     default: {
       const unhandled: never = intent;
       throw new Error(`Unhandled intent ${JSON.stringify(unhandled)}`);

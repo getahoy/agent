@@ -90,5 +90,12 @@ export const commandCopy = {
     to
       ? `Drafted an email to ${to}. Check it and press Send.`
       : "Drafted an email. Add who it goes to, then press Send.",
+  clicked: (label: string) => `Clicked ${capitalised(label)}`,
+  noTarget: (label: string) =>
+    `Can’t find ${capitalised(label)} on the screen.`,
+  manyTargets: (label: string) =>
+    `More than one ${capitalised(label)} on the screen. Pick a number.`,
+  screenChanged: "The screen changed, say it again.",
+  noWindow: "There’s no window in front to click in.",
   which: (apps: readonly string[]) => `Which one: ${listed(apps)}?`,
 };
