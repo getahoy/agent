@@ -40,18 +40,40 @@ test("hide and switch to", () => {
 test("search and google search the web", () => {
   assert.deepEqual(intentOf("Search cats"), {
     kind: "intent",
-    intent: { kind: "search", query: "cats" },
+    intent: { kind: "search", query: "cats", browser: null },
   });
   assert.deepEqual(intentOf("google best pizza near me"), {
     kind: "intent",
-    intent: { kind: "search", query: "best pizza near me" },
+    intent: { kind: "search", query: "best pizza near me", browser: null },
   });
 });
 
 test("open a site keeps the dot", () => {
   assert.deepEqual(intentOf("Open github.com."), {
     kind: "intent",
-    intent: { kind: "openSite", host: "github.com" },
+    intent: { kind: "openSite", host: "github.com", browser: null },
+  });
+});
+
+test("in or on a browser opens the site or search there", () => {
+  assert.deepEqual(intentOf("search cats on safari"), {
+    kind: "intent",
+    intent: { kind: "search", query: "cats", browser: "Safari" },
+  });
+  assert.deepEqual(intentOf("open github.com in google chrome"), {
+    kind: "intent",
+    intent: { kind: "openSite", host: "github.com", browser: "Google Chrome" },
+  });
+});
+
+test("in or on something that is not a browser stays in the query", () => {
+  assert.deepEqual(intentOf("search hotels in goa"), {
+    kind: "intent",
+    intent: { kind: "search", query: "hotels in goa", browser: null },
+  });
+  assert.deepEqual(intentOf("search things on notes"), {
+    kind: "intent",
+    intent: { kind: "search", query: "things on notes", browser: null },
   });
 });
 

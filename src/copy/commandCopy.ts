@@ -63,6 +63,8 @@ export const commandCopy = {
   hid: (app: string) => `Hid ${app}`,
   switched: (app: string) => `Switched to ${app}`,
   searched: (query: string) => `Searched for ${query}`,
+  inBrowser: (message: string, browser: string | null) =>
+    browser ? `${message} in ${browser}` : message,
   notOpen: (app: string) => `${app} isn’t open`,
   askedToQuit: (app: string) =>
     `Asked ${app} to quit. It may be waiting for you to save.`,

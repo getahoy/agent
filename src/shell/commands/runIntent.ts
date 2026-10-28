@@ -1,13 +1,12 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
 import type { CommandOutcome } from "../../core/commands/commandLog.ts";
-import { draftUrl } from "../../core/commands/draftUrl.ts";
 import type { Intent } from "../../core/commands/intent.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import { pressKeys, typeText } from "./helperIntents.ts";
 import { openWith, osaScript } from "./osaScript.ts";
 import { runTabIntent } from "./tabIntents.ts";
+import { runWebIntent } from "./webIntents.ts";
 
-const SEARCH_URL = "https://www.google.com/search?q=";
 const SYSTEM_EVENTS = "System Events";
 
 const QUIT_SCRIPT = [
@@ -102,11 +101,9 @@ export async function runIntent(
         controls: intent.app,
       });
     case "search":
-      await openWith([`${SEARCH_URL}${encodeURIComponent(intent.query)}`]);
-      return done(commandCopy.searched(intent.query));
     case "openSite":
-      await openWith([`https://${intent.host}`]);
-      return done(commandCopy.opened(intent.host));
+    case "draftEmail":
+      return runWebIntent(intent);
     case "keys":
       return pressKeys(helper, intent);
     case "type":
@@ -114,9 +111,6 @@ export async function runIntent(
     case "closeTab":
     case "switchTab":
       return runTabIntent(intent);
-    case "draftEmail":
-      await openWith([draftUrl(intent)]);
-      return done(commandCopy.drafted(intent.to));
     default: {
       const unhandled: never = intent;
       throw new Error(`Unhandled intent ${JSON.stringify(unhandled)}`);

@@ -52,7 +52,9 @@ test("typed text must be what the person said", () => {
 });
 
 test("a host that is not a plain site is rejected", () => {
-  const sites = [{ kind: "openSite", host: "evil.com/path" }] as const;
+  const sites = [
+    { kind: "openSite", host: "evil.com/path", browser: null },
+  ] as const;
   assert.deepEqual(validateActions(sites, "open evil", APPS), {
     kind: "rejected",
   });
@@ -93,6 +95,7 @@ const draft = {
   subject: "Hackathon credits",
   body: "Hi Samar, about the hackathon credits.",
   via: "mail",
+  browser: null,
 } as const;
 
 test("a draft address must be spoken", () => {
@@ -112,6 +115,28 @@ test("a draft is always alone, so nothing can send it", () => {
   };
   const spoken = "send an email to samar abbas at gmail dot com saying hi";
   assert.equal(validateActions([draft, send], spoken, APPS).kind, "rejected");
+});
+
+test("a named browser must be an installed, known browser", () => {
+  const inSafari: InterpretAction = {
+    kind: "openSite",
+    host: "Gmail.com",
+    browser: "safari",
+  };
+  assert.deepEqual(validateActions([inSafari], "open gmail in safari", APPS), {
+    kind: "valid",
+    intents: [{ kind: "openSite", host: "gmail.com", browser: "Safari" }],
+  });
+  const inBrave = { ...inSafari, browser: "Brave Browser" };
+  assert.equal(
+    validateActions([inBrave], "open gmail in brave", APPS).kind,
+    "rejected",
+  );
+  const inNotes = { ...inSafari, browser: "Notes" };
+  assert.equal(
+    validateActions([inNotes], "open gmail in notes", APPS).kind,
+    "rejected",
+  );
 });
 
 test("no actions means nothing to run", () => {

@@ -1,4 +1,5 @@
 import type { InterpretAction } from "@getahoy/protocol";
+import { installedBrowser } from "./browsers.ts";
 import { allowsEmailDraft } from "./emailRules.ts";
 import type { Intent } from "./intent.ts";
 import { allowsShortcut } from "./shortcutRules.ts";
@@ -27,13 +28,12 @@ function installedName(app: string, installedApps: readonly string[]) {
   return installedApps.find((installed) => installed.toLowerCase() === wanted);
 }
 
-function tabIntent(
-  action: Extract<InterpretAction, { kind: "closeTab" | "switchTab" }>,
-  { transcript, installedApps }: Context,
-): Intent | null {
-  if (!said(action.match, transcript)) return null;
-  if (action.browser === null) return { ...action, browser: null };
-  const browser = installedName(action.browser, installedApps);
+function withBrowser<Action extends { browser: string | null }>(
+  action: Action,
+  installedApps: readonly string[],
+): Action | null {
+  if (action.browser === null) return action;
+  const browser = installedBrowser(action.browser, installedApps);
   return browser ? { ...action, browser } : null;
 }
 
@@ -49,10 +49,11 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
       return { kind: action.kind === "switch" ? "activate" : action.kind, app };
     }
     case "search":
-      return action;
+      return withBrowser(action, installedApps);
     case "openSite": {
       const host = action.host.toLowerCase();
-      return isSiteHost(host) ? { kind: "openSite", host } : null;
+      if (!isSiteHost(host)) return null;
+      return withBrowser({ ...action, host }, installedApps);
     }
     case "keys":
       return allowsShortcut(action, transcript) ? action : null;
@@ -60,9 +61,11 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
       return said(action.text, transcript) ? action : null;
     case "closeTab":
     case "switchTab":
-      return tabIntent(action, context);
+      if (!said(action.match, transcript)) return null;
+      return withBrowser(action, installedApps);
     case "draftEmail":
-      return allowsEmailDraft(action, transcript) ? action : null;
+      if (!allowsEmailDraft(action, transcript)) return null;
+      return withBrowser(action, installedApps);
     default: {
       const unhandled: never = action;
       throw new Error(`Unhandled action ${JSON.stringify(unhandled)}`);

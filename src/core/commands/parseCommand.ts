@@ -1,3 +1,4 @@
+import { installedBrowser } from "./browsers.ts";
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
 import { parseTabCommand } from "./parseTabCommand.ts";
@@ -19,6 +20,7 @@ const HINGLISH_ENDINGS: readonly [string, string][] = [
   [" band karo", "close"],
 ];
 const SEARCH = /^(?:search for|search|google) (.+)$/;
+const IN_BROWSER = /^(.+) (?:in|on) ([^ ]+(?: [^ ]+)?)$/;
 const SITE = new RegExp(`^open (${SITE_HOST})$`);
 const APP_VERBS: readonly [RegExp, AppVerb][] = [
   [/^(?:open|launch|start) (.+)$/, "open"],
@@ -70,6 +72,20 @@ function appIntent(
   return { kind: "intent", intent: { kind: verb, app: match.app } };
 }
 
+function inBrowser(command: string, installedApps: readonly string[]) {
+  const [, rest = command, spoken] = IN_BROWSER.exec(command) ?? [];
+  const browser = spoken ? installedBrowser(spoken, installedApps) : null;
+  return browser ? { rest, browser } : { rest: command, browser: null };
+}
+
+function webIntent(command: string, installedApps: readonly string[]) {
+  const { rest, browser } = inBrowser(command, installedApps);
+  const query = SEARCH.exec(rest)?.[1];
+  if (query) return { kind: "search", query, browser } as const;
+  const host = SITE.exec(rest)?.[1];
+  return host ? ({ kind: "openSite", host, browser } as const) : null;
+}
+
 export function parseCommand(
   text: string,
   installedApps: readonly string[],
@@ -77,10 +93,8 @@ export function parseCommand(
   const command = normaliseCommand(text);
   const tab = parseTabCommand(command, installedApps);
   if (tab) return tab;
-  const query = SEARCH.exec(command)?.[1];
-  if (query) return { kind: "intent", intent: { kind: "search", query } };
-  const host = SITE.exec(command)?.[1];
-  if (host) return { kind: "intent", intent: { kind: "openSite", host } };
+  const web = webIntent(command, installedApps);
+  if (web) return { kind: "intent", intent: web };
   for (const [pattern, verb] of APP_VERBS) {
     const spoken = pattern.exec(command)?.[1];
     if (spoken) return appIntent(verb, spoken, installedApps);

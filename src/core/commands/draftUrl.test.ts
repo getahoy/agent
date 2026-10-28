@@ -8,6 +8,7 @@ const draft = {
   subject: "Credits & next steps",
   body: "Hi Samar,\nCan we talk?",
   via: "mail",
+  browser: null,
 } as const;
 
 test("mail drafts open a mailto url with everything encoded", () => {

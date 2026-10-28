@@ -12,6 +12,7 @@ export type EmailDraft = {
   subject: string;
   body: string;
   via: EmailApp;
+  browser: string | null;
 };
 
 export type Intent =
@@ -19,8 +20,8 @@ export type Intent =
   | { kind: "quit"; app: string }
   | { kind: "hide"; app: string }
   | { kind: "activate"; app: string }
-  | { kind: "search"; query: string }
-  | { kind: "openSite"; host: string }
+  | { kind: "search"; query: string; browser: string | null }
+  | { kind: "openSite"; host: string; browser: string | null }
   | { kind: "keys"; key: KeyName; modifiers: readonly KeyModifier[] }
   | { kind: "type"; text: string }
   | TabIntent
