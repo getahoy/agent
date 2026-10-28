@@ -117,6 +117,18 @@ test("a draft is always alone, so nothing can send it", () => {
   assert.equal(validateActions([draft, send], spoken, APPS).kind, "rejected");
 });
 
+test("a click label must be words the person said", () => {
+  const click: InterpretAction = { kind: "click", label: "Continue" };
+  assert.equal(
+    validateActions([click], "hit the blue continue button", APPS).kind,
+    "valid",
+  );
+  assert.equal(
+    validateActions([click], "go to the next step", APPS).kind,
+    "rejected",
+  );
+});
+
 test("a tab closes only when the person said close", () => {
   const close: InterpretAction = {
     kind: "closeTab",

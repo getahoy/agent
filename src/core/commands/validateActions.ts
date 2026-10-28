@@ -61,6 +61,8 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
       return allowsShortcut(action, transcript) ? action : null;
     case "type":
       return said(action.text, transcript) ? action : null;
+    case "click":
+      return said(action.label, transcript) ? action : null;
     case "closeTab":
       if (!CLOSE_WORDS.test(transcript)) return null;
       if (!said(action.match, transcript)) return null;
