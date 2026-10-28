@@ -24,6 +24,7 @@ export type Intent =
   | { kind: "openSite"; host: string; browser: string | null }
   | { kind: "keys"; key: KeyName; modifiers: readonly KeyModifier[] }
   | { kind: "type"; text: string }
+  | { kind: "click"; label: string }
   | TabIntent
   | EmailDraft;
 

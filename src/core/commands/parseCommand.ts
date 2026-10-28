@@ -1,6 +1,7 @@
 import { installedBrowser } from "./browsers.ts";
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
+import { parseScreenCommand } from "./parseScreenCommand.ts";
 import { parseTabCommand } from "./parseTabCommand.ts";
 import { SITE_HOST } from "./siteHost.ts";
 
@@ -93,6 +94,8 @@ export function parseCommand(
   const command = normaliseCommand(text);
   const tab = parseTabCommand(command, installedApps);
   if (tab) return tab;
+  const screen = parseScreenCommand(command);
+  if (screen) return screen;
   const web = webIntent(command, installedApps);
   if (web) return { kind: "intent", intent: web };
   for (const [pattern, verb] of APP_VERBS) {

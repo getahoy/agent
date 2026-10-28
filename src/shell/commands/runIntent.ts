@@ -111,6 +111,8 @@ export async function runIntent(
     case "closeTab":
     case "switchTab":
       return runTabIntent(intent);
+    case "click":
+      return failed(commandCopy.cannotDoYet);
     default: {
       const unhandled: never = intent;
       throw new Error(`Unhandled intent ${JSON.stringify(unhandled)}`);
