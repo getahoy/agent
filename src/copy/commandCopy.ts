@@ -100,6 +100,12 @@ export const commandCopy = {
   confirmTarget: (label: string) =>
     `${capitalised(label)} can’t be undone. Confirm on your phone.`,
   screenChanged: "The screen changed, say it again.",
+  blockedApp:
+    "Ahoy doesn’t click or type in this app. Change the list in Ahoy’s settings file.",
+  breakerTripped:
+    "Ahoy paused after too many actions or failures. Tap Resume to continue.",
+  resume: "Resume",
+  resumed: "Ahoy is back on.",
   noWindow: "There’s no window in front to click in.",
   which: (apps: readonly string[]) => `Which one: ${listed(apps)}?`,
 };

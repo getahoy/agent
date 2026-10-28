@@ -5,16 +5,42 @@ import type { Intent, ParsedCommand } from "../../core/commands/intent.ts";
 import { parseCommand } from "../../core/commands/parseCommand.ts";
 import { validateActions } from "../../core/commands/validateActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
+import {
+  type BlockedApp,
+  isBlockedApp,
+} from "../../core/safety/blockedApps.ts";
 import type { Interpreter } from "../interpret/interpretApi.ts";
-import { waitUntilFrontmost } from "./frontApp.ts";
+import { frontBundleId, waitUntilFrontmost } from "./frontApp.ts";
 import { installedApps } from "./installedApps.ts";
 import { runIntent } from "./runIntent.ts";
 
 type CommandRunnerOptions = {
   helper: HelperClient;
   interpret: Interpreter;
+  blockedApps: readonly BlockedApp[];
   logger: Logger;
 };
+
+const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
+  "click",
+  "keys",
+  "type",
+]);
+
+// Not knowing which app is in front counts as blocked: the list must fail closed.
+async function runGuarded(intent: Intent, options: CommandRunnerOptions) {
+  if (SCREEN_INTENTS.has(intent.kind)) {
+    const front = await frontBundleId();
+    if (!front || isBlockedApp(front, options.blockedApps)) {
+      const refused: CommandOutcome = {
+        status: "refused",
+        message: commandCopy.blockedApp,
+      };
+      return refused;
+    }
+  }
+  return runIntent(intent, options.helper);
+}
 
 type Unmatched = Extract<ParsedCommand, { kind: "unknownApp" | "unsupported" }>;
 
@@ -35,11 +61,11 @@ function appBeforeInput(intent: Intent, next: Intent | undefined) {
 
 async function runInOrder(
   intents: readonly Intent[],
-  helper: HelperClient,
+  options: CommandRunnerOptions,
 ): Promise<CommandOutcome> {
   const messages: string[] = [];
   for (const [index, intent] of intents.entries()) {
-    const outcome = await runIntent(intent, helper);
+    const outcome = await runGuarded(intent, options);
     if (outcome.status !== "done") return outcome;
     messages.push(outcome.message);
     const app = appBeforeInput(intent, intents[index + 1]);
@@ -56,7 +82,7 @@ async function viaInterpreter(
   parsed: Unmatched,
   options: CommandRunnerOptions,
 ): Promise<CommandOutcome> {
-  const { interpret, logger, helper } = options;
+  const { interpret, logger } = options;
   const interpretation = await interpret(text, apps);
   if (interpretation.kind === "failed") {
     logger.warn("command", `Smart commands ${interpretation.reason}`);
@@ -71,17 +97,16 @@ async function viaInterpreter(
     logger.warn("command", "Smart commands rejected");
     return { status: "failed", message: commandCopy.cannotDoYet };
   }
-  return runInOrder(validation.intents, helper);
+  return runInOrder(validation.intents, options);
 }
 
 export function createCommandRunner(options: CommandRunnerOptions) {
-  const { helper } = options;
   return async (text: string): Promise<CommandOutcome> => {
     const apps = await installedApps();
     const parsed = parseCommand(text, apps);
     switch (parsed.kind) {
       case "intent":
-        return runIntent(parsed.intent, helper);
+        return runGuarded(parsed.intent, options);
       case "ambiguous": {
         const message = commandCopy.which(parsed.apps);
         return { status: "needsChoice", message };

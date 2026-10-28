@@ -7,6 +7,8 @@ const POLL_MS = 100;
 const FRONT_TIMEOUT_MS = 3000;
 const APP_EXTENSION = ".app";
 const FRONT_APP_SCRIPT = "POSIX path of (path to frontmost application)";
+const FRONT_BUNDLE_SCRIPT =
+  "id of application (path to frontmost application as text)";
 
 function appNameOfBundle(bundlePath: string): string | null {
   const bundle = path.basename(bundlePath);
@@ -20,6 +22,14 @@ export async function frontApp(): Promise<string | null> {
     .then(({ stdout }) => stdout.trim())
     .catch(() => "");
   return appNameOfBundle(answer);
+}
+
+export async function frontBundleId(): Promise<string | null> {
+  const options = { timeout: FRONT_TIMEOUT_MS };
+  const answer = await run("osascript", ["-e", FRONT_BUNDLE_SCRIPT], options)
+    .then(({ stdout }) => stdout.trim())
+    .catch(() => "");
+  return answer === "" ? null : answer;
 }
 
 export async function waitUntilFrontmost(app: string): Promise<boolean> {

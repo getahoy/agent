@@ -2,10 +2,17 @@ import { readFile } from "node:fs/promises";
 import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
+import { DEFAULT_BLOCKED_APPS } from "../core/safety/blockedApps.ts";
+
+const blockedAppSchema = z.object({
+  kind: z.literal("bundleId"),
+  value: z.string().min(1),
+});
 
 const settingsSchema = z.object({
   onboardingStep: onboardingStepSchema,
   lanEnabled: z.boolean().default(true),
+  blockedApps: z.array(blockedAppSchema).default([...DEFAULT_BLOCKED_APPS]),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -13,6 +20,7 @@ export type Settings = z.infer<typeof settingsSchema>;
 const defaultSettings: Settings = {
   onboardingStep: "welcome",
   lanEnabled: true,
+  blockedApps: [...DEFAULT_BLOCKED_APPS],
 };
 
 function parseJson(text: string): unknown {

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { createLogger } from "@getahoy/lib";
+import { createLogger, type Logger } from "@getahoy/lib";
 import { app, Notification, powerMonitor } from "electron";
 import { agentCopy } from "./copy/agentCopy.ts";
 import { HelperClient } from "./core/helper/helperClient.ts";
@@ -21,7 +21,7 @@ import {
   createPairingServices,
   type PairingServices,
 } from "./shell/pairing/pairingServices.ts";
-import { readSettings } from "./shell/settingsStore.ts";
+import { readSettings, type Settings } from "./shell/settingsStore.ts";
 
 const HELPER_REQUEST_TIMEOUT_MS = 10_000;
 const HELPER_RESTART_DELAYS_MS = [250, 1000, 5000] as const;
@@ -124,6 +124,36 @@ function wireShell(parts: ShellParts): MainWindow {
   return mainWindow;
 }
 
+type CommandParts = {
+  platform: PlatformAdapter;
+  controller: AgentController;
+  settings: Settings;
+  identity: IdentityStore;
+  apiUrl: string;
+  logger: Logger;
+};
+
+function createCommands(parts: CommandParts) {
+  const { platform, controller, settings, identity, apiUrl, logger } = parts;
+  const helper = createHelper(platform, (event) => {
+    controller.handleHelperEvent(event);
+    if (event === "frontWindowChanged") choices.expire();
+  });
+  const choices = new ChoiceBook({
+    clearOverlay: () => void helper.request("overlay", { marks: [] }),
+  });
+  const interpret = createInterpreter({ apiUrl, identity });
+  const { blockedApps } = settings;
+  const commands = new CommandReceiver({
+    isLocked: () => controller.state().screenLocked,
+    run: createCommandRunner({ helper, interpret, blockedApps, logger }),
+    onHeard: (text) => controller.showLastHeard(text),
+    choices,
+    logger,
+  });
+  return { helper, commands };
+}
+
 async function startAgent(): Promise<void> {
   const env = parseAgentEnv();
   const logger = createLogger();
@@ -135,22 +165,9 @@ async function startAgent(): Promise<void> {
   const device = await platform.deviceIdentity();
   const pairedPhones = identity.pairedPhones();
   const controller = new AgentController(platform, settings, pairedPhones);
-  const helper = createHelper(platform, (event) => {
-    controller.handleHelperEvent(event);
-    if (event === "frontWindowChanged") choices.expire();
-  });
-  const choices = new ChoiceBook({
-    clearOverlay: () => void helper.request("overlay", { marks: [] }),
-  });
   const apiUrl = env.VITE_AHOY_API_URL;
-  const interpret = createInterpreter({ apiUrl, identity });
-  const commands = new CommandReceiver({
-    isLocked: () => controller.state().screenLocked,
-    run: createCommandRunner({ helper, interpret, logger }),
-    onHeard: (text) => controller.showLastHeard(text),
-    choices,
-    logger,
-  });
+  const command = { platform, controller, settings, identity, apiUrl, logger };
+  const { helper, commands } = createCommands(command);
   const services = createPairingServices({
     apiUrl,
     port: LAN_PORT,

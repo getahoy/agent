@@ -14,6 +14,11 @@ import type {
   IncomingCommand,
   PhoneRequest,
 } from "../../core/connection/phoneSession.ts";
+import {
+  type Breaker,
+  closedBreaker,
+  recordCommand,
+} from "../../core/safety/breaker.ts";
 import type { ChoiceBook } from "./choiceBook.ts";
 
 type Reply = (frame: Frame) => void;
@@ -47,6 +52,7 @@ export class CommandReceiver {
   readonly #options: CommandReceiverOptions;
   readonly #replies = new Map<string, Reply>();
   #log: CommandLog = emptyCommandLog;
+  #breaker: Breaker = closedBreaker;
   #queue: Promise<void> = Promise.resolve();
 
   constructor(options: CommandReceiverOptions) {
@@ -88,9 +94,15 @@ export class CommandReceiver {
   }
 
   async #execute(commandId: string, work: Work, heard: string | null) {
-    if (heard) this.#options.onHeard(heard);
-    const outcome = await this.#outcomeFor(commandId, work);
-    if (outcome.choice) this.#options.choices.offer(commandId, outcome.choice);
+    const { choices, onHeard } = this.#options;
+    if (heard) onHeard(heard);
+    const paused = this.#breaker.tripped && heard !== null;
+    const outcome = paused
+      ? this.#pausedOutcome()
+      : await this.#outcomeFor(commandId, work);
+    if (!paused) this.#recordForBreaker(outcome);
+    const offerable = paused || !this.#breaker.tripped;
+    if (outcome.choice && offerable) choices.offer(commandId, outcome.choice);
     this.#log = finishCommand(this.#log, commandId, outcome);
     this.#options.logger.info("command", `${commandId} ${outcome.status}`);
     this.#replies.get(commandId)?.(this.#resultFrame(commandId, outcome));
@@ -106,6 +118,25 @@ export class CommandReceiver {
       logger.warn("command", `${commandId} failed, exit ${exitCode(error)}`);
       return { status: "failed", message: commandCopy.failed };
     }
+  }
+
+  #recordForBreaker(outcome: CommandOutcome): void {
+    const wasTripped = this.#breaker.tripped;
+    this.#breaker = recordCommand(this.#breaker, outcome.status, Date.now());
+    if (!wasTripped && this.#breaker.tripped) this.#options.choices.expire();
+  }
+
+  #pausedOutcome(): CommandOutcome {
+    const resume = (): Promise<CommandOutcome> => {
+      this.#breaker = closedBreaker;
+      return Promise.resolve({ status: "done", message: commandCopy.resumed });
+    };
+    const options = [{ number: 1, label: commandCopy.resume }];
+    return {
+      status: "refused",
+      message: commandCopy.breakerTripped,
+      choice: { options, confirm: false, pick: resume },
+    };
   }
 
   #resultFrame(commandId: string, outcome: CommandOutcome): Frame {
