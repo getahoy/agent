@@ -4,6 +4,7 @@ import { commandCopy } from "../../copy/commandCopy.ts";
 import type { CommandOutcome } from "../../core/commands/commandLog.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import type { Snapshot } from "../../core/helper/helperProtocol.ts";
+import { isDestructive } from "../../core/resolver/destructiveLabels.ts";
 import {
   missCandidates,
   resolveTarget,
@@ -74,10 +75,22 @@ export async function offerTargets(
   const pick = (number: number) => {
     const target = shown[number - 1];
     if (!target) return Promise.resolve(failed(commandCopy.screenChanged));
+    if (!offer.confirm && isDestructive(labelOf(target) ?? "")) {
+      return confirmFirst(helper, before, target);
+    }
     return clickSafely(helper, before, target);
   };
   const choice = { options, confirm: offer.confirm, pick };
   return { status: "needsChoice", message: offer.message, choice };
+}
+
+function confirmFirst(
+  helper: HelperClient,
+  before: ScreenState,
+  target: ScreenElement,
+): Promise<CommandOutcome> {
+  const message = commandCopy.confirmTarget(labelOf(target) ?? "");
+  return offerTargets(helper, before, [target], { message, confirm: true });
 }
 
 export async function runClick(
@@ -91,7 +104,13 @@ export async function runClick(
     const offer = { message: commandCopy.manyTargets(label), confirm: false };
     return offerTargets(helper, before, found.targets, offer);
   }
-  if (found.kind === "one") return clickSafely(helper, before, found.target);
+  if (found.kind === "one") {
+    const { target } = found;
+    if (isDestructive(labelOf(target) ?? "")) {
+      return confirmFirst(helper, before, target);
+    }
+    return clickSafely(helper, before, target);
+  }
   const near = missCandidates(before.elements, before.window, MAX_CHOICES);
   if (near.length === 0) return failed(commandCopy.noTarget(label));
   const message = commandCopy.missedTarget(label);

@@ -97,6 +97,8 @@ export const commandCopy = {
     `More than one ${capitalised(label)} on the screen. Pick a number.`,
   missedTarget: (label: string) =>
     `Can’t find ${capitalised(label)}. Pick a number on the screen.`,
+  confirmTarget: (label: string) =>
+    `${capitalised(label)} can’t be undone. Confirm on your phone.`,
   screenChanged: "The screen changed, say it again.",
   noWindow: "There’s no window in front to click in.",
   which: (apps: readonly string[]) => `Which one: ${listed(apps)}?`,
