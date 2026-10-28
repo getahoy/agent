@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { BrowserTab } from "../../core/commands/matchTabs.ts";
-import { appNameOfBundle } from "./frontApp.ts";
 import { osaScript, type ScriptAnswer } from "./osaScript.ts";
 
 export type BrowserFamily = "chromium" | "arc" | "safari";
@@ -21,7 +20,11 @@ const LIST_TABS = [
   "    try { count = win.tabs.length; } catch (error) { count = 0; }",
   "    for (let t = 0; t < count; t++) {",
   "      const tab = win.tabs[t];",
-  '      tabs.push({ window: w, tab: t, title: tab[titled]() || "", url: tab.url() || "" });',
+  '      let title = "";',
+  '      let url = "";',
+  '      try { title = tab[titled]() || ""; } catch (error) { title = ""; }',
+  '      try { url = tab.url() || ""; } catch (error) { url = ""; }',
+  "      tabs.push({ window: w, tab: t, title, url });",
   "    }",
   "  }",
   "  return JSON.stringify(tabs);",
@@ -43,12 +46,6 @@ const ACT_ON_TAB = [
   "}",
 ];
 
-const DEFAULT_BROWSER = [
-  'ObjC.import("AppKit");',
-  'const web = $.NSURL.URLWithString("https://example.com");',
-  "$.NSWorkspace.sharedWorkspace.URLForApplicationToOpenURL(web).path.js;",
-];
-
 const tabListSchema = z.array(
   z.object({
     window: z.int(),
@@ -63,13 +60,14 @@ export type TabList =
   | { kind: "notRunning" }
   | Exclude<ScriptAnswer, { kind: "answered" }>;
 
-function parseTabs(answer: string): TabList {
+function parseTabs(answer: string, browser: string): TabList {
   if (answer === NOT_RUNNING) return { kind: "notRunning" };
   const parsed = tabListSchema.safeParse(JSON.parse(answer));
   if (!parsed.success) {
     throw new Error("Browser returned an unreadable tab list");
   }
-  return { kind: "tabs", tabs: parsed.data };
+  const tabs = parsed.data.map((tab) => ({ ...tab, browser }));
+  return { kind: "tabs", tabs };
 }
 
 export async function listTabs(
@@ -77,21 +75,16 @@ export async function listTabs(
   family: BrowserFamily,
 ): Promise<TabList> {
   const script = await osaScript("JavaScript", LIST_TABS, [browser, family]);
-  return script.kind === "answered" ? parseTabs(script.answer) : script;
+  if (script.kind !== "answered") return script;
+  return parseTabs(script.answer, browser);
 }
 
 export function actOnTab(
-  browser: string,
   family: BrowserFamily,
   action: TabAction,
   tab: BrowserTab,
 ): Promise<ScriptAnswer> {
   const where = [String(tab.window), String(tab.tab)];
-  const args = [browser, family, action, ...where];
+  const args = [tab.browser, family, action, ...where];
   return osaScript("JavaScript", ACT_ON_TAB, args);
-}
-
-export async function defaultBrowser(): Promise<string | null> {
-  const script = await osaScript("JavaScript", DEFAULT_BROWSER, []);
-  return script.kind === "answered" ? appNameOfBundle(script.answer) : null;
 }

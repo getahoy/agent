@@ -117,6 +117,22 @@ test("a draft is always alone, so nothing can send it", () => {
   assert.equal(validateActions([draft, send], spoken, APPS).kind, "rejected");
 });
 
+test("a tab closes only when the person said close", () => {
+  const close: InterpretAction = {
+    kind: "closeTab",
+    match: "notion",
+    browser: null,
+  };
+  assert.equal(
+    validateActions([close], "switch to the notion tab", APPS).kind,
+    "rejected",
+  );
+  assert.equal(
+    validateActions([close], "shut the notion tab", APPS).kind,
+    "valid",
+  );
+});
+
 test("a named browser must be an installed, known browser", () => {
   const inSafari: InterpretAction = {
     kind: "openSite",

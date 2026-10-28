@@ -78,8 +78,8 @@ export const commandCopy = {
   notInFront: (app: string) => `${app} didn’t come to the front, so I stopped.`,
   closedTab: (match: string) => `Closed the ${capitalised(match)} tab`,
   switchedTab: (match: string) => `Switched to the ${capitalised(match)} tab`,
-  noTab: (match: string, browser: string) =>
-    `No tab matching ${match} in ${browser}`,
+  noTab: (match: string, browser: string | null) =>
+    `No tab matching ${match} in ${browser ?? "any open browser"}`,
   manyTabs: (titles: readonly string[]) =>
     `${titles.length} tabs match: ${titles.slice(0, MAX_CHOICES).join(", ")}${titles.length > MAX_CHOICES ? ", …" : ""}. Say which one.`,
   noTabControl: (browser: string | null) =>

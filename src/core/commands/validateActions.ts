@@ -11,6 +11,8 @@ export type Validation =
 
 type Context = { transcript: string; installedApps: readonly string[] };
 
+const CLOSE_WORDS = /\b(?:close|shut|kill|remove|get rid of|band)\b/i;
+
 function plainWords(text: string): string {
   return text
     .toLowerCase()
@@ -60,6 +62,9 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
     case "type":
       return said(action.text, transcript) ? action : null;
     case "closeTab":
+      if (!CLOSE_WORDS.test(transcript)) return null;
+      if (!said(action.match, transcript)) return null;
+      return withBrowser(action, installedApps);
     case "switchTab":
       if (!said(action.match, transcript)) return null;
       return withBrowser(action, installedApps);

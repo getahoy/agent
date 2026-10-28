@@ -8,7 +8,7 @@ const FRONT_TIMEOUT_MS = 3000;
 const APP_EXTENSION = ".app";
 const FRONT_APP_SCRIPT = "POSIX path of (path to frontmost application)";
 
-export function appNameOfBundle(bundlePath: string): string | null {
+function appNameOfBundle(bundlePath: string): string | null {
   const bundle = path.basename(bundlePath);
   if (!bundle.endsWith(APP_EXTENSION)) return null;
   return bundle.slice(0, -APP_EXTENSION.length);
