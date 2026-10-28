@@ -1,5 +1,9 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { CommandOutcome } from "../../core/commands/commandLog.ts";
+import {
+  type CommandOutcome,
+  done,
+  failed,
+} from "../../core/commands/commandLog.ts";
 import type { TabIntent } from "../../core/commands/intent.ts";
 import { type BrowserTab, matchTabs } from "../../core/commands/matchTabs.ts";
 import {
@@ -19,10 +23,6 @@ const TAB_BROWSERS = new Map<string, BrowserFamily>([
 ]);
 
 type Listed = { browser: string; list: TabList };
-
-function failed(message: string): CommandOutcome {
-  return { status: "failed", message };
-}
 
 type Stopped =
   | Exclude<TabList, { kind: "tabs" }>
@@ -94,5 +94,5 @@ export async function runTabIntent(intent: TabIntent): Promise<CommandOutcome> {
   const action = intent.kind === "closeTab" ? "close" : "switch";
   const acted = await actOnTab(family, action, tab);
   if (acted.kind !== "answered") return stopped(acted, tab.browser);
-  return { status: "done", message: actedMessage(intent) };
+  return done(actedMessage(intent));
 }

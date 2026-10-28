@@ -1,5 +1,9 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { CommandOutcome } from "../../core/commands/commandLog.ts";
+import {
+  type CommandOutcome,
+  done,
+  failed,
+} from "../../core/commands/commandLog.ts";
 import type { Intent } from "../../core/commands/intent.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import { runClick } from "./clickIntent.ts";
@@ -42,14 +46,6 @@ type ScriptOutcomes = {
   timedOut: CommandOutcome;
   controls: string;
 };
-
-function done(message: string): CommandOutcome {
-  return { status: "done", message };
-}
-
-function failed(message: string): CommandOutcome {
-  return { status: "failed", message };
-}
 
 const FAILED = failed(commandCopy.failed);
 

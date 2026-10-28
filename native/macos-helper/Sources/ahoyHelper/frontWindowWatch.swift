@@ -5,7 +5,6 @@ private var activationObserver: NSObjectProtocol?
 private var windowObserver: AXObserver?
 
 func watchFrontWindow() {
-  stopWatchingFrontWindow()
   activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
     forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
   ) { _ in MainActor.assumeIsolated { frontWindowChanged() } }
@@ -42,7 +41,6 @@ private func observeFocusedWindow() {
 }
 
 private func frontWindowChanged() {
-  stopWatchingFrontWindow()
   clearOverlay()
   writeLine(EventLine(event: "frontWindowChanged", protocolVersion: nil))
 }

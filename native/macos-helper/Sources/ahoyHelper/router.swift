@@ -15,7 +15,7 @@ func route(_ line: String) {
   case "type": respond(request.id) { try typeText(arguments?.text) }
   case "capture":
     Task { await respondLater(request.id) { try await captureDisplay(arguments?.displayId) } }
-  case "overlay": respond(request.id) { try showOverlay(arguments?.marks) }
+  case "overlay": respond(request.id) { showOverlay(arguments?.marks) }
   default: fail(request.id, .invalidRequest("Unknown verb \(request.verb)"))
   }
 }

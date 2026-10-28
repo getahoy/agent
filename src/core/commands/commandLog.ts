@@ -14,6 +14,19 @@ export type CommandOutcome = {
   choice?: Choice;
 };
 
+export const done = (message: string): CommandOutcome => ({
+  status: "done",
+  message,
+});
+export const failed = (message: string): CommandOutcome => ({
+  status: "failed",
+  message,
+});
+export const refused = (message: string): CommandOutcome => ({
+  status: "refused",
+  message,
+});
+
 export type CommandLog = {
   done: ReadonlyMap<string, CommandOutcome>;
   running: ReadonlySet<string>;

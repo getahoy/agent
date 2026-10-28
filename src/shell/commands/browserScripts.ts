@@ -3,7 +3,7 @@ import type { BrowserTab } from "../../core/commands/matchTabs.ts";
 import { osaScript, type ScriptAnswer } from "./osaScript.ts";
 
 export type BrowserFamily = "chromium" | "arc" | "safari";
-export type TabAction = "close" | "switch";
+type TabAction = "close" | "switch";
 
 const NOT_RUNNING = "null";
 

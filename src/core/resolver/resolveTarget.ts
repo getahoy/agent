@@ -1,8 +1,4 @@
-import {
-  type Frame,
-  PRESS_ACTION,
-  type ScreenElement,
-} from "./screenElement.ts";
+import { type Frame, pressable, type ScreenElement } from "./screenElement.ts";
 
 export type Resolution =
   | { kind: "one"; target: ScreenElement }
@@ -54,10 +50,6 @@ export function fieldsOf(element: ScreenElement): string[] {
   return [title, description, help, placeholder, subrole]
     .flatMap((field) => (field ? [normaliseLabel(field)] : []))
     .filter((field) => field !== "");
-}
-
-function pressable(element: ScreenElement): boolean {
-  return element.actions.includes(PRESS_ACTION);
 }
 
 // A titled group and the button inside it often share one frame: keep one, the pressable one.

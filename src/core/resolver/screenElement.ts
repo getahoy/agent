@@ -13,7 +13,11 @@ export type ScreenElement = {
   frame?: Frame | undefined;
 };
 
-export const PRESS_ACTION = "AXPress";
+const PRESS_ACTION = "AXPress";
+
+export function pressable(element: ScreenElement): boolean {
+  return element.actions.includes(PRESS_ACTION);
+}
 
 export function labelOf(element: ScreenElement): string | null {
   const { title, description, placeholder, help } = element;

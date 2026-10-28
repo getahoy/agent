@@ -1,13 +1,9 @@
 import { fieldsOf, normaliseLabel, usableElements } from "./resolveTarget.ts";
-import {
-  type Frame,
-  PRESS_ACTION,
-  type ScreenElement,
-} from "./screenElement.ts";
+import { type Frame, pressable, type ScreenElement } from "./screenElement.ts";
 
 export const MAX_NEAREST = 9;
 // Below this a label shares too few letter pairs with what was said to be worth a number.
-export const CLOSE_ENOUGH = 0.5;
+const CLOSE_ENOUGH = 0.5;
 
 function letterPairs(text: string): string[] {
   const letters = text.replace(/\s+/g, "");
@@ -52,7 +48,7 @@ export function nearestTargets(
   const wanted = normaliseLabel(label);
   if (wanted === "") return [];
   return usableElements(elements, window)
-    .filter((element) => element.actions.includes(PRESS_ACTION))
+    .filter(pressable)
     .map((element) => ({ element, score: closeness(element, wanted) }))
     .filter(({ score }) => score >= CLOSE_ENOUGH)
     .sort((first, second) => second.score - first.score)

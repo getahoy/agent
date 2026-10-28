@@ -1,7 +1,7 @@
 import AppKit
 
-let badgeSize = 26.0
-let badgeFontSize = 14.0
+private let badgeSize = 26.0
+private let badgeFontSize = 14.0
 
 struct OverlayMark: Decodable {
   let number: Int
@@ -21,14 +21,15 @@ struct OverlayOutput: Encodable {
 
 private var badgePanels: [NSPanel] = []
 
-func showOverlay(_ marks: [OverlayMark]?) throws -> OverlayOutput {
+func showOverlay(_ marks: [OverlayMark]?) -> OverlayOutput {
   clearOverlay()
   badgePanels = (marks ?? []).map(makeBadge)
-  if badgePanels.isEmpty { stopWatchingFrontWindow() } else { watchFrontWindow() }
+  if !badgePanels.isEmpty { watchFrontWindow() }
   return OverlayOutput(shown: badgePanels.count)
 }
 
 func clearOverlay() {
+  stopWatchingFrontWindow()
   for panel in badgePanels { panel.orderOut(nil) }
   badgePanels = []
 }

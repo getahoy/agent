@@ -5,7 +5,7 @@ const run = promisify(execFile);
 const SCRIPT_TIMEOUT_MS = 5000;
 const NOT_ALLOWED_CODE = "(-1743)";
 
-export type ScriptLanguage = "AppleScript" | "JavaScript";
+type ScriptLanguage = "AppleScript" | "JavaScript";
 
 export type ScriptAnswer =
   | { kind: "answered"; answer: string }

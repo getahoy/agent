@@ -37,9 +37,8 @@ export function parseScreenCommand(command: string): ParsedCommand | null {
   if (scroll) return keys(scroll === "up" ? "pageUp" : "pageDown");
   const edge = EDGE.exec(command)?.[1];
   if (edge) return keys(edge === "top" ? "up" : "down", ["mod"]);
-  const click = CLICK.exec(command);
-  const label = click?.[1];
-  if (!click || !label) return null;
+  const label = CLICK.exec(command)?.[1];
+  if (!label) return null;
   const [verb = ""] = command.split(" ");
   return clickOrKey(verb, label);
 }

@@ -1,6 +1,10 @@
 import { CHOICE_TTL_MS } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { Choice, CommandOutcome } from "../../core/commands/commandLog.ts";
+import {
+  type Choice,
+  type CommandOutcome,
+  failed,
+} from "../../core/commands/commandLog.ts";
 
 type Pending = {
   parentId: string;
@@ -10,10 +14,7 @@ type Pending = {
 
 type ChoiceBookOptions = { clearOverlay: () => void };
 
-const CHANGED: CommandOutcome = {
-  status: "failed",
-  message: commandCopy.screenChanged,
-};
+const CHANGED = failed(commandCopy.screenChanged);
 
 export class ChoiceBook {
   readonly #options: ChoiceBookOptions;

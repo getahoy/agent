@@ -1,5 +1,5 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { CommandOutcome } from "../../core/commands/commandLog.ts";
+import { type CommandOutcome, done } from "../../core/commands/commandLog.ts";
 import { draftUrl } from "../../core/commands/draftUrl.ts";
 import type { Intent } from "../../core/commands/intent.ts";
 import { openWith } from "./osaScript.ts";
@@ -17,8 +17,7 @@ function inBrowser(url: string, browser: string | null): string[] {
 
 async function openUrl(url: string, browser: string | null, message: string) {
   await openWith(inBrowser(url, browser));
-  const done: CommandOutcome = { status: "done", message };
-  return done;
+  return done(message);
 }
 
 export function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {

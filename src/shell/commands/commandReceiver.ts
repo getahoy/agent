@@ -5,8 +5,11 @@ import {
   type CommandLog,
   type CommandOutcome,
   decideCommand,
+  done,
   emptyCommandLog,
+  failed,
   finishCommand,
+  refused,
   startCommand,
 } from "../../core/commands/commandLog.ts";
 import type {
@@ -35,10 +38,7 @@ function exitCode(error: unknown): string {
   return "unknown";
 }
 
-const LOCKED: CommandOutcome = {
-  status: "refused",
-  message: commandCopy.unlockFirst,
-};
+const LOCKED = refused(commandCopy.unlockFirst);
 
 type CommandReceiverOptions = {
   isLocked: () => boolean;
@@ -116,7 +116,7 @@ export class CommandReceiver {
       return await work();
     } catch (error) {
       logger.warn("command", `${commandId} failed, exit ${exitCode(error)}`);
-      return { status: "failed", message: commandCopy.failed };
+      return failed(commandCopy.failed);
     }
   }
 
@@ -127,16 +127,13 @@ export class CommandReceiver {
   }
 
   #pausedOutcome(): CommandOutcome {
-    const resume = (): Promise<CommandOutcome> => {
+    const resume = () => {
       this.#breaker = closedBreaker;
-      return Promise.resolve({ status: "done", message: commandCopy.resumed });
+      return Promise.resolve(done(commandCopy.resumed));
     };
     const options = [{ number: 1, label: commandCopy.resume }];
-    return {
-      status: "refused",
-      message: commandCopy.breakerTripped,
-      choice: { options, confirm: false, pick: resume },
-    };
+    const choice = { options, confirm: false, pick: resume };
+    return { ...refused(commandCopy.breakerTripped), choice };
   }
 
   #resultFrame(commandId: string, outcome: CommandOutcome): Frame {

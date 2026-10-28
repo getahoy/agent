@@ -1,6 +1,11 @@
 import type { Logger } from "@getahoy/lib";
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { CommandOutcome } from "../../core/commands/commandLog.ts";
+import {
+  type CommandOutcome,
+  done,
+  failed,
+  refused,
+} from "../../core/commands/commandLog.ts";
 import type { Intent, ParsedCommand } from "../../core/commands/intent.ts";
 import { parseCommand } from "../../core/commands/parseCommand.ts";
 import { validateActions } from "../../core/commands/validateActions.ts";
@@ -28,15 +33,14 @@ const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
 ]);
 
 // Not knowing which app is in front counts as blocked: the list must fail closed.
-async function runGuarded(intent: Intent, options: CommandRunnerOptions) {
+async function runGuarded(
+  intent: Intent,
+  options: CommandRunnerOptions,
+): Promise<CommandOutcome> {
   if (SCREEN_INTENTS.has(intent.kind)) {
     const front = await frontBundleId();
     if (!front || isBlockedApp(front, options.blockedApps)) {
-      const refused: CommandOutcome = {
-        status: "refused",
-        message: commandCopy.blockedApp,
-      };
-      return refused;
+      return refused(commandCopy.blockedApp);
     }
   }
   return runIntent(intent, options.helper);
@@ -45,11 +49,11 @@ async function runGuarded(intent: Intent, options: CommandRunnerOptions) {
 type Unmatched = Extract<ParsedCommand, { kind: "unknownApp" | "unsupported" }>;
 
 function notUnderstood(parsed: Unmatched): CommandOutcome {
-  const message =
+  return failed(
     parsed.kind === "unknownApp"
       ? commandCopy.noSuchApp(parsed.name)
-      : commandCopy.cannotDoYet;
-  return { status: "failed", message };
+      : commandCopy.cannotDoYet,
+  );
 }
 
 function appBeforeInput(intent: Intent, next: Intent | undefined) {
@@ -70,10 +74,10 @@ async function runInOrder(
     messages.push(outcome.message);
     const app = appBeforeInput(intent, intents[index + 1]);
     if (app && !(await waitUntilFrontmost(app))) {
-      return { status: "failed", message: commandCopy.notInFront(app) };
+      return failed(commandCopy.notInFront(app));
     }
   }
-  return { status: "done", message: messages.join(", ") };
+  return done(messages.join(", "));
 }
 
 async function viaInterpreter(
@@ -86,7 +90,7 @@ async function viaInterpreter(
   const interpretation = await interpret(text, apps);
   if (interpretation.kind === "failed") {
     logger.warn("command", `Smart commands ${interpretation.reason}`);
-    return { status: "failed", message: commandCopy.smartUnavailable };
+    return failed(commandCopy.smartUnavailable);
   }
   if (interpretation.actions.length === 0) {
     logger.info("command", "Smart commands none");
@@ -95,7 +99,7 @@ async function viaInterpreter(
   const validation = validateActions(interpretation.actions, text, apps);
   if (validation.kind === "rejected") {
     logger.warn("command", "Smart commands rejected");
-    return { status: "failed", message: commandCopy.cannotDoYet };
+    return failed(commandCopy.cannotDoYet);
   }
   return runInOrder(validation.intents, options);
 }

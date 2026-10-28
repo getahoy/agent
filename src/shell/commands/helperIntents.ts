@@ -1,14 +1,16 @@
 import type { KeyModifier } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
-import type { CommandOutcome } from "../../core/commands/commandLog.ts";
+import {
+  type CommandOutcome,
+  done,
+  failed,
+  refused,
+} from "../../core/commands/commandLog.ts";
 import type { Shortcut } from "../../core/commands/shortcutRules.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import type { Modifier } from "../../core/helper/helperProtocol.ts";
 
-const FAILED: CommandOutcome = {
-  status: "failed",
-  message: commandCopy.failed,
-};
+const FAILED = failed(commandCopy.failed);
 
 const macModifiers: Record<KeyModifier, Modifier> = {
   mod: "command",
@@ -25,8 +27,7 @@ export async function pressKeys(
     (modifier) => macModifiers[modifier],
   );
   const pressed = await helper.request("key", { key: shortcut.key, modifiers });
-  if (!pressed.ok) return FAILED;
-  return { status: "done", message: commandCopy.pressed(shortcut) };
+  return pressed.ok ? done(commandCopy.pressed(shortcut)) : FAILED;
 }
 
 export async function typeText(
@@ -34,9 +35,7 @@ export async function typeText(
   text: string,
 ): Promise<CommandOutcome> {
   const typed = await helper.request("type", { text });
-  if (typed.ok) return { status: "done", message: commandCopy.typed(text) };
-  if (typed.error.code === "secure_input") {
-    return { status: "refused", message: commandCopy.secureInput };
-  }
-  return FAILED;
+  if (typed.ok) return done(commandCopy.typed(text));
+  const secure = typed.error.code === "secure_input";
+  return secure ? refused(commandCopy.secureInput) : FAILED;
 }
