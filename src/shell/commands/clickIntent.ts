@@ -23,6 +23,7 @@ import {
 } from "../../core/resolver/stableTarget.ts";
 import type { SpeechCase } from "../../core/voice/buildSpeech.ts";
 import { nounsFor } from "../../core/voice/spokenWords.ts";
+import { SCREEN_CHANGED } from "./choiceBook.ts";
 
 // Two snapshots this far apart must agree before anything is clicked.
 const SETTLE_MS = 100;
@@ -43,14 +44,12 @@ async function clickSafely({ helper, before }: Screen, target: ScreenElement) {
   const after = await takeScreen(helper);
   const current = after && stillThere(target, after.elements);
   if (!after || !current || !sameScreen(before, after)) {
-    return spoken(failed(commandCopy.screenChanged), SCREEN_CHANGED);
+    return SCREEN_CHANGED;
   }
   const clicked = await helper.request("click", { ref: current.ref });
   if (!clicked.ok) return failed(commandCopy.failed);
   return done(commandCopy.clicked(labelText(target)));
 }
-
-const SCREEN_CHANGED: SpeechCase = { kind: "screenChanged" };
 
 type Offer = { kind: "many" | "near" | "confirm"; label: string };
 
@@ -98,7 +97,7 @@ async function offerTargets(
   const confirm = offer.kind === "confirm";
   const pick = (number: number) => {
     const target = shown[number - 1];
-    if (!target) return Promise.resolve(failed(commandCopy.screenChanged));
+    if (!target) return Promise.resolve(SCREEN_CHANGED);
     const act = confirm ? clickSafely : clickOrConfirm;
     return act(screen, target);
   };

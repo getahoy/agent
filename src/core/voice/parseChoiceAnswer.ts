@@ -4,7 +4,7 @@ export type ChoiceAnswer =
   | { kind: "cancel" }
   | { kind: "delegate" };
 
-export const MAX_ANSWER_WORDS = 4;
+const MAX_ANSWER_WORDS = 4;
 const LAST = -1;
 
 // Sound-alikes are only trusted here, inside a short answer to an open choice.

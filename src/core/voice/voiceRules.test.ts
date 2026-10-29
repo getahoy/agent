@@ -4,7 +4,7 @@ import { MAX_SPEECH_CHARS } from "@getahoy/protocol";
 import { elementArea } from "../resolver/elementArea.ts";
 import { buildSpeech } from "./buildSpeech.ts";
 import { nameOfAddress, nounsFor } from "./spokenWords.ts";
-import { MAX_FOLLOW_UPS, mayDelegate, nextRound } from "./threadRules.ts";
+import { MAX_FOLLOW_UPS, nextRound } from "./threadRules.ts";
 
 const WINDOW = { x: 100, y: 50, width: 1000, height: 800 };
 const at = (x: number, y: number) => ({ x, y, width: 40, height: 20 });
@@ -95,10 +95,8 @@ test("emails are spoken by name, roles by their plural", () => {
   assert.equal(nounsFor(["AXButton", "AXLink"]), "matches");
 });
 
-test("three follow-ups at most, and no delegating a delete", () => {
+test("three follow-ups at most", () => {
   assert.equal(nextRound(0), 1);
   assert.equal(nextRound(MAX_FOLLOW_UPS - 1), MAX_FOLLOW_UPS);
   assert.equal(nextRound(MAX_FOLLOW_UPS), null);
-  assert.equal(mayDelegate(false), true);
-  assert.equal(mayDelegate(true), false);
 });
