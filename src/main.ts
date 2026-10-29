@@ -22,6 +22,7 @@ import {
   type PairingServices,
 } from "./shell/pairing/pairingServices.ts";
 import { readSettings, type Settings } from "./shell/settingsStore.ts";
+import { MacVoice } from "./shell/voice/macVoice.ts";
 
 const HELPER_REQUEST_TIMEOUT_MS = 10_000;
 const HELPER_RESTART_DELAYS_MS = [250, 1000, 5000] as const;
@@ -144,12 +145,14 @@ function createCommands(parts: CommandParts) {
   });
   const interpret = createInterpreter({ apiUrl, identity });
   const { blockedApps } = settings;
+  const isLocked = () => controller.state().screenLocked;
+  const voice = new MacVoice({ apiUrl, identity, isLocked, logger });
   const commands = new CommandReceiver({
-    isLocked: () => controller.state().screenLocked,
+    isLocked,
     run: createCommandRunner({ helper, interpret, blockedApps, logger }),
     onHeard: (text) => controller.showLastHeard(text),
-    onResult: () => undefined,
-    onStopSpeech: () => undefined,
+    onResult: (turn, owner) => voice.speakTurn(turn, owner),
+    onStopSpeech: (owner) => voice.stop(owner),
     choices,
     logger,
   });

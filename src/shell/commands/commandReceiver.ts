@@ -64,6 +64,7 @@ export class CommandReceiver {
     const { choices, run } = this.#options;
     switch (request.type) {
       case "command": {
+        this.#options.onStopSpeech(owner);
         const { commandId, text, speakOn } = request;
         const context = { commandId, owner, speakOn, choices };
         const work = () => commandTurn(text, run, context);
