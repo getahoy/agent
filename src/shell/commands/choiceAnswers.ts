@@ -2,12 +2,10 @@ import {
   type CommandOutcome,
   done,
   failed,
-  refused,
   spoken,
 } from "../../core/commands/commandLog.ts";
 import { buildSpeech, type SpeechCase } from "../../core/voice/buildSpeech.ts";
 import type { ChoiceAnswer } from "../../core/voice/parseChoiceAnswer.ts";
-import { mayDelegate } from "../../core/voice/threadRules.ts";
 import type { ChoiceBook, OpenChoice } from "./choiceBook.ts";
 
 type Answering = {
@@ -24,10 +22,20 @@ function said(
   return spoken(build(buildSpeech(speech) ?? ""), speech);
 }
 
+// The choice stays open, so it goes back with the reply and the phone keeps its sheet.
+function askedAgain(
+  speech: SpeechCase,
+  open: OpenChoice,
+): Promise<CommandOutcome> {
+  const message = buildSpeech(speech) ?? "";
+  const { choice } = open;
+  return Promise.resolve({ status: "needsChoice", message, speech, choice });
+}
+
 async function delegate({ open, choices, owner }: Answering) {
   const count = open.choice.options.length;
-  if (!mayDelegate(open.choice.destructive)) {
-    return said(refused, { kind: "delegateRefused", count });
+  if (open.choice.destructive) {
+    return askedAgain({ kind: "delegateRefused", count }, open);
   }
   const outcome = await choices.pick(open.parentId, 1, owner);
   const [first] = open.choice.options;
@@ -48,11 +56,11 @@ export function answerChoice(answering: Answering): Promise<CommandOutcome> {
         return choices.pick(open.parentId, answer.number, owner);
       }
       const button = open.choice.options[0]?.label ?? "";
-      return Promise.resolve(said(refused, { kind: "confirm", button }));
+      return askedAgain({ kind: "confirm", button }, open);
     }
     case "outOfRange": {
       const count = open.choice.options.length;
-      return Promise.resolve(said(failed, { kind: "outOfRange", count }));
+      return askedAgain({ kind: "outOfRange", count }, open);
     }
     case "delegate":
       return delegate(answering);

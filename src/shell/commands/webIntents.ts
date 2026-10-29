@@ -42,6 +42,7 @@ export async function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
       const gmailIn = intent.via === "gmail" ? browser : null;
       const message = commandCopy.drafted(intent.to);
       const opened = await openUrl(draftUrl(intent), gmailIn, message);
+      if (opened.status !== "done") return opened;
       const name = intent.to ? nameOfAddress(intent.to) : null;
       return spoken(opened, { kind: "draft", name });
     }

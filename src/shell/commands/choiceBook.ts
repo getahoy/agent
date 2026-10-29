@@ -27,7 +27,7 @@ type Pending = OpenChoice & {
 
 type ChoiceBookOptions = { clearOverlay: () => void };
 
-const CHANGED = spoken(failed(commandCopy.screenChanged), {
+export const SCREEN_CHANGED = spoken(failed(commandCopy.screenChanged), {
   kind: "screenChanged",
 });
 
@@ -39,7 +39,13 @@ export class ChoiceBook {
     this.#options = options;
   }
 
+  // The same choice asked again keeps its tags and timer; only the id the phone answers moves on.
   offer(parentId: string, choice: Choice, context: ChoiceContext): void {
+    const pending = this.#pending;
+    if (pending?.choice === choice) {
+      this.#pending = { ...pending, ...context, parentId };
+      return;
+    }
     this.expire();
     const timer = this.#expireAfter(CHOICE_TTL_MS);
     this.#pending = { ...context, parentId, choice, timer, extensions: 0 };
@@ -57,13 +63,15 @@ export class ChoiceBook {
   pick(parentId: string, number: number, owner: object) {
     const pending = this.#pending;
     if (pending?.parentId !== parentId || pending.owner !== owner) {
-      return Promise.resolve<CommandOutcome>(CHANGED);
+      return Promise.resolve<CommandOutcome>(SCREEN_CHANGED);
     }
     this.expire();
     const known = pending.choice.options.some(
       (option) => option.number === number,
     );
-    return known ? pending.choice.pick(number) : Promise.resolve(CHANGED);
+    return known
+      ? pending.choice.pick(number)
+      : Promise.resolve(SCREEN_CHANGED);
   }
 
   extend(choiceId: string, owner: object): void {
