@@ -5,6 +5,7 @@ import {
   done,
   failed,
   refused,
+  spoken,
 } from "../../core/commands/commandLog.ts";
 import type { Shortcut } from "../../core/commands/shortcutRules.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
@@ -27,7 +28,9 @@ export async function pressKeys(
     (modifier) => macModifiers[modifier],
   );
   const pressed = await helper.request("key", { key: shortcut.key, modifiers });
-  return pressed.ok ? done(commandCopy.pressed(shortcut)) : FAILED;
+  if (!pressed.ok) return FAILED;
+  const message = commandCopy.pressedAloud(shortcut);
+  return spoken(done(commandCopy.pressed(shortcut)), { kind: "done", message });
 }
 
 export async function typeText(

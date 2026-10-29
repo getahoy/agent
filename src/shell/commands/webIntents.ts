@@ -1,7 +1,12 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
-import { type CommandOutcome, done } from "../../core/commands/commandLog.ts";
+import {
+  type CommandOutcome,
+  done,
+  spoken,
+} from "../../core/commands/commandLog.ts";
 import { draftUrl } from "../../core/commands/draftUrl.ts";
 import type { Intent } from "../../core/commands/intent.ts";
+import { nameOfAddress } from "../../core/voice/spokenWords.ts";
 import { openWith } from "./osaScript.ts";
 
 const SEARCH_URL = "https://www.google.com/search?q=";
@@ -20,7 +25,7 @@ async function openUrl(url: string, browser: string | null, message: string) {
   return done(message);
 }
 
-export function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
+export async function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
   const { browser } = intent;
   switch (intent.kind) {
     case "search": {
@@ -35,7 +40,10 @@ export function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
     }
     case "draftEmail": {
       const gmailIn = intent.via === "gmail" ? browser : null;
-      return openUrl(draftUrl(intent), gmailIn, commandCopy.drafted(intent.to));
+      const message = commandCopy.drafted(intent.to);
+      const opened = await openUrl(draftUrl(intent), gmailIn, message);
+      const name = intent.to ? nameOfAddress(intent.to) : null;
+      return spoken(opened, { kind: "draft", name });
     }
     default: {
       const unhandled: never = intent;

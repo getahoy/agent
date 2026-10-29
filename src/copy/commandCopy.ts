@@ -33,14 +33,36 @@ const keyLabels: Partial<Record<KeyName, string>> = {
   down: "↓",
 };
 
+const modifierNames: Record<KeyModifier, string> = {
+  control: "Control",
+  alt: "Option",
+  shift: "Shift",
+  mod: "Command",
+};
+
+const spokenArrows: Partial<Record<KeyName, string>> = {
+  left: "Left arrow",
+  right: "Right arrow",
+  up: "Up arrow",
+  down: "Down arrow",
+};
+
 type Shortcut = { key: KeyName; modifiers: readonly KeyModifier[] };
 
+function heldModifiers(modifiers: readonly KeyModifier[]): KeyModifier[] {
+  return MODIFIER_ORDER.filter((modifier) => modifiers.includes(modifier));
+}
+
 function shortcutLabel({ key, modifiers }: Shortcut): string {
-  const held = MODIFIER_ORDER.filter((modifier) =>
-    modifiers.includes(modifier),
-  );
+  const held = heldModifiers(modifiers);
   const symbols = held.map((modifier) => modifierSymbols[modifier]).join("");
   return `${symbols}${keyLabels[key] ?? key.toUpperCase()}`;
+}
+
+function spokenShortcut({ key, modifiers }: Shortcut): string {
+  const names = heldModifiers(modifiers).map((held) => modifierNames[held]);
+  const keyName = spokenArrows[key] ?? keyLabels[key] ?? key.toUpperCase();
+  return [...names, keyName].join(" ");
 }
 
 function capitalised(name: string): string {
@@ -72,6 +94,7 @@ export const commandCopy = {
     `Allow Ahoy to control ${app} in System Settings → Privacy & Security → Automation.`,
   noSuchApp: (name: string) => `Can’t find an app called ${capitalised(name)}`,
   pressed: (shortcut: Shortcut) => `Pressed ${shortcutLabel(shortcut)}`,
+  pressedAloud: (shortcut: Shortcut) => `Pressed ${spokenShortcut(shortcut)}`,
   typed: (text: string) => `Typed “${text}”`,
   secureInput: "I won’t type into a password field.",
   smartUnavailable: "Smart commands aren’t working right now.",

@@ -5,9 +5,11 @@ import {
   type CommandOutcome,
   done,
   failed,
+  spoken,
 } from "../../core/commands/commandLog.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import { isDestructiveElement } from "../../core/resolver/destructiveLabels.ts";
+import { elementArea } from "../../core/resolver/elementArea.ts";
 import { nearestTargets } from "../../core/resolver/nearestTargets.ts";
 import { resolveTarget } from "../../core/resolver/resolveTarget.ts";
 import {
@@ -19,6 +21,8 @@ import {
   sameScreen,
   stillThere,
 } from "../../core/resolver/stableTarget.ts";
+import type { SpeechCase } from "../../core/voice/buildSpeech.ts";
+import { nounsFor } from "../../core/voice/spokenWords.ts";
 
 // Two snapshots this far apart must agree before anything is clicked.
 const SETTLE_MS = 100;
@@ -39,18 +43,44 @@ async function clickSafely({ helper, before }: Screen, target: ScreenElement) {
   const after = await takeScreen(helper);
   const current = after && stillThere(target, after.elements);
   if (!after || !current || !sameScreen(before, after)) {
-    return failed(commandCopy.screenChanged);
+    return spoken(failed(commandCopy.screenChanged), SCREEN_CHANGED);
   }
   const clicked = await helper.request("click", { ref: current.ref });
   if (!clicked.ok) return failed(commandCopy.failed);
   return done(commandCopy.clicked(labelText(target)));
 }
 
+const SCREEN_CHANGED: SpeechCase = { kind: "screenChanged" };
+
+type Offer = { kind: "many" | "near" | "confirm"; label: string };
+
+type Words = { message: string; speech: SpeechCase | null };
+
+function offerWords({ kind, label }: Offer): Words {
+  switch (kind) {
+    case "many":
+      return { message: commandCopy.manyTargets(label), speech: null };
+    case "near":
+      return {
+        message: commandCopy.missedTarget(label),
+        speech: { kind: "nearMiss", label },
+      };
+    case "confirm":
+      return {
+        message: commandCopy.confirmTarget(label),
+        speech: { kind: "confirm", button: label },
+      };
+    default: {
+      const unhandled: never = kind;
+      throw new Error(`Unhandled offer ${unhandled}`);
+    }
+  }
+}
+
 async function offerTargets(
   screen: Screen,
   targets: readonly ScreenElement[],
-  message: string,
-  confirm: boolean,
+  offer: Offer,
 ): Promise<CommandOutcome> {
   const shown = targets.slice(0, MAX_CHOICES);
   const marks = shown.flatMap((target, index) =>
@@ -61,19 +91,34 @@ async function offerTargets(
     number: index + 1,
     label: labelText(target).slice(0, MAX_CHOICE_LABEL_CHARS),
   }));
+  const { window } = screen.before;
+  const areas = shown.map((target) =>
+    target.frame ? elementArea(target.frame, window) : null,
+  );
+  const confirm = offer.kind === "confirm";
   const pick = (number: number) => {
     const target = shown[number - 1];
     if (!target) return Promise.resolve(failed(commandCopy.screenChanged));
     const act = confirm ? clickSafely : clickOrConfirm;
     return act(screen, target);
   };
-  return { status: "needsChoice", message, choice: { options, confirm, pick } };
+  const destructive = confirm || shown.some(isDestructiveElement);
+  const choice = { options, areas, confirm, destructive, pick };
+  const words = offerWords(offer);
+  const nouns = nounsFor(shown.map((target) => target.role));
+  const speech = words.speech ?? {
+    kind: "choices",
+    label: offer.label,
+    nouns,
+    areas,
+  };
+  return { status: "needsChoice", message: words.message, choice, speech };
 }
 
 function clickOrConfirm(screen: Screen, target: ScreenElement) {
   if (!isDestructiveElement(target)) return clickSafely(screen, target);
-  const message = commandCopy.confirmTarget(labelText(target));
-  return offerTargets(screen, [target], message, true);
+  const label = labelText(target);
+  return offerTargets(screen, [target], { kind: "confirm", label });
 }
 
 export async function runClick(
@@ -86,10 +131,12 @@ export async function runClick(
   const found = resolveTarget(before.elements, before.window, label);
   if (found.kind === "one") return clickOrConfirm(screen, found.target);
   if (found.kind === "many") {
-    const message = commandCopy.manyTargets(label);
-    return offerTargets(screen, found.targets, message, false);
+    return offerTargets(screen, found.targets, { kind: "many", label });
   }
   const near = nearestTargets(before.elements, before.window, label);
-  if (near.length === 0) return failed(commandCopy.noTarget(label));
-  return offerTargets(screen, near, commandCopy.missedTarget(label), false);
+  if (near.length > 0) {
+    return offerTargets(screen, near, { kind: "near", label });
+  }
+  const missing = failed(commandCopy.noTarget(label));
+  return spoken(missing, { kind: "notFound", label });
 }

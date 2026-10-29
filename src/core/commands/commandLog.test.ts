@@ -11,29 +11,30 @@ import {
 } from "./commandLog.ts";
 
 const OPENED: CommandOutcome = { status: "done", message: "Opened Safari" };
+const empty = () => emptyCommandLog<CommandOutcome>();
 
 test("a new command runs", () => {
-  assert.deepEqual(decideCommand(emptyCommandLog, randomUUID()), {
+  assert.deepEqual(decideCommand(empty(), randomUUID()), {
     kind: "run",
   });
 });
 
 test("a repeat while running waits instead of running twice", () => {
   const id = randomUUID();
-  const log = startCommand(emptyCommandLog, id);
+  const log = startCommand(empty(), id);
   assert.deepEqual(decideCommand(log, id), { kind: "running" });
 });
 
 test("a repeat after finishing gets the stored result", () => {
   const id = randomUUID();
-  const log = finishCommand(startCommand(emptyCommandLog, id), id, OPENED);
+  const log = finishCommand(startCommand(empty(), id), id, OPENED);
   assert.deepEqual(decideCommand(log, id), { kind: "repeat", outcome: OPENED });
   assert.equal(log.running.has(id), false);
 });
 
 test("only the last hundred results are kept", () => {
   const first = randomUUID();
-  let log = finishCommand(emptyCommandLog, first, OPENED);
+  let log = finishCommand(empty(), first, OPENED);
   for (let count = 0; count < REMEMBERED_COMMANDS; count += 1) {
     log = finishCommand(log, randomUUID(), OPENED);
   }

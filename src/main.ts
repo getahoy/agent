@@ -148,6 +148,8 @@ function createCommands(parts: CommandParts) {
     isLocked: () => controller.state().screenLocked,
     run: createCommandRunner({ helper, interpret, blockedApps, logger }),
     onHeard: (text) => controller.showLastHeard(text),
+    onResult: () => undefined,
+    onStopSpeech: () => undefined,
     choices,
     logger,
   });

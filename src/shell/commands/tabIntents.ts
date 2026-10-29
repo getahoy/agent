@@ -86,7 +86,8 @@ export async function runTabIntent(intent: TabIntent): Promise<CommandOutcome> {
   if (found.kind === "none") return nothingFound(intent, listed);
   if (found.kind === "many") {
     const titles = found.tabs.map((tab) => tab.title);
-    return { status: "needsChoice", message: commandCopy.manyTabs(titles) };
+    const message = commandCopy.manyTabs(titles);
+    return { status: "needsChoice", message, speech: { kind: "manyTabs" } };
   }
   const { tab } = found;
   const family = TAB_BROWSERS.get(tab.browser);

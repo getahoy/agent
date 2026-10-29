@@ -78,7 +78,8 @@ export class PhoneLink {
         this.#emit();
       },
       onGoodbye,
-      onCommand: (request, reply) => commands.handle(request, reply),
+      onCommand: (request, reply, owner) =>
+        commands.handle(request, reply, owner),
     });
   }
 

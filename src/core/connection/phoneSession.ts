@@ -22,12 +22,17 @@ type PhoneSessionOptions = {
   onConnected: (phone: PairedPhone, session: PhoneSession) => void;
   onDisconnected: (phone: PairedPhone, session: PhoneSession) => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
-  onCommand: (command: PhoneRequest, reply: (frame: Frame) => void) => void;
+  onCommand: (
+    request: PhoneRequest,
+    reply: (frame: Frame) => void,
+    owner: PhoneSession,
+  ) => void;
 };
 
-export type IncomingCommand = Extract<Frame, { type: "command" }>;
-export type IncomingChoice = Extract<Frame, { type: "command.choose" }>;
-export type PhoneRequest = IncomingCommand | IncomingChoice;
+export type PhoneRequest = Extract<
+  Frame,
+  { type: "command" | "command.choose" | "choice.extend" | "speech.stop" }
+>;
 
 type Phase =
   | { kind: "awaitingHello" }
@@ -94,8 +99,10 @@ export class PhoneSession {
         return;
       case "command":
       case "command.choose":
+      case "choice.extend":
+      case "speech.stop":
         if (this.#phase.kind !== "connected") return;
-        this.#options.onCommand(frame, (reply) => this.#send(reply));
+        this.#options.onCommand(frame, (reply) => this.#send(reply), this);
         return;
       case "status":
       case "pong":
