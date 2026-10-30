@@ -16,7 +16,7 @@
   --signal-mist: light-dark(#e3e5ff, #23264a);
   --flare: light-dark(#c8412b, #ff7a5c);
   --on-flare: light-dark(#ffffff, #121110);
-  --flare-mist: light-dark(#fbe4de, rgba(255, 122, 92, 0.14));
+  --flare-mist: light-dark(#fbe4de, #3a1f19);
   --kelp: light-dark(#2e7352, #5fbf8f);
   --qr-ink: #171614;
   --qr-paper: #fdfcfa;
