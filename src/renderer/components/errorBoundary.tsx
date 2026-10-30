@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from "react";
 import { agentCopy } from "../../copy/agentCopy.ts";
-import { ActionButton } from "./actionButton.tsx";
+import { Button } from "./ui/button.tsx";
+import { Text } from "./ui/text.tsx";
 
 type ErrorBoundaryProps = { children: ReactNode };
 type ErrorBoundaryState = { failed: boolean };
@@ -18,13 +19,14 @@ export class ErrorBoundary extends Component<
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <main className="flex min-h-screen flex-col gap-4 p-8">
-        <p role="alert">{agentCopy["error.message"]}</p>
-        <div>
-          <ActionButton onPress={() => this.setState({ failed: false })}>
-            {agentCopy["error.retry"]}
-          </ActionButton>
-        </div>
+      <main
+        role="alert"
+        className="flex h-full flex-col items-center justify-center gap-4 bg-sailcloth p-8 text-center"
+      >
+        <Text variant="body">{agentCopy["error.message"]}</Text>
+        <Button onClick={() => this.setState({ failed: false })}>
+          {agentCopy["error.retry"]}
+        </Button>
       </main>
     );
   }

@@ -76,6 +76,7 @@
   --color-hover: var(--hover);
   --color-scrim: var(--scrim);
   --color-switch-thumb: var(--switch-thumb);
+  --color-qr-paper: var(--qr-paper);
 }
 
 @theme {
