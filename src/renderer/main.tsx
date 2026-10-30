@@ -7,12 +7,16 @@ import "./tokens.css";
 import { createRoot } from "react-dom/client";
 import { AgentApp } from "./agentApp.tsx";
 import { ErrorBoundary } from "./components/errorBoundary.tsx";
+import { PopoverApp } from "./popover/popoverApp.tsx";
+
+const surface = new URLSearchParams(window.location.search).get("surface");
+document.body.dataset.surface = surface ?? "window";
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <ErrorBoundary>
-      <AgentApp />
+      {surface === "popover" ? <PopoverApp /> : <AgentApp />}
     </ErrorBoundary>,
   );
 }

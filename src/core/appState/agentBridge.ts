@@ -19,7 +19,10 @@ export const bridgeChannels = {
   setLanEnabled: "agent:set-lan-enabled",
   openWindow: "agent:open-window",
   quit: "agent:quit",
+  setPopoverHeight: "agent:set-popover-height",
 } as const;
+
+export const popoverHeightSchema = z.number().positive().finite();
 
 export const permissionSchema = z.enum(["accessibility", "screenRecording"]);
 
@@ -40,4 +43,5 @@ export type AgentBridge = {
   setLanEnabled: (enabled: boolean) => Promise<void>;
   openWindow: () => Promise<void>;
   quit: () => Promise<void>;
+  setPopoverHeight: (height: number) => Promise<void>;
 };

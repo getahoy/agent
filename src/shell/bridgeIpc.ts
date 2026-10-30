@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   bridgeChannels,
   permissionSchema,
+  popoverHeightSchema,
 } from "../core/appState/agentBridge.ts";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
@@ -16,6 +17,7 @@ type BridgeParts = {
   services: PairingServices;
   setLanEnabled: (enabled: boolean) => Promise<void>;
   openWindow: () => void;
+  setPopoverHeight: (height: number) => void;
 };
 
 function handleParsed<T>(
@@ -63,6 +65,11 @@ export function registerBridge(parts: BridgeParts): void {
   ipcMain.handle(bridgeChannels.relaunch, () => platform.lifecycle.relaunch());
   ipcMain.handle(bridgeChannels.openWindow, () => parts.openWindow());
   ipcMain.handle(bridgeChannels.quit, () => app.quit());
+  handleParsed(
+    bridgeChannels.setPopoverHeight,
+    popoverHeightSchema,
+    parts.setPopoverHeight,
+  );
   registerPairing(parts);
   controller.onChange((state) => {
     for (const window of BrowserWindow.getAllWindows()) {

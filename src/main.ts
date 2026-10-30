@@ -1,27 +1,24 @@
 import { spawn } from "node:child_process";
 import { createLogger, type Logger } from "@getahoy/lib";
-import { app, Notification, powerMonitor } from "electron";
-import { agentCopy } from "./copy/agentCopy.ts";
+import { app, powerMonitor } from "electron";
 import { HelperClient } from "./core/helper/helperClient.ts";
 import type { HelperEvent } from "./core/helper/helperProtocol.ts";
 import { parseAgentEnv } from "./env/agentEnv.ts";
-import { macosMenubarIcon } from "./platform/macos/macosDevice.ts";
 import { MacosPlatform } from "./platform/macos/macosPlatform.ts";
 import type { PlatformAdapter } from "./ports/platform.ts";
 import { AgentController } from "./shell/agentController.ts";
-import { AgentTray } from "./shell/agentTray.ts";
-import { registerBridge } from "./shell/bridgeIpc.ts";
 import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { createInterpreter } from "./shell/interpret/interpretApi.ts";
-import { MainWindow } from "./shell/mainWindow.ts";
+import type { MainWindow } from "./shell/mainWindow.ts";
 import {
   createPairingServices,
   type PairingServices,
 } from "./shell/pairing/pairingServices.ts";
 import { readSettings, type Settings } from "./shell/settingsStore.ts";
+import { createSurfaces } from "./shell/shellSurfaces.ts";
 import { MacVoice } from "./shell/voice/macVoice.ts";
 
 const HELPER_REQUEST_TIMEOUT_MS = 10_000;
@@ -49,22 +46,6 @@ function createHelper(
     requestTimeoutMs: HELPER_REQUEST_TIMEOUT_MS,
     restartDelaysMs: HELPER_RESTART_DELAYS_MS,
     onEvent,
-  });
-}
-
-function announceMenubarWhenOnboarded(
-  controller: AgentController,
-  mainWindow: MainWindow,
-): void {
-  let wasDone = controller.state().onboardingStep === "done";
-  controller.onChange((state) => {
-    const done = state.onboardingStep === "done";
-    if (done && !wasDone) {
-      mainWindow.close();
-      const title = agentCopy["notification.title"];
-      new Notification({ title, body: agentCopy["notification.body"] }).show();
-    }
-    wasDone = done;
   });
 }
 
@@ -99,31 +80,7 @@ function quitAfterGoodbye({ controller, helper, services }: ShellParts): void {
 }
 
 function wireShell(parts: ShellParts): MainWindow {
-  const { platform, controller, services } = parts;
-  const { phoneLink, pairing } = services;
-  const mainWindow = new MainWindow(platform.lifecycle, () => pairing.stop());
-  const setLanEnabled = async (enabled: boolean) => {
-    if (!enabled) phoneLink.endAll("turned_off");
-    await controller.setLanEnabled(enabled);
-    if (enabled) phoneLink.start();
-    else phoneLink.stop();
-  };
-  const tray = new AgentTray({
-    menubarIcon: macosMenubarIcon,
-    openWindow: () => mainWindow.show(),
-    setLanEnabled: (enabled) => void setLanEnabled(enabled),
-    quit: () => app.quit(),
-  });
-  tray.render(controller.state());
-  controller.onChange((state) => tray.render(state));
-  registerBridge({
-    controller,
-    platform,
-    services,
-    setLanEnabled,
-    openWindow: () => mainWindow.show(),
-  });
-  announceMenubarWhenOnboarded(controller, mainWindow);
+  const mainWindow = createSurfaces(parts);
   watchPower(parts);
   quitAfterGoodbye(parts);
   app.on("second-instance", () => mainWindow.show());

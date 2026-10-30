@@ -2,44 +2,20 @@ import {
   Menu,
   type MenuItemConstructorOptions,
   type NativeImage,
+  type Rectangle,
   Tray,
 } from "electron";
-import { agentCopy, helperStatusCopy } from "../copy/agentCopy.ts";
+import { agentCopy } from "../copy/agentCopy.ts";
 import { type AgentState, menubarStatus } from "../core/appState/appState.ts";
 import type { MenubarStatus } from "../ports/platform.ts";
 
 type TrayActions = {
   menubarIcon: (status: MenubarStatus) => NativeImage;
+  togglePopover: (trayBounds: Rectangle) => void;
   openWindow: () => void;
-  setLanEnabled: (enabled: boolean) => void;
   quit: () => void;
+  extraMenuItems: readonly MenuItemConstructorOptions[];
 };
-
-function connectionLine(state: AgentState): string {
-  if (state.screenLocked) return agentCopy["menubar.locked"];
-  if (!state.lanEnabled) return agentCopy["menubar.off"];
-  const [phone] = state.pairedPhones;
-  if (!phone) return agentCopy["menubar.noPhone"];
-  const name = phone.displayName;
-  if (state.connectedPhoneKeys.includes(phone.publicKey)) {
-    return `${agentCopy["menubar.connectedTo"]} ${name}`;
-  }
-  if (state.pausedPhoneKeys.includes(phone.publicKey)) {
-    return `${name} ${agentCopy["menubar.paused"]}`;
-  }
-  return `${name} ${agentCopy["menubar.ready"]}`;
-}
-
-function statusLines(state: AgentState): string[] {
-  const lines = [connectionLine(state), helperStatusCopy[state.helper]];
-  if (!state.permissions.accessibility) {
-    lines.push(agentCopy["menubar.accessibilityNeeded"]);
-  }
-  if (!state.permissions.screenRecording) {
-    lines.push(agentCopy["menubar.screenRecordingNeeded"]);
-  }
-  return lines;
-}
 
 const HEARD_TITLE_MS = 5000;
 const HEARD_TITLE_CHARS = 40;
@@ -52,6 +28,7 @@ function clipped(text: string): string {
 export class AgentTray {
   readonly #actions: TrayActions;
   readonly #tray: Tray;
+  readonly #menu: Menu;
   #heardAt = 0;
   #heardTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -59,30 +36,20 @@ export class AgentTray {
     this.#actions = actions;
     this.#tray = new Tray(actions.menubarIcon("disconnected"));
     this.#tray.setToolTip(agentCopy["app.name"]);
+    this.#tray.setIgnoreDoubleClickEvents(true);
+    this.#menu = Menu.buildFromTemplate([
+      { label: agentCopy["menubar.open"], click: actions.openWindow },
+      ...actions.extraMenuItems,
+      { type: "separator" },
+      { label: agentCopy["menubar.quit"], click: actions.quit },
+    ]);
+    this.#tray.on("click", (_event, bounds) => actions.togglePopover(bounds));
+    this.#tray.on("right-click", () => this.#tray.popUpContextMenu(this.#menu));
   }
 
   render(state: AgentState): void {
     this.#showHeard(state.lastHeard);
-    const actions = this.#actions;
-    this.#tray.setImage(actions.menubarIcon(menubarStatus(state)));
-    const status: MenuItemConstructorOptions[] = statusLines(state).map(
-      (label) => ({ label, enabled: false }),
-    );
-    this.#tray.setContextMenu(
-      Menu.buildFromTemplate([
-        ...status,
-        { type: "separator" },
-        {
-          label: agentCopy["menubar.enabled"],
-          type: "checkbox",
-          checked: state.lanEnabled,
-          click: (item) => actions.setLanEnabled(item.checked),
-        },
-        { type: "separator" },
-        { label: agentCopy["menubar.open"], click: actions.openWindow },
-        { label: agentCopy["menubar.quit"], click: actions.quit },
-      ]),
-    );
+    this.#tray.setImage(this.#actions.menubarIcon(menubarStatus(state)));
   }
 
   #showHeard(heard: AgentState["lastHeard"]): void {

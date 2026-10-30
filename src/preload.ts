@@ -35,6 +35,7 @@ const bridge: AgentBridge = {
   setLanEnabled: (enabled) => invoke(bridgeChannels.setLanEnabled, enabled),
   openWindow: () => invoke(bridgeChannels.openWindow),
   quit: () => invoke(bridgeChannels.quit),
+  setPopoverHeight: (height) => invoke(bridgeChannels.setPopoverHeight, height),
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);
