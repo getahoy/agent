@@ -18,7 +18,10 @@ const config: ForgeConfig = {
       NSAppleEventsUsageDescription:
         "Ahoy controls apps you name, like quitting or hiding them, when you ask from your phone.",
     },
-    extraResource: [`${HELPER_PACKAGE}/.build/release/ahoyHelper`],
+    extraResource: [
+      `${HELPER_PACKAGE}/.build/release/ahoyHelper`,
+      "assets/menubar",
+    ],
     osxSign: { type: "development", identity: "Apple Development" },
   },
   hooks: {

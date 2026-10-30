@@ -9,7 +9,7 @@ export type HelperBinary = {
   args: readonly string[];
 };
 
-export type MenubarStatus = "off" | "disconnected" | "connected" | "error";
+export type MenubarStatus = "connected" | "noPhone" | "off" | "needsPermission";
 
 export type DeviceIdentity = {
   platform: Platform;

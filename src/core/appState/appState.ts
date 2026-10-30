@@ -74,10 +74,10 @@ function windowScreen(facts: AgentFacts): WindowScreen {
 }
 
 export function menubarStatus(facts: AgentFacts): MenubarStatus {
-  if (facts.helper === "stopped") return "error";
-  if (!allPermissionsGranted(facts.permissions)) return "error";
-  if (!facts.lanEnabled) return "off";
-  return facts.connectedPhoneKeys.length > 0 ? "connected" : "disconnected";
+  if (facts.helper === "stopped") return "needsPermission";
+  if (!allPermissionsGranted(facts.permissions)) return "needsPermission";
+  if (!facts.lanEnabled || facts.screenLocked) return "off";
+  return facts.connectedPhoneKeys.length > 0 ? "connected" : "noPhone";
 }
 
 export function agentState(facts: AgentFacts): AgentState {

@@ -1,18 +1,28 @@
 import { execFile } from "node:child_process";
 import { hostname } from "node:os";
+import path from "node:path";
 import { promisify } from "node:util";
-import { type NativeImage, nativeImage } from "electron";
+import { app, type NativeImage, nativeImage } from "electron";
 import type { DeviceIdentity, MenubarStatus } from "../../ports/platform.ts";
 
-const MENUBAR_ICON_HEIGHT = 18;
 const HELPER_CAPABILITIES = ["snapshot", "click", "key", "type", "capture"];
+const MENUBAR_ICON_FOLDER = "menubar";
 
-const menubarSymbols: Record<MenubarStatus, string> = {
-  off: "iphone.slash",
-  disconnected: "iphone",
-  connected: "iphone.radiowaves.left.and.right",
-  error: "exclamationmark.triangle",
+const menubarIconFiles: Record<MenubarStatus, string> = {
+  connected: "pennantSolidTemplate.png",
+  noPhone: "pennantOutlineTemplate.png",
+  off: "pennantSlashTemplate.png",
+  needsPermission: "pennantDotTemplate.png",
 };
+
+const menubarIcons = new Map<MenubarStatus, NativeImage>();
+
+function menubarIconFolder(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, MENUBAR_ICON_FOLDER);
+  }
+  return path.join(app.getAppPath(), "assets", MENUBAR_ICON_FOLDER);
+}
 
 const runFile = promisify(execFile);
 
@@ -34,9 +44,11 @@ export async function macosDeviceIdentity(): Promise<DeviceIdentity> {
 }
 
 export function macosMenubarIcon(status: MenubarStatus): NativeImage {
-  const icon = nativeImage
-    .createFromNamedImage(menubarSymbols[status])
-    .resize({ height: MENUBAR_ICON_HEIGHT });
+  const cached = menubarIcons.get(status);
+  if (cached) return cached;
+  const file = path.join(menubarIconFolder(), menubarIconFiles[status]);
+  const icon = nativeImage.createFromPath(file);
   icon.setTemplateImage(true);
+  menubarIcons.set(status, icon);
   return icon;
 }
