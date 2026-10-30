@@ -1,10 +1,11 @@
-import { app, Notification } from "electron";
+import { app, type MenuItemConstructorOptions, Notification } from "electron";
 import { agentCopy } from "../copy/agentCopy.ts";
 import { macosMenubarIcon } from "../platform/macos/macosDevice.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import type { AgentController } from "./agentController.ts";
 import { AgentTray } from "./agentTray.ts";
 import { registerBridge } from "./bridgeIpc.ts";
+import { GalleryWindow } from "./galleryWindow.ts";
 import { MainWindow } from "./mainWindow.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
 import { PopoverWindow } from "./popoverWindow.ts";
@@ -29,6 +30,12 @@ function announceMenubarWhenOnboarded(
     }
     wasDone = done;
   });
+}
+
+function developerMenuItems(): MenuItemConstructorOptions[] {
+  if (app.isPackaged) return [];
+  const gallery = new GalleryWindow();
+  return [{ label: agentCopy["menubar.gallery"], click: () => gallery.show() }];
 }
 
 function lanSwitch({ controller, services }: SurfaceParts) {
@@ -56,7 +63,7 @@ export function createSurfaces(parts: SurfaceParts): MainWindow {
     togglePopover: (bounds) => popover.toggle(bounds),
     openWindow,
     quit: () => app.quit(),
-    extraMenuItems: [],
+    extraMenuItems: developerMenuItems(),
   });
   tray.render(controller.state());
   controller.onChange((state) => tray.render(state));

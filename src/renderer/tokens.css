@@ -1,56 +1,36 @@
 @import "tailwindcss";
 
+/* light-dark() resolves where the colour is used, so a gallery frame set to
+   one colour scheme shows that theme beside the system one. */
 :root {
   color-scheme: light dark;
-  --ink: #171614;
-  --on-ink: #ffffff;
-  --sailcloth: #f4f2ed;
-  --linen: #ebe8e1;
-  --paper: #fdfcfa;
-  --rope: #dedad0;
-  --driftwood: #6e6a62;
-  --fog: #a29d93;
-  --signal: #3a4cf0;
-  --signal-mist: #e3e5ff;
-  --flare: #c8412b;
-  --on-flare: #ffffff;
-  --flare-mist: #fbe4de;
-  --kelp: #2e7352;
+  --ink: light-dark(#171614, #f2efe8);
+  --on-ink: light-dark(#ffffff, #121110);
+  --sailcloth: light-dark(#f4f2ed, #121110);
+  --linen: light-dark(#ebe8e1, #191816);
+  --paper: light-dark(#fdfcfa, #1f1e1b);
+  --rope: light-dark(#dedad0, #2f2d29);
+  --driftwood: light-dark(#6e6a62, #a39e94);
+  --fog: light-dark(#a29d93, #6b675f);
+  --signal: light-dark(#3a4cf0, #8e9aff);
+  --signal-mist: light-dark(#e3e5ff, #23264a);
+  --flare: light-dark(#c8412b, #ff7a5c);
+  --on-flare: light-dark(#ffffff, #121110);
+  --flare-mist: light-dark(#fbe4de, rgba(255, 122, 92, 0.14));
+  --kelp: light-dark(#2e7352, #5fbf8f);
   --qr-ink: #171614;
   --qr-paper: #fdfcfa;
-  --material: rgba(246, 244, 239, 0.86);
-  --material-card: rgba(253, 252, 250, 0.7);
-  --material-tint: #ebe8e1;
-  --material-problem: #fbe4de;
-  --hairline: rgba(23, 22, 20, 0.1);
-  --hover: rgba(23, 22, 20, 0.07);
+  --material: light-dark(rgba(246, 244, 239, 0.86), rgba(36, 34, 31, 0.82));
+  --material-card: light-dark(
+    rgba(253, 252, 250, 0.7),
+    rgba(255, 255, 255, 0.06)
+  );
+  --material-tint: light-dark(#ebe8e1, rgba(255, 255, 255, 0.08));
+  --material-problem: light-dark(#fbe4de, rgba(255, 122, 92, 0.14));
+  --hairline: light-dark(rgba(23, 22, 20, 0.1), rgba(255, 255, 255, 0.12));
+  --hover: light-dark(rgba(23, 22, 20, 0.07), rgba(255, 255, 255, 0.08));
   --scrim: rgba(0, 0, 0, 0.18);
   --switch-thumb: #ffffff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #f2efe8;
-    --on-ink: #121110;
-    --sailcloth: #121110;
-    --linen: #191816;
-    --paper: #1f1e1b;
-    --rope: #2f2d29;
-    --driftwood: #a39e94;
-    --fog: #6b675f;
-    --signal: #8e9aff;
-    --signal-mist: #23264a;
-    --flare: #ff7a5c;
-    --on-flare: #121110;
-    --flare-mist: rgba(255, 122, 92, 0.14);
-    --kelp: #5fbf8f;
-    --material: rgba(36, 34, 31, 0.82);
-    --material-card: rgba(255, 255, 255, 0.06);
-    --material-tint: rgba(255, 255, 255, 0.08);
-    --material-problem: rgba(255, 122, 92, 0.14);
-    --hairline: rgba(255, 255, 255, 0.12);
-    --hover: rgba(255, 255, 255, 0.08);
-  }
 }
 
 @theme inline {
@@ -142,6 +122,8 @@
   --width-sidebar: 200px;
   --width-setup: 440px;
   --width-dialog: 280px;
+  --width-window: 760px;
+  --height-window: 540px;
 }
 
 @utility app-drag {
