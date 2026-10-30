@@ -16,5 +16,7 @@ export function useAgentActions() {
     finishPairing: () => ahoy.finishPairing(),
     dismissNotice: () => ahoy.dismissNotice(),
     setLanEnabled: (enabled: boolean) => ahoy.setLanEnabled(enabled),
+    openWindow: () => ahoy.openWindow(),
+    quit: () => ahoy.quit(),
   };
 }

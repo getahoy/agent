@@ -1,10 +1,6 @@
 export const homeCopy = {
-  title: "Ahoy",
-  noPhoneTitle: "Pair your phone",
   connected: "Connected",
   off: "Ahoy is off. Your phone cannot connect.",
-  turnOff: "Turn off Ahoy",
-  turnOn: "Turn on Ahoy",
   remove: "Remove phone",
   pairNew: "Pair a new phone",
   lastConnected: "Last connected",
@@ -13,7 +9,12 @@ export const homeCopy = {
   dismiss: "Dismiss",
   ready: (phone: string) => `Not connected. Open Ahoy on ${phone} to connect.`,
   paused: (phone: string) => `${phone} paused the connection.`,
-  heard: (text: string) => `Heard: “${text}”`,
+  heard: (text: string) => `“${text}”`,
+  heardAt: (eyebrow: string, when: string) => `${eyebrow} · ${when}`,
+  phoneWithStatus: (phone: string, status: string) => `${phone} · ${status}`,
+  removeTitle: (phone: string) => `Remove ${phone}?`,
+  signOutBody: (phone: string) =>
+    `${phone} will be removed and you will need to scan a new code to use Ahoy again.`,
   removedBanner: (phone: string) => `${phone} removed this Mac.`,
   signedOutBanner: (phone: string) => `${phone} signed out of Ahoy.`,
   newPhoneHint: (phone: string) =>

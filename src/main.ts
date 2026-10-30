@@ -116,7 +116,13 @@ function wireShell(parts: ShellParts): MainWindow {
   });
   tray.render(controller.state());
   controller.onChange((state) => tray.render(state));
-  registerBridge({ controller, platform, mainWindow, services, setLanEnabled });
+  registerBridge({
+    controller,
+    platform,
+    services,
+    setLanEnabled,
+    openWindow: () => mainWindow.show(),
+  });
   announceMenubarWhenOnboarded(controller, mainWindow);
   watchPower(parts);
   quitAfterGoodbye(parts);

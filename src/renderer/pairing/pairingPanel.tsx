@@ -1,42 +1,40 @@
 import { agentCopy, pairingFailureCopy } from "../../copy/agentCopy.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
+import { useAgentActions } from "../hooks/useAgentActions.ts";
+import { usePendingAction } from "../hooks/usePendingAction.ts";
+import { PairingDone } from "./pairingDone.tsx";
 import { PairingFailed } from "./pairingFailed.tsx";
-import { PairingQrCode } from "./pairingQrCode.tsx";
-import { PairingSucceeded } from "./pairingSucceeded.tsx";
+import { PairingOffer } from "./pairingOffer.tsx";
 
-type PairingPanelProps = {
-  status: PairingStatus;
-  onFinish: () => void;
-  onRetry: () => void;
-};
+type PairingPanelProps = { status: PairingStatus };
 
-export function PairingPanel({ status, onFinish, onRetry }: PairingPanelProps) {
+export function PairingPanel({ status }: PairingPanelProps) {
+  const actions = useAgentActions();
+  const [finish, finishing] = usePendingAction(actions.finishPairing);
   switch (status.kind) {
     case "idle":
     case "starting":
       return (
-        <p className="text-muted text-sm" aria-busy="true">
+        <p aria-busy="true" className="py-24 text-driftwood text-ui">
           {agentCopy["pair.starting"]}
         </p>
       );
     case "offering":
-      return (
-        <PairingQrCode qr={status.qr} reachableOnLan={status.reachableOnLan} />
-      );
+      return <PairingOffer {...status} />;
     case "failed":
       return (
         <PairingFailed
           message={pairingFailureCopy[status.reason]}
-          onRetry={onRetry}
+          onRetry={() => void actions.startPairing()}
         />
       );
     case "paired":
       return (
-        <PairingSucceeded
+        <PairingDone
           phoneName={status.phoneName}
           accountEmail={status.accountEmail}
-          finishLabel={agentCopy["pair.done"]}
-          onFinish={onFinish}
+          pending={finishing}
+          onFinish={finish}
         />
       );
     default: {

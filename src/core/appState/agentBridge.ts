@@ -17,6 +17,8 @@ export const bridgeChannels = {
   finishPairing: "agent:finish-pairing",
   dismissNotice: "agent:dismiss-notice",
   setLanEnabled: "agent:set-lan-enabled",
+  openWindow: "agent:open-window",
+  quit: "agent:quit",
 } as const;
 
 export const permissionSchema = z.enum(["accessibility", "screenRecording"]);
@@ -36,4 +38,6 @@ export type AgentBridge = {
   finishPairing: () => Promise<void>;
   dismissNotice: () => Promise<void>;
   setLanEnabled: (enabled: boolean) => Promise<void>;
+  openWindow: () => Promise<void>;
+  quit: () => Promise<void>;
 };

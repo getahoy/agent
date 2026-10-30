@@ -144,6 +144,16 @@
   --width-dialog: 280px;
 }
 
+@utility app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
 @layer base {
   html,
   body,

@@ -2,10 +2,10 @@ import { agentCopy } from "../../copy/agentCopy.ts";
 import { homeCopy } from "../../copy/homeCopy.ts";
 import type { AgentState } from "../../core/appState/appState.ts";
 import { ActionButton } from "../components/actionButton.tsx";
-import { PairingPanel } from "../components/pairingPanel.tsx";
 import { ScreenLayout } from "../components/screenLayout.tsx";
 import { useAgentActions } from "../hooks/useAgentActions.ts";
 import { usePairingSession } from "../hooks/usePairingSession.ts";
+import { PairingPanel } from "../pairing/pairingPanel.tsx";
 
 type PairScreenProps = { state: AgentState };
 
@@ -26,11 +26,7 @@ export function PairScreen({ state }: PairScreenProps) {
           {homeCopy.newPhoneHint(currentPhone.displayName)}
         </p>
       ) : null}
-      <PairingPanel
-        status={state.pairing}
-        onFinish={() => void actions.finishPairing()}
-        onRetry={() => void actions.startPairing()}
-      />
+      <PairingPanel status={state.pairing} />
       {state.pairingNewPhone && offering ? (
         <div>
           <ActionButton

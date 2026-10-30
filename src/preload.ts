@@ -33,6 +33,8 @@ const bridge: AgentBridge = {
   finishPairing: () => invoke(bridgeChannels.finishPairing),
   dismissNotice: () => invoke(bridgeChannels.dismissNotice),
   setLanEnabled: (enabled) => invoke(bridgeChannels.setLanEnabled, enabled),
+  openWindow: () => invoke(bridgeChannels.openWindow),
+  quit: () => invoke(bridgeChannels.quit),
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);

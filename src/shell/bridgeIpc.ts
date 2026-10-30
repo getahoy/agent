@@ -1,5 +1,5 @@
 import { bytes32Schema } from "@getahoy/protocol";
-import { ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { z } from "zod";
 import {
   bridgeChannels,
@@ -8,15 +8,14 @@ import {
 import { onboardingStepSchema } from "../core/appState/appState.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import type { AgentController } from "./agentController.ts";
-import type { MainWindow } from "./mainWindow.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
 
 type BridgeParts = {
   controller: AgentController;
   platform: PlatformAdapter;
-  mainWindow: MainWindow;
   services: PairingServices;
   setLanEnabled: (enabled: boolean) => Promise<void>;
+  openWindow: () => void;
 };
 
 function handleParsed<T>(
@@ -53,7 +52,7 @@ function registerPairing({ controller, services, setLanEnabled }: BridgeParts) {
 }
 
 export function registerBridge(parts: BridgeParts): void {
-  const { controller, platform, mainWindow } = parts;
+  const { controller, platform } = parts;
   ipcMain.handle(bridgeChannels.getState, () => controller.state());
   handleParsed(bridgeChannels.completeStep, onboardingStepSchema, (step) =>
     controller.completeStep(step),
@@ -62,6 +61,12 @@ export function registerBridge(parts: BridgeParts): void {
     platform.permissions.openSettings(p),
   );
   ipcMain.handle(bridgeChannels.relaunch, () => platform.lifecycle.relaunch());
+  ipcMain.handle(bridgeChannels.openWindow, () => parts.openWindow());
+  ipcMain.handle(bridgeChannels.quit, () => app.quit());
   registerPairing(parts);
-  controller.onChange((state) => mainWindow.send(bridgeChannels.state, state));
+  controller.onChange((state) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(bridgeChannels.state, state);
+    }
+  });
 }

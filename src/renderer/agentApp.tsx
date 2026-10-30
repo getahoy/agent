@@ -1,15 +1,15 @@
 import { agentCopy } from "../copy/agentCopy.ts";
 import { useAgentState } from "./hooks/useAgentState.ts";
-import { HomeScreen } from "./screens/homeScreen.tsx";
 import { PairScreen } from "./screens/pairScreen.tsx";
 import { PermissionsScreen } from "./screens/permissionsScreen.tsx";
 import { WelcomeScreen } from "./screens/welcomeScreen.tsx";
+import { WindowApp } from "./window/windowApp.tsx";
 
 export function AgentApp() {
   const state = useAgentState();
   if (!state) {
     return (
-      <p className="p-8 text-muted" aria-busy="true">
+      <p className="p-8 text-driftwood text-ui" aria-busy="true">
         {agentCopy.loading}
       </p>
     );
@@ -23,7 +23,7 @@ export function AgentApp() {
     case "pair":
       return <PairScreen state={state} />;
     case "home":
-      return <HomeScreen state={state} />;
+      return <WindowApp state={state} initialPage="home" />;
     default: {
       const unhandled: never = state.screen;
       return unhandled;
