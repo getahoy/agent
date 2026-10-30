@@ -1,8 +1,8 @@
 import { agentCopy } from "../copy/agentCopy.ts";
 import { useAgentState } from "./hooks/useAgentState.ts";
-import { PairScreen } from "./screens/pairScreen.tsx";
-import { PermissionsScreen } from "./screens/permissionsScreen.tsx";
-import { WelcomeScreen } from "./screens/welcomeScreen.tsx";
+import { PairStep } from "./setup/pairStep.tsx";
+import { PermissionsStep } from "./setup/permissionsStep.tsx";
+import { WelcomeStep } from "./setup/welcomeStep.tsx";
 import { WindowApp } from "./window/windowApp.tsx";
 
 export function AgentApp() {
@@ -17,13 +17,22 @@ export function AgentApp() {
 
   switch (state.screen) {
     case "welcome":
-      return <WelcomeScreen state={state} />;
+      return <WelcomeStep />;
     case "permissions":
-      return <PermissionsScreen state={state} />;
+      if (state.onboardingStep === "done") {
+        return (
+          <WindowApp
+            key="permissions"
+            state={state}
+            initialPage="permissions"
+          />
+        );
+      }
+      return <PermissionsStep permissions={state.permissions} />;
     case "pair":
-      return <PairScreen state={state} />;
+      return <PairStep state={state} />;
     case "home":
-      return <WindowApp state={state} initialPage="home" />;
+      return <WindowApp key="home" state={state} initialPage="home" />;
     default: {
       const unhandled: never = state.screen;
       return unhandled;
