@@ -1,7 +1,7 @@
-import { cn } from "cn";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { agentCopy } from "../../copy/agentCopy.ts";
+import { cn } from "../lib/cn.ts";
 import { useRise } from "../lib/motion.ts";
 
 const SETUP_STEPS = ["welcome", "permissions", "pair"] as const;

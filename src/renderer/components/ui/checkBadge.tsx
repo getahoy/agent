@@ -1,5 +1,5 @@
-import { cn } from "cn";
 import { motion } from "motion/react";
+import { cn } from "../../lib/cn.ts";
 import { usePop } from "../../lib/motion.ts";
 
 type CheckBadgeProps = { label: string; className?: string };

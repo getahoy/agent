@@ -1,8 +1,8 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "cn";
 import { LoaderCircle } from "lucide-react";
 import { useSpinner } from "../../hooks/useSpinner.ts";
+import { cn } from "../../lib/cn.ts";
 
 const buttonVariants = cva(
   "inline-flex shrink-0 cursor-default items-center justify-center gap-2 whitespace-nowrap rounded-pill font-medium outline-none transition-[background-color,transform] duration-150 active:scale-97 disabled:pointer-events-none disabled:bg-linen disabled:text-fog motion-reduce:active:scale-100",

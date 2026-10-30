@@ -1,8 +1,8 @@
-import { cn } from "cn";
 import { agentCopy } from "../../copy/agentCopy.ts";
 import { Button } from "../components/ui/button.tsx";
 import { CheckBadge } from "../components/ui/checkBadge.tsx";
 import { ListRow } from "../components/ui/listRow.tsx";
+import { cn } from "../lib/cn.ts";
 
 type PermissionRowProps = {
   name: string;
