@@ -1,7 +1,6 @@
 export const homeCopy = {
   connected: "Connected",
   off: "Ahoy is off. Your phone cannot connect.",
-  remove: "Remove phone",
   pairNew: "Pair a new phone",
   lastConnected: "Last connected",
   signedInAs: "Signed in as",
@@ -12,6 +11,7 @@ export const homeCopy = {
   heard: (text: string) => `“${text}”`,
   heardAt: (eyebrow: string, when: string) => `${eyebrow} · ${when}`,
   phoneWithStatus: (phone: string, status: string) => `${phone} · ${status}`,
+  pairedOn: (date: string) => `Paired ${date}`,
   removeTitle: (phone: string) => `Remove ${phone}?`,
   signOutBody: (phone: string) =>
     `${phone} will be removed and you will need to scan a new code to use Ahoy again.`,

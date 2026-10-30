@@ -18,10 +18,11 @@ const PERMISSION_POLL_MS = 2000;
 type StateListener = (state: AgentState) => void;
 
 function summarise(phones: readonly PairedPhone[]): PhoneSummary[] {
-  return phones.map(({ publicKey, displayName, accountEmail }) => ({
+  return phones.map(({ publicKey, displayName, accountEmail, pairedAt }) => ({
     publicKey,
     displayName,
     accountEmail,
+    pairedAt,
   }));
 }
 

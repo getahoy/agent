@@ -12,12 +12,21 @@ import { PhoneGlyph } from "../phone/phoneGlyph.tsx";
 import { relativeTime } from "../phone/relativeTime.ts";
 
 const CLOCK_TICK_MS = 30_000;
+const pairedDate = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+});
 
 type PairedPhoneRowProps = {
   phone: PhoneSummary;
   connected: boolean;
   lastConnectedAt: number | null;
 };
+
+function phoneDetail(phone: PhoneSummary, since: string | null): string {
+  const paired = homeCopy.pairedOn(pairedDate.format(phone.pairedAt));
+  return since ? homeCopy.phoneWithStatus(paired, since) : paired;
+}
 
 export function PairedPhoneRow({
   phone,
@@ -39,18 +48,14 @@ export function PairedPhoneRow({
       <ListRow
         leading={<PhoneGlyph />}
         title={phone.displayName}
-        detail={
-          since
-            ? homeCopy.phoneWithStatus(phone.accountEmail, since)
-            : phone.accountEmail
-        }
+        detail={phoneDetail(phone, since)}
         trailing={
           <Button
             variant="quietDestructive"
             size="sm"
             onClick={() => setConfirming(true)}
           >
-            {homeCopy.remove}
+            {agentCopy["remove.confirm"]}
           </Button>
         }
       />

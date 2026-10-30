@@ -15,6 +15,7 @@ const phoneSummarySchema = z.object({
   publicKey: z.string(),
   displayName: z.string(),
   accountEmail: z.string(),
+  pairedAt: z.int(),
 });
 const endedNoticeSchema = z.object({
   phoneName: z.string(),
