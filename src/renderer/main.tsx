@@ -1,3 +1,8 @@
+import "@fontsource-variable/fraunces/full.css";
+import "@fontsource-variable/fraunces/full-italic.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/geist-mono/500.css";
 import "./tokens.css";
 import { createRoot } from "react-dom/client";
 import { AgentApp } from "./agentApp.tsx";

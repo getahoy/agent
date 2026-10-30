@@ -2,44 +2,164 @@
 
 :root {
   color-scheme: light dark;
-  --background: #ffffff;
-  --foreground: #1d1d1f;
-  --muted: #6e6e73;
-  --border: #d2d2d7;
-  --primary: #0071e3;
-  --primary-foreground: #ffffff;
-  --success: #248a3d;
-  --destructive: #d70015;
-  --qr-foreground: #1d1d1f;
-  --qr-background: #ffffff;
-  --qr-eye: #0071e3;
+  --ink: #171614;
+  --on-ink: #ffffff;
+  --sailcloth: #f4f2ed;
+  --linen: #ebe8e1;
+  --paper: #fdfcfa;
+  --rope: #dedad0;
+  --driftwood: #6e6a62;
+  --fog: #a29d93;
+  --signal: #3a4cf0;
+  --signal-mist: #e3e5ff;
+  --flare: #c8412b;
+  --on-flare: #ffffff;
+  --flare-mist: #fbe4de;
+  --kelp: #2e7352;
+  --qr-ink: #171614;
+  --qr-paper: #fdfcfa;
+  --material: rgba(246, 244, 239, 0.86);
+  --material-card: rgba(253, 252, 250, 0.7);
+  --material-tint: #ebe8e1;
+  --material-problem: #fbe4de;
+  --hairline: rgba(23, 22, 20, 0.1);
+  --hover: rgba(23, 22, 20, 0.07);
+  --scrim: rgba(0, 0, 0, 0.18);
+  --switch-thumb: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1e1e1e;
-    --foreground: #f5f5f7;
-    --muted: #a1a1a6;
-    --border: #3a3a3c;
-    --primary: #0a84ff;
-    --success: #30d158;
-    --destructive: #ff453a;
+    --ink: #f2efe8;
+    --on-ink: #121110;
+    --sailcloth: #121110;
+    --linen: #191816;
+    --paper: #1f1e1b;
+    --rope: #2f2d29;
+    --driftwood: #a39e94;
+    --fog: #6b675f;
+    --signal: #8e9aff;
+    --signal-mist: #23264a;
+    --flare: #ff7a5c;
+    --on-flare: #121110;
+    --flare-mist: rgba(255, 122, 92, 0.14);
+    --kelp: #5fbf8f;
+    --material: rgba(36, 34, 31, 0.82);
+    --material-card: rgba(255, 255, 255, 0.06);
+    --material-tint: rgba(255, 255, 255, 0.08);
+    --material-problem: rgba(255, 122, 92, 0.14);
+    --hairline: rgba(255, 255, 255, 0.12);
+    --hover: rgba(255, 255, 255, 0.08);
   }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-success: var(--success);
-  --color-destructive: var(--destructive);
-  --font-sans: system-ui, -apple-system, sans-serif;
-  --radius-control: 8px;
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-sailcloth: var(--sailcloth);
+  --color-linen: var(--linen);
+  --color-paper: var(--paper);
+  --color-rope: var(--rope);
+  --color-driftwood: var(--driftwood);
+  --color-fog: var(--fog);
+  --color-signal: var(--signal);
+  --color-signal-mist: var(--signal-mist);
+  --color-flare: var(--flare);
+  --color-on-flare: var(--on-flare);
+  --color-flare-mist: var(--flare-mist);
+  --color-kelp: var(--kelp);
+  --color-material: var(--material);
+  --color-material-card: var(--material-card);
+  --color-material-tint: var(--material-tint);
+  --color-material-problem: var(--material-problem);
+  --color-hairline: var(--hairline);
+  --color-hover: var(--hover);
+  --color-scrim: var(--scrim);
+  --color-switch-thumb: var(--switch-thumb);
 }
 
-body {
-  @apply bg-background font-sans text-foreground;
+@theme {
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-display--font-variation-settings: "SOFT" 100, "WONK" 1;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans--font-feature-settings: "cv11", "ss01";
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-label: 11px;
+  --text-label--line-height: 1.33;
+  --text-label--letter-spacing: 0.06em;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.33;
+  --text-ui: 13px;
+  --text-ui--line-height: 1.45;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.43;
+  --text-row: 15px;
+  --text-row--line-height: 1.3;
+  --text-card-title: 20px;
+  --text-card-title--line-height: 1.1;
+  --text-card-title--letter-spacing: -0.01em;
+  --text-title: 28px;
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.01em;
+  --text-setup: 32px;
+  --text-setup--line-height: 1.08;
+  --text-setup--letter-spacing: -0.02em;
+  --text-reveal: 44px;
+  --text-reveal--line-height: 1.15;
+  --text-reveal--letter-spacing: -0.015em;
+  --text-reveal--font-weight: 300;
+  --text-heard: 24px;
+  --text-heard--line-height: 1.15;
+  --text-heard--letter-spacing: -0.01em;
+  --text-numeral: 16px;
+  --text-numeral--line-height: 1;
+
+  --spacing: 4px;
+
+  --radius-row: 6px;
+  --radius-tag: 7px;
+  --radius-thumb: 10px;
+  --radius-popover: 12px;
+  --radius-group: 16px;
+  --radius-qr: 20px;
+  --radius-card: 24px;
+  --radius-pill: 9999px;
+
+  --shadow-float:
+    0 1px 0 rgba(23, 22, 20, 0.04), 0 16px 40px -16px rgba(23, 22, 20, 0.22);
+  --shadow-dialog:
+    0 0 0 0.5px var(--hairline), 0 20px 50px -10px rgba(0, 0, 0, 0.35);
+  --shadow-thumb: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-focus: 0 0 0 4px var(--signal-mist);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --width-popover: 340px;
+  --width-sidebar: 200px;
+  --width-setup: 440px;
+  --width-dialog: 280px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-sailcloth font-sans text-ink antialiased select-none;
+    font-optical-sizing: auto;
+  }
+
+  body[data-surface="popover"] {
+    @apply bg-transparent;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-signal outline-offset-2;
+  }
 }
