@@ -60,8 +60,8 @@ test("the other cases read like speech", () => {
     "Done. Closed the Grok tab.",
   );
   assert.equal(
-    buildSpeech({ kind: "draft", name: "Samar" }),
-    "Drafted an email to Samar. Check it and press Send.",
+    buildSpeech({ kind: "draft", name: "Jake" }),
+    "Drafted an email to Jake. Check it and press Send.",
   );
   assert.equal(
     buildSpeech({ kind: "outOfRange", count: 2 }),
@@ -89,7 +89,7 @@ test("long speech is cut at a sentence, never past 140 characters", () => {
 });
 
 test("emails are spoken by name, roles by their plural", () => {
-  assert.equal(nameOfAddress("samar.abbas99@gmail.com"), "Samar Abbas");
+  assert.equal(nameOfAddress("jake.bauer99@gmail.com"), "Jake Bauer");
   assert.equal(nameOfAddress("rahul@example.com"), "Rahul");
   assert.equal(nounsFor(["AXButton", "AXButton"]), "buttons");
   assert.equal(nounsFor(["AXButton", "AXLink"]), "matches");

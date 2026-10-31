@@ -91,19 +91,19 @@ test("a tab match must be spoken and its browser installed", () => {
 
 const draft = {
   kind: "draftEmail",
-  to: "samarabbas@gmail.com",
+  to: "jakebauer@gmail.com",
   subject: "Hackathon credits",
-  body: "Hi Samar, about the hackathon credits.",
+  body: "Hi Jake, about the hackathon credits.",
   via: "mail",
   browser: null,
 } as const;
 
 test("a draft address must be spoken", () => {
-  const spoken = "draft a mail to samar abbas at gmail dot com about credits";
+  const spoken = "draft a mail to jake bauer at gmail dot com about credits";
   assert.equal(validateActions([draft], spoken, APPS).kind, "valid");
   const other = "draft a mail to rahul about credits";
   assert.equal(validateActions([draft], other, APPS).kind, "rejected");
-  const broken = { ...draft, to: "samarabbas" };
+  const broken = { ...draft, to: "jakebauer" };
   assert.equal(validateActions([broken], spoken, APPS).kind, "rejected");
 });
 
@@ -113,7 +113,7 @@ test("a draft is always alone, so nothing can send it", () => {
     key: "return",
     modifiers: ["mod"],
   };
-  const spoken = "send an email to samar abbas at gmail dot com saying hi";
+  const spoken = "send an email to jake bauer at gmail dot com saying hi";
   assert.equal(validateActions([draft, send], spoken, APPS).kind, "rejected");
 });
 
