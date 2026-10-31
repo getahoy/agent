@@ -1,17 +1,13 @@
 import { motion } from "motion/react";
-import { cn } from "../../lib/cn.ts";
 import { usePop } from "../../lib/motion.ts";
 
-type CheckBadgeProps = { label: string; className?: string };
-
-export function CheckBadge({ label, className }: CheckBadgeProps) {
+export function CheckBadge() {
   const pop = usePop();
   return (
     <motion.svg
-      role="img"
-      aria-label={label}
+      aria-hidden="true"
       viewBox="0 0 22 22"
-      className={cn("size-5.5 shrink-0 text-kelp", className)}
+      className="size-5.5 shrink-0 text-kelp"
       {...pop}
     >
       <circle cx="11" cy="11" r="11" fill="currentColor" />

@@ -22,7 +22,7 @@ export function PermissionRow({
   const statusClass = cn(layout === "setup" && "sr-only");
   const trailing = granted ? (
     <span className="flex items-center gap-1.5 font-medium text-kelp text-ui">
-      <CheckBadge label={agentCopy["permissions.granted"]} />
+      <CheckBadge />
       <span className={statusClass}>{agentCopy["permissions.granted"]}</span>
     </span>
   ) : (

@@ -20,11 +20,8 @@ const textVariants = [
   "display",
   "setup",
   "title",
-  "cardTitle",
   "body",
-  "ui",
   "muted",
-  "caption",
   "eyebrow",
   "heard",
   "heardSmall",
@@ -59,7 +56,7 @@ export function GalleryPrimitives() {
           <StatusPill label={agentCopy["status.encrypted"]} />
           <StatusPill label={agentCopy["status.paused"]} tone="quiet" />
           <StatusPill size="sm" label={agentCopy["status.off"]} tone="quiet" />
-          <CheckBadge label={agentCopy["permissions.granted"]} />
+          <CheckBadge />
           <PennantMark className="h-6.5 w-8.5" />
         </div>
       </GalleryPair>

@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import { agentCopy } from "../copy/agentCopy.ts";
-import { loadSurface, secureWebPreferences } from "./surfaceUrl.ts";
+import { loadSurface, secureWebPreferences } from "./rendererSurface.ts";
 
 const GALLERY_WIDTH = 1640;
 const GALLERY_HEIGHT = 960;

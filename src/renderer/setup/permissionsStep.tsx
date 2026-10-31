@@ -25,7 +25,7 @@ export function PermissionsStep({ permissions }: PermissionsStepProps) {
         size="lg"
         disabled={!allPermissionsGranted(permissions)}
         pending={moving}
-        onClick={() => next()}
+        onClick={next}
       >
         {agentCopy["permissions.continue"]}
       </Button>

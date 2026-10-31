@@ -2,7 +2,10 @@ import type { AgentState } from "../../core/appState/appState.ts";
 
 const PHONE_KEY = "gallery-phone";
 const MINUTE_MS = 60_000;
+const DAY_MS = 1440 * MINUTE_MS;
 const PAIRING_WINDOW_MS = 5 * MINUTE_MS;
+const PAIRED_AGO_MS = 20 * DAY_MS;
+const HEARD_AGO_MS = 2 * MINUTE_MS;
 const now = Date.now();
 
 const connected: AgentState = {
@@ -16,16 +19,16 @@ const connected: AgentState = {
       publicKey: PHONE_KEY,
       displayName: "Maya’s iPhone",
       accountEmail: "maya@example.com",
-      pairedAt: now - 20 * 24 * 60 * MINUTE_MS,
+      pairedAt: now - PAIRED_AGO_MS,
     },
   ],
   lanEnabled: true,
   connectedPhoneKeys: [PHONE_KEY],
   pausedPhoneKeys: [],
-  lastConnectedAt: now - 2 * MINUTE_MS,
+  lastConnectedAt: now - HEARD_AGO_MS,
   endedNotice: null,
   pairingNewPhone: false,
-  lastHeard: { text: "close the grok tab", at: now - 2 * MINUTE_MS },
+  lastHeard: { text: "close the grok tab", at: now - HEARD_AGO_MS },
   screen: "home",
 };
 

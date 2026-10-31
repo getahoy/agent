@@ -21,12 +21,7 @@ export function WelcomeStep() {
       <Text variant="body" className="max-w-95">
         {agentCopy["welcome.body"]}
       </Text>
-      <Button
-        size="lg"
-        className="mt-2"
-        pending={starting}
-        onClick={() => start()}
-      >
+      <Button size="lg" className="mt-2" pending={starting} onClick={start}>
         {agentCopy["welcome.continue"]}
       </Button>
     </SetupFrame>

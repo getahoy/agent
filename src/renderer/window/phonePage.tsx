@@ -36,7 +36,7 @@ export function PhonePage({ state, onPairFirst }: PhonePageProps) {
         {link.kind === "none" ? (
           <Button onClick={onPairFirst}>{agentCopy["pair.title"]}</Button>
         ) : (
-          <Button pending={starting} onClick={() => pairNew()}>
+          <Button pending={starting} onClick={pairNew}>
             {homeCopy.pairNew}
           </Button>
         )}

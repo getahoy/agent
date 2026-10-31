@@ -39,7 +39,7 @@ export function PairStep({ state }: PairStepProps) {
           variant="secondary"
           size="sm"
           pending={cancelling}
-          onClick={() => cancel()}
+          onClick={cancel}
         >
           {agentCopy["pair.cancel"]}
         </Button>

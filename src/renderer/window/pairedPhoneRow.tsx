@@ -66,7 +66,7 @@ export function PairedPhoneRow({
         confirmLabel={agentCopy["remove.confirm"]}
         cancelLabel={agentCopy["dialog.cancel"]}
         pending={removing}
-        onConfirm={() => remove()}
+        onConfirm={remove}
         onOpenChange={setConfirming}
       />
     </>

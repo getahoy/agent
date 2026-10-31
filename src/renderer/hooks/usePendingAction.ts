@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-export function usePendingAction<Input extends unknown[]>(
-  action: (...input: Input) => Promise<void>,
-): [run: (...input: Input) => void, pending: boolean] {
+export function usePendingAction(
+  action: () => Promise<void>,
+): [run: () => void, pending: boolean] {
   const [pending, setPending] = useState(false);
-  const run = (...input: Input) => {
+  const run = () => {
     setPending(true);
-    void action(...input).finally(() => setPending(false));
+    void action().finally(() => setPending(false));
   };
   return [run, pending];
 }

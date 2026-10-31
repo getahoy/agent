@@ -8,22 +8,19 @@ const textVariants = cva("", {
       display: "text-balance font-display font-light text-reveal",
       setup: "text-balance font-display font-light text-setup",
       title: "text-balance font-display font-normal text-title",
-      cardTitle: "font-display font-normal text-card-title",
       body: "text-driftwood text-row",
-      ui: "text-ui",
       muted: "text-driftwood text-ui",
-      caption: "text-caption text-driftwood",
       eyebrow: "font-medium font-mono text-label uppercase",
       heard: "font-display font-normal text-driftwood text-heard italic",
       heardSmall: "font-display font-normal text-driftwood text-row italic",
     },
   },
-  defaultVariants: { variant: "ui" },
 });
 
 type TextElement = "h1" | "h2" | "p" | "span";
 
-type TextProps = VariantProps<typeof textVariants> & {
+type TextProps = {
+  variant: NonNullable<VariantProps<typeof textVariants>["variant"]>;
   as?: TextElement;
   className?: string;
   children: ReactNode;

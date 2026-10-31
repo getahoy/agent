@@ -37,7 +37,7 @@ export function HomePage({ state }: HomePageProps) {
           onDismiss={() => void actions.dismissNotice()}
         />
       ) : null}
-      {link.kind === "none" || pairing ? (
+      {pairing ? (
         <HomePairing status={state.pairing} />
       ) : (
         <PhoneStatusCard kind={link.kind} phone={link.phone} />

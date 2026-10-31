@@ -1,7 +1,7 @@
 import { BrowserWindow, nativeTheme } from "electron";
 import { agentCopy } from "../copy/agentCopy.ts";
 import type { LifecycleController } from "../ports/platform.ts";
-import { loadSurface, secureWebPreferences } from "./surfaceUrl.ts";
+import { loadSurface, secureWebPreferences } from "./rendererSurface.ts";
 
 const WINDOW_WIDTH = 760;
 const WINDOW_HEIGHT = 540;

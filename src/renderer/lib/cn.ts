@@ -18,7 +18,6 @@ export const cn = createCn({
             "setup",
             "reveal",
             "heard",
-            "numeral",
           ],
         },
       ],
