@@ -75,7 +75,7 @@ function windowScreen(facts: AgentFacts): WindowScreen {
 
 export function menubarStatus(facts: AgentFacts): MenubarStatus {
   if (facts.helper === "stopped") return "needsPermission";
-  if (!allPermissionsGranted(facts.permissions)) return "needsPermission";
+  if (!facts.permissions.accessibility) return "needsPermission";
   if (!facts.lanEnabled || facts.screenLocked) return "off";
   return facts.connectedPhoneKeys.length > 0 ? "connected" : "noPhone";
 }

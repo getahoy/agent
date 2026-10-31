@@ -74,7 +74,6 @@ export const agentCopy = {
   "menubar.noPhone": "No phone paired",
   "menubar.locked": "Screen locked, Ahoy is paused",
   "menubar.accessibilityNeeded": "Accessibility not allowed",
-  "menubar.screenRecordingNeeded": "Screen Recording not allowed",
   "menubar.enabled": "Listen for my phone",
   "menubar.open": "Open Ahoy",
   "menubar.quit": "Quit Ahoy",

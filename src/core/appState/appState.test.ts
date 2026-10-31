@@ -65,9 +65,9 @@ test("missing accessibility shows the dot", () => {
   assert.equal(menubarStatus({ ...connected, permissions }), "needsPermission");
 });
 
-test("missing screen recording shows the dot", () => {
+test("missing screen recording shows no dot while screenshots are not built", () => {
   const permissions = { accessibility: true, screenRecording: false };
-  assert.equal(menubarStatus({ ...connected, permissions }), "needsPermission");
+  assert.equal(menubarStatus({ ...connected, permissions }), "connected");
 });
 
 test("a stopped helper shows the dot", () => {
