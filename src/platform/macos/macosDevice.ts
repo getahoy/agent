@@ -48,6 +48,7 @@ export function macosMenubarIcon(status: MenubarStatus): NativeImage {
   if (cached) return cached;
   const file = path.join(menubarIconFolder(), menubarIconFiles[status]);
   const icon = nativeImage.createFromPath(file);
+  if (icon.isEmpty()) throw new Error(`Menu bar icon missing: ${file}`);
   icon.setTemplateImage(true);
   menubarIcons.set(status, icon);
   return icon;

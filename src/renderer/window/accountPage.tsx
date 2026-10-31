@@ -15,7 +15,10 @@ type AccountPageProps = { phone: PhoneSummary | undefined };
 export function AccountPage({ phone }: AccountPageProps) {
   const actions = useAgentActions();
   const [confirming, setConfirming] = useState(false);
-  const [signOut, signingOut] = usePendingAction(actions.signOut);
+  const [signOut, signingOut] = usePendingAction(async () => {
+    await actions.signOut();
+    setConfirming(false);
+  });
   return (
     <>
       <Text as="h1" variant="title">
@@ -49,7 +52,7 @@ export function AccountPage({ phone }: AccountPageProps) {
         confirmLabel={agentCopy["signOut.confirm"]}
         cancelLabel={agentCopy["dialog.cancel"]}
         pending={signingOut}
-        onConfirm={() => signOut()}
+        onConfirm={signOut}
         onOpenChange={setConfirming}
       />
     </>

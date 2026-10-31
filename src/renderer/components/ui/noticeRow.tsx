@@ -31,7 +31,10 @@ export function NoticeRow({ tone, icon, action, children }: NoticeRowProps) {
       icon
     );
   return (
-    <div role="status" className={rowVariants({ tone })}>
+    <div
+      role={tone === "problem" ? "alert" : "status"}
+      className={rowVariants({ tone })}
+    >
       {marker}
       <span className="flex-1">{children}</span>
       {action}

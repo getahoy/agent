@@ -6,7 +6,7 @@ type PairingFailedProps = { message: string; onRetry: () => void };
 
 export function PairingFailed({ message, onRetry }: PairingFailedProps) {
   return (
-    <div role="alert" className="w-full text-left">
+    <div className="w-full text-left">
       <NoticeRow
         tone="problem"
         action={

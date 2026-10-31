@@ -11,7 +11,7 @@ export function PopoverApp() {
   return (
     <div
       ref={panel}
-      className="flex w-popover flex-col gap-2.5 rounded-popover bg-material p-3 text-ink"
+      className="flex w-popover flex-col gap-2.5 bg-material p-3 text-ink"
     >
       {state ? (
         <PopoverContent state={state} />

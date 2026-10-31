@@ -1,5 +1,5 @@
-import { BrowserWindow, type Rectangle, screen } from "electron";
-import { loadSurface, secureWebPreferences } from "./surfaceUrl.ts";
+import { app, BrowserWindow, type Rectangle, screen } from "electron";
+import { loadSurface, secureWebPreferences } from "./rendererSurface.ts";
 
 const POPOVER_WIDTH = 340;
 const POPOVER_START_HEIGHT = 320;
@@ -36,7 +36,10 @@ export class PopoverWindow {
       webPreferences: secureWebPreferences(),
     });
     this.#window.setHiddenInMissionControl(true);
-    this.#window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    this.#window.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true,
+      skipTransformProcessType: true,
+    });
     this.#window.on("blur", () => this.hide());
     this.#window.webContents.on("before-input-event", (event, input) => {
       if (input.type !== "keyDown" || input.key !== "Escape") return;
@@ -80,6 +83,9 @@ export class PopoverWindow {
     const y = Math.max(trayBounds.y + trayBounds.height, workArea.y);
     this.#window.setPosition(x, y + GAP_BELOW_TRAY);
     this.#window.setAlwaysOnTop(true, "pop-up-menu");
+    // A menu bar app is not active by default; without this the popover never
+    // gets key focus, so Esc and click-away (blur) would not close it.
+    app.focus({ steal: true });
     this.#window.show();
     this.#window.focus();
   }
