@@ -17,6 +17,7 @@ import {
   createPairingServices,
   type PairingServices,
 } from "./shell/pairing/pairingServices.ts";
+import { lockDownNavigation } from "./shell/rendererGuard.ts";
 import { readSettings, type Settings } from "./shell/settingsStore.ts";
 import { createSurfaces } from "./shell/shellSurfaces.ts";
 import { MacVoice } from "./shell/voice/macVoice.ts";
@@ -156,6 +157,7 @@ async function startAgent(): Promise<void> {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  lockDownNavigation();
   app.on("window-all-closed", () => undefined);
   void app.whenReady().then(startAgent);
 }

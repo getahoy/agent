@@ -10,6 +10,7 @@ import { onboardingStepSchema } from "../core/appState/appState.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import type { AgentController } from "./agentController.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
+import { fromOwnRenderer } from "./rendererGuard.ts";
 
 type BridgeParts = {
   controller: AgentController;
@@ -20,12 +21,19 @@ type BridgeParts = {
   setPopoverHeight: (height: number) => void;
 };
 
+function handle(channel: string, work: (input: unknown) => unknown): void {
+  ipcMain.handle(channel, (event, input: unknown) => {
+    if (!fromOwnRenderer(event)) return undefined;
+    return work(input);
+  });
+}
+
 function handleParsed<T>(
   channel: string,
   schema: z.ZodType<T>,
   work: (input: T) => unknown,
 ): void {
-  ipcMain.handle(channel, async (_event, input: unknown) => {
+  handle(channel, async (input) => {
     const parsed = schema.safeParse(input);
     if (parsed.success) await work(parsed.data);
   });
@@ -33,38 +41,34 @@ function handleParsed<T>(
 
 function registerPairing({ controller, services, setLanEnabled }: BridgeParts) {
   const { pairing } = services;
-  ipcMain.handle(bridgeChannels.startPairing, () => pairing.start());
-  ipcMain.handle(bridgeChannels.stopPairing, () => pairing.stop());
-  ipcMain.handle(bridgeChannels.signOut, () => services.signOut());
-  ipcMain.handle(bridgeChannels.requestNewPhone, () =>
+  handle(bridgeChannels.startPairing, () => pairing.start());
+  handle(bridgeChannels.stopPairing, () => pairing.stop());
+  handle(bridgeChannels.signOut, () => services.signOut());
+  handle(bridgeChannels.requestNewPhone, () =>
     controller.setPairingNewPhone(true),
   );
-  ipcMain.handle(bridgeChannels.cancelNewPhone, () => {
+  handle(bridgeChannels.cancelNewPhone, () => {
     pairing.stop();
     controller.setPairingNewPhone(false);
   });
-  ipcMain.handle(bridgeChannels.finishPairing, () =>
-    controller.finishPairing(),
-  );
-  ipcMain.handle(bridgeChannels.dismissNotice, () =>
-    controller.dismissEndedNotice(),
-  );
+  handle(bridgeChannels.finishPairing, () => controller.finishPairing());
+  handle(bridgeChannels.dismissNotice, () => controller.dismissEndedNotice());
   handleParsed(bridgeChannels.unpairPhone, bytes32Schema, services.unpairPhone);
   handleParsed(bridgeChannels.setLanEnabled, z.boolean(), setLanEnabled);
 }
 
 export function registerBridge(parts: BridgeParts): void {
   const { controller, platform } = parts;
-  ipcMain.handle(bridgeChannels.getState, () => controller.state());
+  handle(bridgeChannels.getState, () => controller.state());
   handleParsed(bridgeChannels.completeStep, onboardingStepSchema, (step) =>
     controller.completeStep(step),
   );
   handleParsed(bridgeChannels.openPermissionSettings, permissionSchema, (p) =>
     platform.permissions.openSettings(p),
   );
-  ipcMain.handle(bridgeChannels.relaunch, () => platform.lifecycle.relaunch());
-  ipcMain.handle(bridgeChannels.openWindow, () => parts.openWindow());
-  ipcMain.handle(bridgeChannels.quit, () => app.quit());
+  handle(bridgeChannels.relaunch, () => platform.lifecycle.relaunch());
+  handle(bridgeChannels.openWindow, () => parts.openWindow());
+  handle(bridgeChannels.quit, () => app.quit());
   handleParsed(
     bridgeChannels.setPopoverHeight,
     popoverHeightSchema,
