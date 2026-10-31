@@ -68,8 +68,11 @@ private func makeBadge(_ mark: OverlayMark) -> NSPanel {
   panel.backgroundColor = .clear
   panel.hasShadow = false
   panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-  panel.contentView = badgeView(number: mark.number, tag: size, scale: panel.backingScaleFactor)
   panel.orderFrontRegardless()
+  // The panel's own scale is only right once it sits on its screen, so a
+  // mark on a second display with a different scale stays sharp.
+  let scale = panel.screen?.backingScaleFactor ?? panel.backingScaleFactor
+  panel.contentView = badgeView(number: mark.number, tag: size, scale: scale)
   return panel
 }
 
