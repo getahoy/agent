@@ -27,6 +27,7 @@ type ServiceInput = {
   device: DeviceIdentity;
   controller: AgentController;
   commands: CommandReceiver;
+  onPhoneEnded: () => void;
 };
 
 function localHello(device: DeviceIdentity): Hello {
@@ -90,8 +91,8 @@ export function createPairingServices(input: ServiceInput) {
     apiUrl,
     identity,
     logger,
-    onPeerEnded: (phone, reason) =>
-      void phoneEndedPairing(parts, phone, reason),
+    onPeerEnded: (phone, reason, whileAsleep) =>
+      void phoneEndedPairing(parts, phone, reason, whileAsleep),
   });
   const pairing = createPairingSession(input, authClient, phoneLink);
   const parts: PairingParts = {
@@ -99,8 +100,10 @@ export function createPairingServices(input: ServiceInput) {
     phoneLink,
     controller,
     monitor,
+    pairing,
     authClient,
     logger,
+    onPhoneEnded: input.onPhoneEnded,
   };
   return {
     phoneLink,

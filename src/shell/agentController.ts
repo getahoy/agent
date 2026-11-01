@@ -2,12 +2,12 @@ import {
   type AgentFacts,
   type AgentState,
   agentState,
-  type EndedNotice,
   type OnboardingStep,
   type PhoneSummary,
   stepAfter,
 } from "../core/appState/appState.ts";
 import type { HelperEvent } from "../core/helper/helperProtocol.ts";
+import type { EndedByPhone } from "../core/pairing/endedByPhone.ts";
 import type { PairedPhone } from "../core/pairing/pairedPhone.ts";
 import type { PairingStatus } from "../core/pairing/pairingStatus.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
@@ -98,7 +98,13 @@ export class AgentController {
   }
 
   setPairing(pairing: PairingStatus, pairedPhones: readonly PairedPhone[]) {
-    this.#update({ pairing, pairedPhones: summarise(pairedPhones) });
+    const endedNotice =
+      pairing.kind === "paired" ? null : this.#facts.endedNotice;
+    this.#update({
+      pairing,
+      pairedPhones: summarise(pairedPhones),
+      endedNotice,
+    });
   }
 
   setPairedPhones(pairedPhones: readonly PairedPhone[]): void {
@@ -118,12 +124,8 @@ export class AgentController {
     this.#update({ pausedPhoneKeys: [...paused] });
   }
 
-  showEndedNotice(endedNotice: EndedNotice): void {
-    this.#update({ endedNotice });
-  }
-
-  dismissEndedNotice(): void {
-    this.#update({ endedNotice: null });
+  phoneEnded(endedNotice: EndedByPhone | null): void {
+    if (endedNotice) this.#update({ endedNotice });
   }
 
   setPairingNewPhone(pairingNewPhone: boolean): void {

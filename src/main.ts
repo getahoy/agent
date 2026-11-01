@@ -59,7 +59,7 @@ function watchPower({ controller, services }: ShellParts): void {
   powerMonitor.on("lock-screen", () => setLocked(true));
   powerMonitor.on("unlock-screen", () => setLocked(false));
   powerMonitor.on("suspend", () => phoneLink.endAll("sleeping"));
-  powerMonitor.on("resume", () => void monitor.check());
+  powerMonitor.on("resume", () => void monitor.check("wake"));
 }
 
 function quitAfterGoodbye({ controller, helper, services }: ShellParts): void {
@@ -120,7 +120,12 @@ function createCommands(parts: CommandParts) {
     choices,
     logger,
   });
-  return { helper, commands };
+  const onPhoneEnded = () => {
+    choices.expire();
+    voice.stop();
+    void helper.request("overlay", { marks: [] });
+  };
+  return { helper, commands, onPhoneEnded };
 }
 
 async function startAgent(): Promise<void> {
@@ -136,7 +141,7 @@ async function startAgent(): Promise<void> {
   const controller = new AgentController(platform, settings, pairedPhones);
   const apiUrl = env.VITE_AHOY_API_URL;
   const command = { platform, controller, settings, identity, apiUrl, logger };
-  const { helper, commands } = createCommands(command);
+  const { helper, commands, onPhoneEnded } = createCommands(command);
   const services = createPairingServices({
     apiUrl,
     port: LAN_PORT,
@@ -145,6 +150,7 @@ async function startAgent(): Promise<void> {
     device,
     controller,
     commands,
+    onPhoneEnded,
   });
   const mainWindow = wireShell({ platform, controller, helper, services });
   helper.start();

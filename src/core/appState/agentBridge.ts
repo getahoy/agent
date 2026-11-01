@@ -15,7 +15,6 @@ export const bridgeChannels = {
   requestNewPhone: "agent:request-new-phone",
   cancelNewPhone: "agent:cancel-new-phone",
   finishPairing: "agent:finish-pairing",
-  dismissNotice: "agent:dismiss-notice",
   setLanEnabled: "agent:set-lan-enabled",
   openWindow: "agent:open-window",
   quit: "agent:quit",
@@ -39,7 +38,6 @@ export type AgentBridge = {
   requestNewPhone: () => Promise<void>;
   cancelNewPhone: () => Promise<void>;
   finishPairing: () => Promise<void>;
-  dismissNotice: () => Promise<void>;
   setLanEnabled: (enabled: boolean) => Promise<void>;
   openWindow: () => Promise<void>;
   quit: () => Promise<void>;

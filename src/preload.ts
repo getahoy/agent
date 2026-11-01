@@ -31,7 +31,6 @@ const bridge: AgentBridge = {
   requestNewPhone: () => invoke(bridgeChannels.requestNewPhone),
   cancelNewPhone: () => invoke(bridgeChannels.cancelNewPhone),
   finishPairing: () => invoke(bridgeChannels.finishPairing),
-  dismissNotice: () => invoke(bridgeChannels.dismissNotice),
   setLanEnabled: (enabled) => invoke(bridgeChannels.setLanEnabled, enabled),
   openWindow: () => invoke(bridgeChannels.openWindow),
   quit: () => invoke(bridgeChannels.quit),

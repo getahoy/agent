@@ -16,11 +16,17 @@ function canvasColor(): string {
 export class MainWindow {
   readonly #lifecycle: LifecycleController;
   readonly #onClosed: () => void;
+  readonly #onShown: () => void;
   #window: BrowserWindow | null = null;
 
-  constructor(lifecycle: LifecycleController, onClosed: () => void) {
+  constructor(
+    lifecycle: LifecycleController,
+    onClosed: () => void,
+    onShown: () => void,
+  ) {
     this.#lifecycle = lifecycle;
     this.#onClosed = onClosed;
+    this.#onShown = onShown;
     nativeTheme.on("updated", () =>
       this.#window?.setBackgroundColor(canvasColor()),
     );
@@ -37,6 +43,7 @@ export class MainWindow {
     if (window.isMinimized()) window.restore();
     window.show();
     window.focus();
+    this.#onShown();
   }
 
   #create(): BrowserWindow {

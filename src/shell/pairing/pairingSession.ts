@@ -2,6 +2,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { randomSecret } from "@getahoy/crypto";
 import type { Logger } from "@getahoy/lib";
 import type { DeviceDescription } from "@getahoy/protocol";
+import { keepsCurrentCode } from "../../core/pairing/endedByPhone.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import {
   type PairingFailure,
@@ -42,12 +43,14 @@ export class PairingSession {
   readonly #options: PairingSessionOptions;
   #run: AbortController | null = null;
   #status: PairingStatus = { kind: "idle" };
+  #wanted = false;
 
   constructor(options: PairingSessionOptions) {
     this.#options = options;
   }
 
   start(): void {
+    this.#wanted = true;
     if (this.#run) return;
     const run = new AbortController();
     this.#run = run;
@@ -57,12 +60,18 @@ export class PairingSession {
   }
 
   stop(): void {
+    this.#wanted = false;
     this.#run?.abort();
     this.#run = null;
-    const { kind } = this.#status;
-    if (kind === "starting" || kind === "offering") {
-      this.#emit({ kind: "idle" });
-    }
+    if (keepsCurrentCode(this.#status)) this.#emit({ kind: "idle" });
+  }
+
+  restartAfterPhoneEnded(): void {
+    if (keepsCurrentCode(this.#status)) return;
+    this.#run?.abort();
+    this.#run = null;
+    this.#emit({ kind: "idle" });
+    if (this.#wanted) this.start();
   }
 
   async #rounds(signal: AbortSignal): Promise<void> {

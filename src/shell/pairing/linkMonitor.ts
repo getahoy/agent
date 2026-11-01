@@ -10,8 +10,14 @@ type LinkMonitorOptions = {
   apiUrl: string;
   identity: IdentityStore;
   logger: Logger;
-  onPeerEnded: (phone: PairedPhone, reason: EndReason) => void;
+  onPeerEnded: (
+    phone: PairedPhone,
+    reason: EndReason,
+    whileAsleep: boolean,
+  ) => void;
 };
+
+export type CheckReason = "wake" | "routine";
 
 function settled(result: RequestResult<unknown>): boolean {
   if (result.code === "success") return true;
@@ -28,8 +34,11 @@ export class LinkMonitor {
   }
 
   start(): void {
-    void this.check();
-    this.#timer = setInterval(() => void this.check(), CHECK_INTERVAL_MS);
+    void this.check("routine");
+    this.#timer = setInterval(
+      () => void this.check("routine"),
+      CHECK_INTERVAL_MS,
+    );
   }
 
   stop(): void {
@@ -37,7 +46,7 @@ export class LinkMonitor {
     this.#timer = null;
   }
 
-  async check(): Promise<void> {
+  async check(reason: CheckReason): Promise<void> {
     const { apiUrl, identity, onPeerEnded } = this.#options;
     const sessionToken = identity.sessionToken();
     if (!sessionToken) return;
@@ -53,7 +62,8 @@ export class LinkMonitor {
       const link = listed.data.links.find(
         (candidate) => candidate.peerPublicKey === phone.publicKey,
       );
-      if (link && !link.active) onPeerEnded(phone, link.reason ?? "removed");
+      if (!link || link.active) continue;
+      onPeerEnded(phone, link.reason ?? "removed", reason === "wake");
     }
   }
 

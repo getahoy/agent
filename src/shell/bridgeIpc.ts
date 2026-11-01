@@ -52,7 +52,6 @@ function registerPairing({ controller, services, setLanEnabled }: BridgeParts) {
     controller.setPairingNewPhone(false);
   });
   handle(bridgeChannels.finishPairing, () => controller.finishPairing());
-  handle(bridgeChannels.dismissNotice, () => controller.dismissEndedNotice());
   handleParsed(bridgeChannels.unpairPhone, bytes32Schema, services.unpairPhone);
   handleParsed(bridgeChannels.setLanEnabled, z.boolean(), setLanEnabled);
 }

@@ -50,10 +50,13 @@ function lanSwitch({ controller, services }: SurfaceParts) {
 
 export function createSurfaces(parts: SurfaceParts): MainWindow {
   const { platform, controller, services } = parts;
-  const mainWindow = new MainWindow(platform.lifecycle, () =>
-    services.pairing.stop(),
+  const checkLinks = () => void services.monitor.check("routine");
+  const mainWindow = new MainWindow(
+    platform.lifecycle,
+    () => services.pairing.stop(),
+    checkLinks,
   );
-  const popover = new PopoverWindow();
+  const popover = new PopoverWindow(checkLinks);
   const openWindow = () => {
     popover.hide();
     mainWindow.show();
