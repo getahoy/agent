@@ -1,6 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type AgentFacts, menubarStatus } from "./appState.ts";
+import { phoneEnding } from "../pairing/endedByPhone.ts";
+import type { PairedPhone } from "../pairing/pairedPhone.ts";
+import {
+  type AgentFacts,
+  afterPhoneEnded,
+  agentState,
+  agentStateSchema,
+  menubarStatus,
+} from "./appState.ts";
+
+const pairedPhone: PairedPhone = {
+  publicKey: "",
+  displayName: "",
+  platform: "ios",
+  accountEmail: "o@e.com",
+  pairedAt: 0,
+};
 
 const PHONE_KEY = "phone-key";
 
@@ -89,4 +105,56 @@ test("a missing permission wins over off and locked", () => {
 
 test("off wins over a connected phone", () => {
   assert.equal(menubarStatus({ ...connected, lanEnabled: false }), "off");
+});
+
+const justPaired: AgentFacts = {
+  ...connected,
+  pairing: { kind: "paired", phoneName: "iPhone", accountEmail: "o@e.com" },
+};
+
+const phoneRecord = {
+  ...pairedPhone,
+  publicKey: PHONE_KEY,
+  displayName: "iPhone",
+};
+
+test("a phone saying goodbye removed resets pairing and sets the notice", () => {
+  const learned = { at: 5, whileAsleep: false };
+  const ending = phoneEnding([phoneRecord], PHONE_KEY, "removed", learned);
+  assert.equal(ending.kind, "ended");
+  if (ending.kind !== "ended") return;
+  const state = agentState(afterPhoneEnded(justPaired, [], ending.notice));
+  assert.equal(state.pairing.kind, "idle");
+  assert.deepEqual(state.endedNotice, {
+    reason: "removed",
+    deviceName: "iPhone",
+    at: 5,
+    whileAsleep: false,
+  });
+});
+
+test("a code already on screen survives the phone ending", () => {
+  const offering = {
+    kind: "offering",
+    qr: "qr",
+    expiresAt: 1,
+    reachableOnLan: true,
+  } as const;
+  const facts = afterPhoneEnded({ ...connected, pairing: offering }, [], null);
+  assert.deepEqual(facts.pairing, offering);
+});
+
+test("paired with no phone left never shows the done screen", () => {
+  const stale = agentState({ ...justPaired, pairedPhones: [] });
+  assert.equal(stale.pairing.kind, "idle");
+});
+
+test("an ended notice in an old shape is dropped, not the whole state", () => {
+  const old = { phoneName: "iPhone", reason: "removed" };
+  const parsed = agentStateSchema.safeParse({
+    ...agentState(connected),
+    endedNotice: old,
+  });
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data?.endedNotice, null);
 });
