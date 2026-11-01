@@ -66,7 +66,12 @@ export const phoneStates = {
     pairedPhones: [],
     connectedPhoneKeys: [],
     pairing: offering,
-    endedNotice: { phoneName: "Maya’s iPhone", reason: "removed" },
+    endedNotice: {
+      reason: "removed",
+      deviceName: "Maya’s iPhone",
+      at: Date.now(),
+      whileAsleep: false,
+    },
   },
 } satisfies Record<string, AgentState>;
 

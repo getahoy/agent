@@ -2,8 +2,8 @@ import { Lock } from "lucide-react";
 import { agentCopy } from "../../copy/agentCopy.ts";
 import type { AgentState } from "../../core/appState/appState.ts";
 import { NoticeRow } from "../components/ui/noticeRow.tsx";
+import { shownEndedNotice } from "../pairing/shownEndedNotice.ts";
 import { phoneLink } from "../phone/phoneLink.ts";
-import { endedNoticeText } from "../phone/phoneLinkCopy.ts";
 import { PopoverFooter } from "./popoverFooter.tsx";
 import { PopoverHeader } from "./popoverHeader.tsx";
 import { PopoverPairCard } from "./popoverPairCard.tsx";
@@ -18,7 +18,7 @@ export function PopoverContent({ state }: PopoverContentProps) {
     <>
       <PopoverHeader lanEnabled={state.lanEnabled} />
       {link.kind === "none" ? (
-        <PopoverPairCard />
+        <PopoverPairCard ended={shownEndedNotice(state)} />
       ) : (
         <PopoverPhoneCard
           kind={link.kind}
@@ -26,9 +26,6 @@ export function PopoverContent({ state }: PopoverContentProps) {
           lastHeard={state.lastHeard}
         />
       )}
-      {state.endedNotice ? (
-        <NoticeRow>{endedNoticeText(state.endedNotice)}</NoticeRow>
-      ) : null}
       {link.kind === "locked" ? (
         <NoticeRow
           icon={

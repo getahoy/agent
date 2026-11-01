@@ -39,6 +39,25 @@ const fade: Entrance = {
   transition: { duration: durations.base, ease: easings.out },
 };
 
+const MESSAGE_SECONDS = 0.48;
+const MESSAGE_RISE_PX = 12;
+
+const messageFade: Entrance = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration: MESSAGE_SECONDS },
+};
+
+const messageRise: Entrance = {
+  initial: { opacity: 0, y: MESSAGE_RISE_PX },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: MESSAGE_SECONDS, ease: easings.out },
+};
+
+export function useMessageEnter(): Entrance {
+  return useReducedMotion() ? messageFade : messageRise;
+}
+
 export function useRise(): Entrance {
   return useReducedMotion() ? reducedFade : rise;
 }

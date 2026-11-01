@@ -1,12 +1,21 @@
 import { agentCopy } from "../../copy/agentCopy.ts";
+import { endedWhenCopy } from "../../copy/endedCopy.ts";
 import { homeCopy } from "../../copy/homeCopy.ts";
-import type { EndedNotice } from "../../core/appState/appState.ts";
+import {
+  type EndedByPhone,
+  noticeAge,
+} from "../../core/pairing/endedByPhone.ts";
 import type { PhoneLinkKind } from "./phoneLink.ts";
 
-export function endedNoticeText(notice: EndedNotice): string {
-  return notice.reason === "removed"
-    ? homeCopy.removedBanner(notice.phoneName)
-    : homeCopy.signedOutBanner(notice.phoneName);
+export function endedWhen(notice: EndedByPhone, now: number): string {
+  const age = noticeAge(notice.at, now);
+  const when =
+    age.kind === "justNow"
+      ? endedWhenCopy.justNow
+      : age.kind === "minutes"
+        ? endedWhenCopy.minutes(age.count)
+        : endedWhenCopy.hours(age.count);
+  return notice.whileAsleep ? endedWhenCopy.whileAsleep(when) : when;
 }
 
 export const pillLabels: Record<PhoneLinkKind, string> = {

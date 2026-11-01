@@ -66,6 +66,9 @@
   --font-sans--font-feature-settings: "cv11", "ss01";
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
+  --text-micro: 10px;
+  --text-micro--line-height: 1.3;
+  --text-micro--letter-spacing: 0.06em;
   --text-label: 11px;
   --text-label--line-height: 1.33;
   --text-label--letter-spacing: 0.06em;
