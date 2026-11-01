@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { MenubarStatus, PermissionState } from "../../ports/platform.ts";
+import type { EndedByPhone } from "../pairing/endedByPhone.ts";
 import { pairingStatusSchema } from "../pairing/pairingStatus.ts";
 
 export const onboardingStepSchema = z.enum([
@@ -17,9 +18,11 @@ const phoneSummarySchema = z.object({
   accountEmail: z.string(),
   pairedAt: z.int(),
 });
-const endedNoticeSchema = z.object({
-  phoneName: z.string(),
+const endedNoticeSchema: z.ZodType<EndedByPhone> = z.object({
   reason: z.enum(["removed", "signed_out"]),
+  deviceName: z.string(),
+  at: z.int(),
+  whileAsleep: z.boolean(),
 });
 
 export const agentStateSchema = z.object({
@@ -46,7 +49,6 @@ export type OnboardingStep = z.infer<typeof onboardingStepSchema>;
 export type HelperStatus = z.infer<typeof helperStatusSchema>;
 type WindowScreen = z.infer<typeof windowScreenSchema>;
 export type PhoneSummary = z.infer<typeof phoneSummarySchema>;
-export type EndedNotice = z.infer<typeof endedNoticeSchema>;
 export type AgentState = z.infer<typeof agentStateSchema>;
 export type AgentFacts = Omit<AgentState, "screen">;
 

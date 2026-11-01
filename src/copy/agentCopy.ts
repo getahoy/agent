@@ -57,8 +57,6 @@ export const agentCopy = {
   "signOut.title": "Sign out of Ahoy on this Mac?",
   "signOut.body": "You will need to scan a new code to use Ahoy again.",
   "signOut.confirm": "Sign out",
-  "ended.removed": "removed this Mac from Ahoy.",
-  "ended.signedOut": "signed out of Ahoy on this Mac.",
   "heard.eyebrow": "Heard",
   "status.notConnected": "Not connected",
   "status.paused": "Paused",

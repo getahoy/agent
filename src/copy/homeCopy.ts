@@ -15,8 +15,6 @@ export const homeCopy = {
   removeTitle: (phone: string) => `Remove ${phone}?`,
   signOutBody: (phone: string) =>
     `${phone} will be removed and you will need to scan a new code to use Ahoy again.`,
-  removedBanner: (phone: string) => `${phone} removed this Mac.`,
-  signedOutBanner: (phone: string) => `${phone} signed out of Ahoy.`,
   newPhoneHint: (phone: string) =>
     `Scan this code with the new phone. ${phone} keeps working until the new phone scans it, then it is removed from this Mac.`,
 };
