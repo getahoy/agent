@@ -43,14 +43,12 @@ export class PairingSession {
   readonly #options: PairingSessionOptions;
   #run: AbortController | null = null;
   #status: PairingStatus = { kind: "idle" };
-  #wanted = false;
 
   constructor(options: PairingSessionOptions) {
     this.#options = options;
   }
 
   start(): void {
-    this.#wanted = true;
     if (this.#run) return;
     const run = new AbortController();
     this.#run = run;
@@ -60,22 +58,9 @@ export class PairingSession {
   }
 
   stop(): void {
-    this.#wanted = false;
     this.#run?.abort();
     this.#run = null;
     if (keepsCurrentCode(this.#status)) this.#emit({ kind: "idle" });
-  }
-
-  status(): PairingStatus {
-    return this.#status;
-  }
-
-  restartAfterPhoneEnded(): void {
-    if (keepsCurrentCode(this.#status)) return;
-    this.#run?.abort();
-    this.#run = null;
-    this.#emit({ kind: "idle" });
-    if (this.#wanted) this.start();
   }
 
   async #rounds(signal: AbortSignal): Promise<void> {

@@ -100,7 +100,6 @@ export function createPairingServices(input: ServiceInput) {
     phoneLink,
     controller,
     monitor,
-    pairing,
     authClient,
     logger,
     onPhoneEnded: input.onPhoneEnded,

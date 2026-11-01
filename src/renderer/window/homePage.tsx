@@ -36,7 +36,10 @@ export function HomePage({ state }: HomePageProps) {
         </Text>
       )}
       {pairing ? (
-        <HomePairing status={state.pairing} />
+        <HomePairing
+          status={state.pairing}
+          hasPhone={state.pairedPhones.length > 0}
+        />
       ) : (
         <PhoneStatusCard kind={link.kind} phone={link.phone} />
       )}

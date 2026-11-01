@@ -23,7 +23,7 @@ async function endPairing(
   reason: EndReason,
   whileAsleep: boolean,
 ): Promise<void> {
-  const { identity, controller, pairing, logger } = parts;
+  const { identity, controller, logger } = parts;
   const trace = (step: string) => {
     if (!app.isPackaged) logger.info("pairing.end", step);
   };
@@ -37,9 +37,6 @@ async function endPairing(
   trace(`endPhone done, ${identity.pairedPhones().length} phones left`);
   parts.onPhoneEnded();
   controller.phoneEnded(identity.pairedPhones(), ending.notice);
-  const before = pairing.status().kind;
-  pairing.restartAfterPhoneEnded();
-  trace(`session ${before} -> ${pairing.status().kind}`);
   const { pairing: shown, endedNotice } = controller.state();
   trace(`state ${shown.kind}, notice ${endedNotice?.reason ?? "none"}`);
   if (ending.notice) notifyWhenUnseen(ending.notice);

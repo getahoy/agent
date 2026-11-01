@@ -1,15 +1,14 @@
 import { useEffect } from "react";
-import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
 
-export function usePairingSession(status: PairingStatus["kind"]): void {
-  useEffect(
-    () => () => {
+export function usePairingSession(needsFreshCode: boolean): void {
+  useEffect(() => {
+    void window.ahoy.startPairing();
+    return () => {
       void window.ahoy.stopPairing();
-    },
-    [],
-  );
+    };
+  }, []);
 
   useEffect(() => {
-    if (status === "idle") void window.ahoy.startPairing();
-  }, [status]);
+    if (needsFreshCode) void window.ahoy.startPairing();
+  }, [needsFreshCode]);
 }

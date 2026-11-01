@@ -16,7 +16,9 @@ const PAIR_STEP = 2;
 type PairStepProps = { state: AgentState };
 
 export function PairStep({ state }: PairStepProps) {
-  usePairingSession(state.pairing.kind);
+  usePairingSession(
+    state.pairing.kind === "idle" && state.pairedPhones.length === 0,
+  );
   const actions = useAgentActions();
   const [cancel, cancelling] = usePendingAction(actions.cancelNewPhone);
   const [currentPhone] = state.pairedPhones;
