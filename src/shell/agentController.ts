@@ -1,6 +1,7 @@
 import {
   type AgentFacts,
   type AgentState,
+  afterPhoneEnded,
   agentState,
   type OnboardingStep,
   type PhoneSummary,
@@ -124,8 +125,11 @@ export class AgentController {
     this.#update({ pausedPhoneKeys: [...paused] });
   }
 
-  phoneEnded(endedNotice: EndedByPhone | null): void {
-    if (endedNotice) this.#update({ endedNotice });
+  phoneEnded(
+    pairedPhones: readonly PairedPhone[],
+    notice: EndedByPhone | null,
+  ): void {
+    this.#update(afterPhoneEnded(this.#facts, summarise(pairedPhones), notice));
   }
 
   setPairingNewPhone(pairingNewPhone: boolean): void {

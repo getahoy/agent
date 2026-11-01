@@ -1,5 +1,5 @@
 import type { EndReason, GoodbyeReason } from "@getahoy/protocol";
-import { BrowserWindow, Notification } from "electron";
+import { app, BrowserWindow, Notification } from "electron";
 import { endedNotificationCopy } from "../../copy/endedCopy.ts";
 import {
   type EndedByPhone,
@@ -17,28 +17,43 @@ function notifyWhenUnseen(notice: EndedByPhone): void {
   new Notification({ title, body: copy.body }).show();
 }
 
-export async function phoneEndedPairing(
+async function endPairing(
   parts: PairingParts,
   phone: PairedPhone,
   reason: EndReason,
   whileAsleep: boolean,
 ): Promise<void> {
   const { identity, controller, pairing, logger } = parts;
+  const trace = (step: string) => {
+    if (!app.isPackaged) logger.info("pairing.end", step);
+  };
   const learned = { at: Date.now(), whileAsleep };
-  const ending = phoneEnding(
-    identity.pairedPhones(),
-    phone.publicKey,
-    reason,
-    learned,
-  );
+  const phones = identity.pairedPhones();
+  const ending = phoneEnding(phones, phone.publicKey, reason, learned);
+  const withNotice = ending.kind === "ended" && ending.notice !== null;
+  trace(`${reason}: ${ending.kind}, notice ${withNotice ? "yes" : "no"}`);
   if (ending.kind === "ignored") return;
   await identity.endPhone(phone.publicKey, reason);
+  trace(`endPhone done, ${identity.pairedPhones().length} phones left`);
   parts.onPhoneEnded();
-  controller.setPairedPhones(identity.pairedPhones());
-  controller.phoneEnded(ending.notice);
+  controller.phoneEnded(identity.pairedPhones(), ending.notice);
+  const before = pairing.status().kind;
   pairing.restartAfterPhoneEnded();
-  logger.info("pairing", `Phone ended the pairing (${reason})`);
+  trace(`session ${before} -> ${pairing.status().kind}`);
+  const { pairing: shown, endedNotice } = controller.state();
+  trace(`state ${shown.kind}, notice ${endedNotice?.reason ?? "none"}`);
   if (ending.notice) notifyWhenUnseen(ending.notice);
+}
+
+export function phoneEndedPairing(
+  parts: PairingParts,
+  phone: PairedPhone,
+  reason: EndReason,
+  whileAsleep: boolean,
+): void {
+  endPairing(parts, phone, reason, whileAsleep).catch((error: unknown) =>
+    parts.logger.error("pairing", "Ending the pairing failed", error),
+  );
 }
 
 export function handlePhoneGoodbye(
@@ -52,7 +67,7 @@ export function handlePhoneGoodbye(
       return;
     case "removed":
     case "signed_out":
-      void phoneEndedPairing(parts, phone, reason, false);
+      phoneEndedPairing(parts, phone, reason, false);
       return;
     case "replaced":
     case "turned_off":

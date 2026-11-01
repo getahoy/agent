@@ -66,6 +66,10 @@ export class PairingSession {
     if (keepsCurrentCode(this.#status)) this.#emit({ kind: "idle" });
   }
 
+  status(): PairingStatus {
+    return this.#status;
+  }
+
   restartAfterPhoneEnded(): void {
     if (keepsCurrentCode(this.#status)) return;
     this.#run?.abort();

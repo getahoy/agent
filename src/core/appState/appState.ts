@@ -1,7 +1,13 @@
 import { z } from "zod";
 import type { MenubarStatus, PermissionState } from "../../ports/platform.ts";
-import type { EndedByPhone } from "../pairing/endedByPhone.ts";
-import { pairingStatusSchema } from "../pairing/pairingStatus.ts";
+import {
+  type EndedByPhone,
+  keepsCurrentCode,
+} from "../pairing/endedByPhone.ts";
+import {
+  type PairingStatus,
+  pairingStatusSchema,
+} from "../pairing/pairingStatus.ts";
 
 export const onboardingStepSchema = z.enum([
   "welcome",
@@ -39,7 +45,7 @@ export const agentStateSchema = z.object({
   connectedPhoneKeys: z.array(z.string()),
   pausedPhoneKeys: z.array(z.string()),
   lastConnectedAt: z.int().nullable(),
-  endedNotice: endedNoticeSchema.nullable(),
+  endedNotice: endedNoticeSchema.nullable().catch(null),
   pairingNewPhone: z.boolean(),
   lastHeard: z.object({ text: z.string(), at: z.int() }).nullable(),
   screen: windowScreenSchema,
@@ -82,6 +88,28 @@ export function menubarStatus(facts: AgentFacts): MenubarStatus {
   return facts.connectedPhoneKeys.length > 0 ? "connected" : "noPhone";
 }
 
+// A "paired" result with no phone left is stale: show the code screen instead.
+function shownPairing(facts: AgentFacts): PairingStatus {
+  const stale = facts.pairing.kind === "paired" && !facts.pairedPhones.length;
+  return stale ? { kind: "idle" } : facts.pairing;
+}
+
+export function afterPhoneEnded(
+  facts: AgentFacts,
+  pairedPhones: PhoneSummary[],
+  notice: EndedByPhone | null,
+): AgentFacts {
+  const pairing = keepsCurrentCode(facts.pairing)
+    ? facts.pairing
+    : { kind: "idle" as const };
+  const endedNotice = notice ?? facts.endedNotice;
+  return { ...facts, pairedPhones, pairing, endedNotice };
+}
+
 export function agentState(facts: AgentFacts): AgentState {
-  return { ...facts, screen: windowScreen(facts) };
+  return {
+    ...facts,
+    pairing: shownPairing(facts),
+    screen: windowScreen(facts),
+  };
 }

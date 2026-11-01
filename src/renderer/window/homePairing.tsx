@@ -5,7 +5,7 @@ import { PairingPanel } from "../pairing/pairingPanel.tsx";
 type HomePairingProps = { status: PairingStatus };
 
 export function HomePairing({ status }: HomePairingProps) {
-  usePairingSession();
+  usePairingSession(status.kind);
   return (
     <div className="flex flex-col items-center">
       <PairingPanel status={status} />

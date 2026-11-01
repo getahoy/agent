@@ -92,7 +92,7 @@ export function createPairingServices(input: ServiceInput) {
     identity,
     logger,
     onPeerEnded: (phone, reason, whileAsleep) =>
-      void phoneEndedPairing(parts, phone, reason, whileAsleep),
+      phoneEndedPairing(parts, phone, reason, whileAsleep),
   });
   const pairing = createPairingSession(input, authClient, phoneLink);
   const parts: PairingParts = {
