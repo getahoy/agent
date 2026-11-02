@@ -19,15 +19,14 @@ export function PairingCode({ status, place }: PairingCodeProps) {
   const row = place === "ended";
   const centred = place === "setup" || place === "newPhone";
   const offLan = shown.kind === "offering" && !shown.reachableOnLan;
+  const crossAlign = centred ? "items-center" : "items-start";
   return (
-    <div className={cn("flex flex-col gap-4", centred && "items-center")}>
+    <div className={cn("flex flex-col gap-4", crossAlign)}>
       <div
         className={cn(
           "flex",
-          row && "flex-row items-center gap-6",
-          !row && "flex-col gap-4",
+          row ? "flex-row items-center gap-6" : ["flex-col gap-4", crossAlign],
           place === "setup" && "gap-4.5",
-          centred && "items-center",
         )}
       >
         <QrFrame

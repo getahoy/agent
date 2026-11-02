@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { frameLabelCopy, pairingCodeCopy } from "../../copy/pairingCodeCopy.ts";
 import { Button } from "../components/ui/button.tsx";
 import { QrCode } from "../components/ui/qrCode.tsx";
@@ -8,7 +9,7 @@ import { cn } from "../lib/cn.ts";
 import type { CodeLook, FrameView } from "./codeView.ts";
 
 const lookClass: Record<CodeLook, string> = {
-  clear: "animate-qr-reveal",
+  clear: "",
   blurred: "opacity-35 blur-qr",
   dim: "opacity-12",
 };
@@ -29,13 +30,14 @@ export function QrFrame({
   onNewCode,
 }: QrFrameProps) {
   const { code } = view;
+  const [codeAtOpen] = useState(code?.qr);
   return (
     <div
       role="img"
       aria-label={frameLabelCopy[view.label]}
       aria-busy={view.spinner}
       className={cn(
-        "relative flex shrink-0 rounded-qr bg-qr-paper ring-1 ring-rope",
+        "relative flex w-fit shrink-0 rounded-qr bg-qr-paper ring-1 ring-rope",
         inset === "tight" ? "p-3.5" : "p-4",
       )}
     >
@@ -46,6 +48,9 @@ export function QrFrame({
             className={cn(
               "absolute inset-0 transition-[filter,opacity] duration-240",
               lookClass[code.look],
+              code.look === "clear" &&
+                code.qr !== codeAtOpen &&
+                "animate-qr-reveal",
             )}
           >
             <QrCode value={code.qr} />
