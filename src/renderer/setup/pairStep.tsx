@@ -4,7 +4,6 @@ import type { AgentState } from "../../core/appState/appState.ts";
 import { Button } from "../components/ui/button.tsx";
 import { Text } from "../components/ui/text.tsx";
 import { useAgentActions } from "../hooks/useAgentActions.ts";
-import { usePairingSession } from "../hooks/usePairingSession.ts";
 import { usePendingAction } from "../hooks/usePendingAction.ts";
 import { EndedMessage } from "../pairing/endedMessage.tsx";
 import { PairingPanel } from "../pairing/pairingPanel.tsx";
@@ -16,9 +15,6 @@ const PAIR_STEP = 2;
 type PairStepProps = { state: AgentState };
 
 export function PairStep({ state }: PairStepProps) {
-  usePairingSession(
-    state.pairing.kind === "idle" && state.pairedPhones.length === 0,
-  );
   const actions = useAgentActions();
   const [cancel, cancelling] = usePendingAction(actions.cancelNewPhone);
   const [currentPhone] = state.pairedPhones;
@@ -41,7 +37,10 @@ export function PairStep({ state }: PairStepProps) {
           {homeCopy.newPhoneHint(currentPhone.displayName)}
         </Text>
       ) : null}
-      <PairingPanel status={state.pairing} />
+      <PairingPanel
+        status={state.pairing}
+        place={state.pairingNewPhone ? "newPhone" : "setup"}
+      />
       {replacing ? (
         <Button
           variant="secondary"

@@ -13,8 +13,12 @@ type PopoverPairCardProps = { ended: EndedByPhone | null };
 export function PopoverPairCard({ ended }: PopoverPairCardProps) {
   const actions = useAgentActions();
   const enter = useMessageEnter();
+  const openQr = () => {
+    void actions.startPairing();
+    void actions.openWindow();
+  };
   const showQr = (
-    <Button size="xl" width="full" onClick={() => void actions.openWindow()}>
+    <Button size="xl" width="full" onClick={openQr}>
       {agentCopy["popover.showQr"]}
     </Button>
   );

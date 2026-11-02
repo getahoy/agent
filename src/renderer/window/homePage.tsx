@@ -4,10 +4,10 @@ import type { AgentState } from "../../core/appState/appState.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
 import { Text } from "../components/ui/text.tsx";
 import { EndedMessage } from "../pairing/endedMessage.tsx";
+import { PairingPanel } from "../pairing/pairingPanel.tsx";
 import { shownEndedNotice } from "../pairing/shownEndedNotice.ts";
 import { LastHeard } from "../phone/lastHeard.tsx";
 import { type PhoneLink, phoneLink } from "../phone/phoneLink.ts";
-import { HomePairing } from "./homePairing.tsx";
 import { PhoneStatusCard } from "./phoneStatusCard.tsx";
 
 function homeTitle(link: PhoneLink, pairing: PairingStatus): string {
@@ -45,10 +45,7 @@ export function HomePage({ state }: HomePageProps) {
         </Text>
       )}
       {pairing ? (
-        <HomePairing
-          status={state.pairing}
-          hasPhone={state.pairedPhones.length > 0}
-        />
+        <PairingPanel status={state.pairing} place={ended ? "ended" : "home"} />
       ) : (
         <PhoneStatusCard kind={link.kind} phone={link.phone} />
       )}

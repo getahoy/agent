@@ -76,7 +76,7 @@ export function GalleryApp() {
           <GalleryPair key={label} label={`pair · ${label}`}>
             <GalleryWindowFrame>
               <SetupFrame step={2}>
-                <PairingPanel status={status} />
+                <PairingPanel status={status} place="setup" />
               </SetupFrame>
             </GalleryWindowFrame>
           </GalleryPair>

@@ -1,6 +1,7 @@
 import type { AgentState } from "../../core/appState/appState.ts";
 
 const PHONE_KEY = "gallery-phone";
+const SECOND_MS = 1000;
 const MINUTE_MS = 60_000;
 const DAY_MS = 1440 * MINUTE_MS;
 const PAIRING_WINDOW_MS = 5 * MINUTE_MS;
@@ -32,10 +33,12 @@ const connected: AgentState = {
   screen: "home",
 };
 
+const GALLERY_QR = "ahoy://pair?gallery";
+
 const offering: AgentState["pairing"] = {
   kind: "offering",
-  qr: "ahoy://pair?gallery",
-  expiresAt: now + PAIRING_WINDOW_MS,
+  qr: GALLERY_QR,
+  expiresAt: Math.floor((now + PAIRING_WINDOW_MS) / SECOND_MS),
   reachableOnLan: true,
 };
 
@@ -77,8 +80,13 @@ export const phoneStates = {
 
 export const pairingStates = {
   starting: { kind: "starting" },
+  slow: { kind: "slow" },
   offering,
   offeringOffLan: { ...offering, reachableOnLan: false },
+  refreshing: { kind: "refreshing", qr: GALLERY_QR },
+  offline: { kind: "offline" },
+  expired: { kind: "expired", qr: GALLERY_QR },
+  scanned: { kind: "scanned", qr: GALLERY_QR },
   network: { kind: "failed", reason: "network" },
   server: { kind: "failed", reason: "server" },
   updateRequired: { kind: "failed", reason: "updateRequired" },
