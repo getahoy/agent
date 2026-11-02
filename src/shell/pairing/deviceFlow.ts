@@ -2,9 +2,11 @@ import { DESKTOP_CLIENT_ID } from "@getahoy/protocol";
 import { createAuthClient } from "better-auth/client";
 import { deviceAuthorizationClient } from "better-auth/client/plugins";
 import { z } from "zod";
+import { withDeadline } from "../../core/pairing/deadline.ts";
 
 const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 const MS_PER_SECOND = 1000;
+const REQUEST_DEADLINE_MS = 15_000;
 
 const refusalCodeSchema = z.enum([
   "authorization_pending",
@@ -52,9 +54,16 @@ export function createDeviceAuthClient(apiUrl: string) {
   });
 }
 
-export async function requestDeviceCode(
+export function requestDeviceCode(
   client: DeviceAuthClient,
 ): Promise<CodeRequest> {
+  return withDeadline(askForCode(client), REQUEST_DEADLINE_MS, {
+    kind: "failed",
+    failure: "server",
+  });
+}
+
+async function askForCode(client: DeviceAuthClient): Promise<CodeRequest> {
   const response = await client.device
     .code({ client_id: DESKTOP_CLIENT_ID })
     .catch(() => null);
@@ -77,13 +86,14 @@ export async function pollDeviceToken(
   client: DeviceAuthClient,
   deviceCode: string,
 ): Promise<TokenPoll> {
-  const response = await client.device
+  const request = client.device
     .token({
       grant_type: DEVICE_GRANT,
       device_code: deviceCode,
       client_id: DESKTOP_CLIENT_ID,
     })
     .catch(() => null);
+  const response = await withDeadline(request, REQUEST_DEADLINE_MS, null);
   if (!response) return { kind: "network" };
   if (response.data) {
     return { kind: "approved", sessionToken: response.data.access_token };

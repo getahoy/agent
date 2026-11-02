@@ -9,6 +9,7 @@ import { registerBridge } from "./bridgeIpc.ts";
 import { GalleryWindow } from "./galleryWindow.ts";
 import { MainWindow } from "./mainWindow.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
+import { surfacePairing } from "./pairing/surfacePairing.ts";
 import { PopoverWindow } from "./popoverWindow.ts";
 
 type SurfaceParts = {
@@ -61,15 +62,26 @@ function lanSwitch({ controller, services }: SurfaceParts) {
 export function createSurfaces(parts: SurfaceParts): MainWindow {
   const { platform, controller, services, logger } = parts;
   const { monitor } = services;
+  const pairing = surfacePairing({
+    controller,
+    pairing: services.pairing,
+    surfaceVisible: () => mainWindow.isVisible() || popover.isVisible(),
+    trace: app.isPackaged
+      ? null
+      : (message) => logger.info("pairing.surface", message),
+  });
   const mainWindow = new MainWindow(
     platform.lifecycle,
-    () => services.pairing.stop(),
+    pairing.visibilityChanged,
     () => void monitor.check("window"),
   );
-  const popover = new PopoverWindow(() => void monitor.check("popover"));
+  const popover = new PopoverWindow(
+    () => void monitor.check("popover"),
+    pairing.visibilityChanged,
+  );
   const openWindow = () => {
-    popover.hide();
     mainWindow.show();
+    popover.hide();
   };
   const tray = new AgentTray({
     menubarIcon: macosMenubarIcon,
@@ -86,6 +98,7 @@ export function createSurfaces(parts: SurfaceParts): MainWindow {
     platform,
     services,
     setLanEnabled: lanSwitch(parts),
+    startPairing: pairing.start,
     openWindow,
     setPopoverHeight: (height) => popover.setHeight(height),
   });

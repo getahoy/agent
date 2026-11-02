@@ -5,27 +5,31 @@ import type { DeviceDescription } from "@getahoy/protocol";
 import { keepsCurrentCode } from "../../core/pairing/endedByPhone.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import {
-  type PairingFailure,
-  type PairingStatus,
-  pairingFailure,
-} from "../../core/pairing/pairingStatus.ts";
-import { pairingQr, verifiedPhone } from "../../core/pairing/pairingTerms.ts";
+  type CodeEffect,
+  type CodeEvent,
+  type CodeState,
+  codeStep,
+  idleCode,
+} from "../../core/pairing/pairingCode.ts";
+import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
+import { pairingQr } from "../../core/pairing/pairingTerms.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import type { LanEndpoint } from "../lan/lanAddresses.ts";
 import {
   type DeviceAuthClient,
-  type IssuedCode,
   pollDeviceToken,
   requestDeviceCode,
 } from "./deviceFlow.ts";
-import { completePairing } from "./pairingApi.ts";
+import { completeClaim, type OpenCode } from "./pairingCompletion.ts";
 
 const SLOW_DOWN_STEP_MS = 2000;
 const MS_PER_SECOND = 1000;
+const SLOW_AFTER_MS = 6000;
+const NETWORK_CHECK_MS = 2000;
 
-type RoundEnd = "expired" | "finished";
+const refusedByServer: CodeEvent = { kind: "refused", reason: "server" };
 
-type OpenCode = { code: IssuedCode; pairingSecret: Uint8Array };
+type Claim = { open: OpenCode; sessionToken: string | null };
 
 type PairingSessionOptions = {
   apiUrl: string;
@@ -34,6 +38,7 @@ type PairingSessionOptions = {
   device: () => DeviceDescription;
   lanEndpoint: () => LanEndpoint | null;
   lanListening: () => boolean;
+  isOnline: () => boolean;
   logger: Logger;
   onStatus: (status: PairingStatus) => void;
   onReplaced: (phones: readonly PairedPhone[]) => void;
@@ -42,7 +47,8 @@ type PairingSessionOptions = {
 export class PairingSession {
   readonly #options: PairingSessionOptions;
   #run: AbortController | null = null;
-  #status: PairingStatus = { kind: "idle" };
+  #code: CodeState = idleCode;
+  #claim: Claim | null = null;
 
   constructor(options: PairingSessionOptions) {
     this.#options = options;
@@ -52,107 +58,133 @@ export class PairingSession {
     if (this.#run) return;
     const run = new AbortController();
     this.#run = run;
-    void this.#rounds(run.signal).finally(() => {
-      if (this.#run === run) this.#run = null;
-    });
+    void this.#drive(run.signal)
+      .catch((error: unknown) => {
+        this.#options.logger.error("pairing", "Pairing session broke", error);
+        if (!run.signal.aborted) this.#advance(refusedByServer);
+      })
+      .finally(() => {
+        if (this.#run === run) this.#run = null;
+      });
   }
 
   stop(): void {
+    // The phone has already approved this code, so the claim must finish or
+    // the phone is linked on the server but never saved on this Mac.
+    if (this.#code.status.kind === "scanned") return;
     this.#run?.abort();
     this.#run = null;
-    if (keepsCurrentCode(this.#status)) this.#emit({ kind: "idle" });
+    this.#claim = null;
+    if (!keepsCurrentCode(this.#code.status)) return;
+    this.#code = idleCode;
+    this.#options.onStatus(idleCode.status);
   }
 
-  async #rounds(signal: AbortSignal): Promise<void> {
-    while (!signal.aborted && (await this.#round(signal)) === "expired") {
-      this.#options.logger.info("pairing", "Code expired, showing a new one");
+  async #drive(signal: AbortSignal): Promise<void> {
+    const online = this.#options.isOnline();
+    let effect = this.#advance({ kind: "begin", online });
+    while (effect !== "none" && !signal.aborted) {
+      const event = await this.#perform(effect, signal);
+      if (signal.aborted) return;
+      effect = this.#advance(event);
     }
   }
 
-  async #round(signal: AbortSignal): Promise<RoundEnd> {
-    const { authClient, identity, device, lanEndpoint, lanListening } =
-      this.#options;
-    this.#emit({ kind: "starting" });
-    const requested = await requestDeviceCode(authClient);
-    if (signal.aborted) return "finished";
-    if (requested.kind === "failed") return this.#fail(requested.failure);
+  #advance(event: CodeEvent): CodeEffect {
+    const step = codeStep(this.#code, event);
+    const changed = step.state.status !== this.#code.status;
+    this.#code = step.state;
+    if (changed) this.#options.onStatus(step.state.status);
+    return step.effect;
+  }
+
+  #perform(
+    effect: Exclude<CodeEffect, "none">,
+    signal: AbortSignal,
+  ): Promise<CodeEvent> {
+    switch (effect) {
+      case "request":
+        return this.#request(signal);
+      case "awaitNetwork":
+        return this.#awaitNetwork(signal);
+      case "poll":
+        return this.#awaitApproval(signal);
+      case "complete":
+        return this.#complete();
+      default: {
+        const unhandled: never = effect;
+        return unhandled;
+      }
+    }
+  }
+
+  async #request(signal: AbortSignal): Promise<CodeEvent> {
+    const slow = setTimeout(() => {
+      if (!signal.aborted) this.#advance({ kind: "slow" });
+    }, SLOW_AFTER_MS);
+    const requested = await requestDeviceCode(this.#options.authClient);
+    clearTimeout(slow);
+    if (requested.kind === "failed") {
+      const online = this.#options.isOnline();
+      return { kind: "missed", failure: requested.failure, online };
+    }
     const open = { code: requested.code, pairingSecret: randomSecret() };
+    if (!signal.aborted) this.#claim = { open, sessionToken: null };
+    return { kind: "issued", offer: this.#offer(open) };
+  }
+
+  #offer(open: OpenCode): Extract<PairingStatus, { kind: "offering" }> {
+    const { identity, device, lanEndpoint, lanListening } = this.#options;
     const lan = lanEndpoint() ?? undefined;
+    const { userCode, expiresAt } = open.code;
     const qr = pairingQr({
-      userCode: open.code.userCode,
+      userCode,
       displayName: device().displayName,
       desktopPublicKey: identity.encodedPublicKey(),
       pairingSecret: open.pairingSecret,
-      expiresAt: open.code.expiresAt,
+      expiresAt,
       lan,
     });
     const reachableOnLan = lan !== undefined && lanListening();
-    const { expiresAt } = open.code;
-    this.#emit({ kind: "offering", qr, expiresAt, reachableOnLan });
-    return this.#awaitApproval(open, signal);
+    return { kind: "offering", qr, expiresAt, reachableOnLan };
   }
 
-  async #awaitApproval(open: OpenCode, signal: AbortSignal): Promise<RoundEnd> {
-    const { authClient } = this.#options;
-    const { deviceCode, expiresAt } = open.code;
-    let intervalMs = open.code.intervalMs;
-    while (!signal.aborted) {
-      await sleep(intervalMs, undefined, { signal }).catch(() => undefined);
-      if (signal.aborted) return "finished";
-      if (Date.now() / MS_PER_SECOND >= expiresAt) return "expired";
+  async #awaitNetwork(signal: AbortSignal): Promise<CodeEvent> {
+    while (!signal.aborted && !this.#options.isOnline()) {
+      await sleep(NETWORK_CHECK_MS, undefined, { signal }).catch(() => null);
+    }
+    return { kind: "online" };
+  }
+
+  async #awaitApproval(signal: AbortSignal): Promise<CodeEvent> {
+    const claim = this.#claim;
+    if (!claim) return refusedByServer;
+    const { deviceCode, expiresAt } = claim.open.code;
+    const dueAt = expiresAt * MS_PER_SECOND;
+    let intervalMs = claim.open.code.intervalMs;
+    while (!signal.aborted && Date.now() < dueAt) {
+      const waitMs = Math.min(intervalMs, dueAt - Date.now());
+      await sleep(waitMs, undefined, { signal }).catch(() => null);
+      if (signal.aborted || Date.now() >= dueAt) break;
+      const { authClient } = this.#options;
       const polled = await pollDeviceToken(authClient, deviceCode);
-      if (signal.aborted) return "finished";
       if (polled.kind === "approved") {
-        return this.#complete(open, polled.sessionToken);
+        claim.sessionToken = polled.sessionToken;
+        return { kind: "approved" };
       }
-      if (polled.kind === "expired") return "expired";
-      if (polled.kind === "failed") return this.#fail("server");
+      if (polled.kind === "expired") break;
+      if (polled.kind === "failed") return refusedByServer;
       if (polled.kind === "slowDown") intervalMs += SLOW_DOWN_STEP_MS;
     }
-    return "finished";
+    return { kind: "due" };
   }
 
-  async #complete(open: OpenCode, sessionToken: string): Promise<RoundEnd> {
-    const { apiUrl, identity, device, logger } = this.#options;
+  #complete(): Promise<CodeEvent> {
+    const claim = this.#claim;
+    if (!claim?.sessionToken) return Promise.resolve(refusedByServer);
+    const { apiUrl, identity, device, logger, onReplaced } = this.#options;
     const desktop = device();
-    const completed = await completePairing({
-      apiUrl,
-      sessionToken,
-      body: { userCode: open.code.userCode, device: desktop },
-    });
-    if (completed.code === "error") {
-      return this.#fail(pairingFailure(completed.error));
-    }
-    const phone = verifiedPhone({
-      complete: completed.data,
-      desktopPublicKey: desktop.publicKey,
-      pairingSecret: open.pairingSecret,
-      now: Date.now(),
-    });
-    if (!phone) {
-      logger.warn("pairing", "Claim proof did not match, pairing refused");
-      return this.#fail("proofRejected");
-    }
-    const { desktopId } = completed.data;
-    const replaced = await identity.completePairing({
-      desktopId,
-      sessionToken,
-      phone,
-    });
-    this.#options.onReplaced(replaced);
-    logger.info("pairing", "Phone paired");
-    const { displayName: phoneName, accountEmail } = phone;
-    this.#emit({ kind: "paired", phoneName, accountEmail });
-    return "finished";
-  }
-
-  #fail(reason: PairingFailure): RoundEnd {
-    this.#emit({ kind: "failed", reason });
-    return "finished";
-  }
-
-  #emit(status: PairingStatus): void {
-    this.#status = status;
-    this.#options.onStatus(status);
+    const completion = { apiUrl, identity, logger, onReplaced, desktop };
+    return completeClaim(completion, claim.open, claim.sessionToken);
   }
 }

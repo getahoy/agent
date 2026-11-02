@@ -4,7 +4,7 @@ import {
   type Hello,
   PROTOCOL_VERSION,
 } from "@getahoy/protocol";
-import { app } from "electron";
+import { app, net } from "electron";
 import type { DeviceIdentity } from "../../ports/platform.ts";
 import type { AgentController } from "../agentController.ts";
 import type { CommandReceiver } from "../commands/commandReceiver.ts";
@@ -64,6 +64,7 @@ function createPairingSession(
     device: () => desktopDescription(identity, device),
     lanEndpoint: () => lanEndpoint(port),
     lanListening: () => controller.state().lanEnabled,
+    isOnline: () => net.isOnline(),
     logger,
     onStatus: (status) =>
       controller.setPairing(status, identity.pairedPhones()),

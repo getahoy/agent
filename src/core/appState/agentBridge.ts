@@ -9,7 +9,6 @@ export const bridgeChannels = {
   openPermissionSettings: "agent:open-permission-settings",
   relaunch: "agent:relaunch",
   startPairing: "agent:start-pairing",
-  stopPairing: "agent:stop-pairing",
   unpairPhone: "agent:unpair-phone",
   signOut: "agent:sign-out",
   requestNewPhone: "agent:request-new-phone",
@@ -33,7 +32,6 @@ export type AgentBridge = {
   openPermissionSettings: (permission: Permission) => Promise<void>;
   relaunch: () => Promise<void>;
   startPairing: () => Promise<void>;
-  stopPairing: () => Promise<void>;
   unpairPhone: (publicKey: string) => Promise<void>;
   signOut: () => Promise<void>;
   requestNewPhone: () => Promise<void>;

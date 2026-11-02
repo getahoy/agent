@@ -29,7 +29,6 @@ const bridge: AgentBridge = {
     invoke(bridgeChannels.openPermissionSettings, permission),
   relaunch: () => invoke(bridgeChannels.relaunch),
   startPairing: () => invoke(bridgeChannels.startPairing),
-  stopPairing: () => invoke(bridgeChannels.stopPairing),
   unpairPhone: (publicKey) => invoke(bridgeChannels.unpairPhone, publicKey),
   signOut: () => invoke(bridgeChannels.signOut),
   requestNewPhone: () => invoke(bridgeChannels.requestNewPhone),

@@ -15,10 +15,12 @@ function clamp(value: number, min: number, max: number): number {
 export class PopoverWindow {
   readonly #window: BrowserWindow;
   readonly #onShown: () => void;
+  readonly #onVisibilityChange: () => void;
   #hiddenAt = 0;
 
-  constructor(onShown: () => void) {
+  constructor(onShown: () => void, onVisibilityChange: () => void) {
     this.#onShown = onShown;
+    this.#onVisibilityChange = onVisibilityChange;
     // A panel takes key focus when shown without activating the app, so Esc
     // and click-away work and the main window stays where it is.
     this.#window = new BrowserWindow({
@@ -66,6 +68,11 @@ export class PopoverWindow {
     this.#hiddenAt = Date.now();
     this.#window.setAlwaysOnTop(false);
     this.#window.hide();
+    this.#onVisibilityChange();
+  }
+
+  isVisible(): boolean {
+    return this.#window.isVisible();
   }
 
   setHeight(height: number): void {
@@ -85,6 +92,7 @@ export class PopoverWindow {
     this.#window.setPosition(x, y + GAP_BELOW_TRAY);
     this.#window.setAlwaysOnTop(true, "pop-up-menu");
     this.#window.show();
+    this.#onVisibilityChange();
     this.#onShown();
   }
 }

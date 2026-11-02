@@ -19,6 +19,7 @@ type BridgeParts = {
   platform: PlatformAdapter;
   services: PairingServices;
   setLanEnabled: (enabled: boolean) => Promise<void>;
+  startPairing: () => void;
   openWindow: () => void;
   setPopoverHeight: (height: number) => void;
 };
@@ -41,10 +42,10 @@ function handleParsed<T>(
   });
 }
 
-function registerPairing({ controller, services, setLanEnabled }: BridgeParts) {
+function registerPairing(parts: BridgeParts) {
+  const { controller, services, setLanEnabled } = parts;
   const { pairing } = services;
-  handle(bridgeChannels.startPairing, () => pairing.start());
-  handle(bridgeChannels.stopPairing, () => pairing.stop());
+  handle(bridgeChannels.startPairing, () => parts.startPairing());
   handle(bridgeChannels.signOut, () => services.signOut());
   handle(bridgeChannels.requestNewPhone, () =>
     controller.setPairingNewPhone(true),

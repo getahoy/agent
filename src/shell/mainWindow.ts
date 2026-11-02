@@ -15,17 +15,18 @@ function canvasColor(): string {
 
 export class MainWindow {
   readonly #lifecycle: LifecycleController;
-  readonly #onClosed: () => void;
+  readonly #onVisibilityChange: () => void;
   readonly #onShown: () => void;
   #window: BrowserWindow | null = null;
+  #visible = false;
 
   constructor(
     lifecycle: LifecycleController,
-    onClosed: () => void,
+    onVisibilityChange: () => void,
     onShown: () => void,
   ) {
     this.#lifecycle = lifecycle;
-    this.#onClosed = onClosed;
+    this.#onVisibilityChange = onVisibilityChange;
     this.#onShown = onShown;
     nativeTheme.on("updated", () =>
       this.#window?.setBackgroundColor(canvasColor()),
@@ -36,6 +37,10 @@ export class MainWindow {
     this.#window?.close();
   }
 
+  isVisible(): boolean {
+    return this.#visible;
+  }
+
   show(): void {
     const window = this.#window ?? this.#create();
     this.#window = window;
@@ -43,7 +48,14 @@ export class MainWindow {
     if (window.isMinimized()) window.restore();
     window.show();
     window.focus();
+    this.#setVisible(true);
     this.#onShown();
+  }
+
+  #setVisible(visible: boolean): void {
+    if (this.#visible === visible) return;
+    this.#visible = visible;
+    this.#onVisibilityChange();
   }
 
   #create(): BrowserWindow {
@@ -60,10 +72,16 @@ export class MainWindow {
       webPreferences: secureWebPreferences(),
     });
     loadSurface(window, "window");
+    // macOS sends hide and show when the window is minimised, covered or on
+    // another Space, not only when it is closed.
+    window.on("show", () => this.#setVisible(true));
+    window.on("restore", () => this.#setVisible(true));
+    window.on("hide", () => this.#setVisible(false));
+    window.on("minimize", () => this.#setVisible(false));
     window.on("closed", () => {
       this.#window = null;
       this.#lifecycle.hideWindowSurface();
-      this.#onClosed();
+      this.#setVisible(false);
     });
     return window;
   }
