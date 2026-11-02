@@ -11,13 +11,18 @@ const pairingFailureSchema = z.enum([
 export const pairingStatusSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("idle") }),
   z.object({ kind: z.literal("starting") }),
+  z.object({ kind: z.literal("slow") }),
   z.object({
     kind: z.literal("offering"),
     qr: z.string(),
     expiresAt: z.int(),
     reachableOnLan: z.boolean(),
   }),
+  z.object({ kind: z.literal("refreshing"), qr: z.string() }),
+  z.object({ kind: z.literal("offline") }),
   z.object({ kind: z.literal("failed"), reason: pairingFailureSchema }),
+  z.object({ kind: z.literal("expired"), qr: z.string() }),
+  z.object({ kind: z.literal("scanned"), qr: z.string() }),
   z.object({
     kind: z.literal("paired"),
     phoneName: z.string(),

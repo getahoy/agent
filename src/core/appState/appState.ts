@@ -106,6 +106,12 @@ export function afterPhoneEnded(
   return { ...facts, pairedPhones, pairing, endedNotice };
 }
 
+export function needsPairingCode(state: AgentState): boolean {
+  const pairingScreen = state.screen === "pair" || state.screen === "home";
+  const wantsPhone = state.pairedPhones.length === 0 || state.pairingNewPhone;
+  return pairingScreen && wantsPhone && state.pairing.kind === "idle";
+}
+
 export function agentState(facts: AgentFacts): AgentState {
   return {
     ...facts,

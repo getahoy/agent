@@ -41,8 +41,17 @@ export function phoneEnding(
   return { kind: "ended", notice };
 }
 
+const CODE_IN_PROGRESS: ReadonlySet<PairingStatus["kind"]> = new Set([
+  "starting",
+  "slow",
+  "offering",
+  "refreshing",
+  "offline",
+  "scanned",
+]);
+
 export function keepsCurrentCode(status: PairingStatus): boolean {
-  return status.kind === "offering" || status.kind === "starting";
+  return CODE_IN_PROGRESS.has(status.kind);
 }
 
 export function noticeShown(notice: EndedByPhone, now: number): boolean {
