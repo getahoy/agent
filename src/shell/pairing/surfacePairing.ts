@@ -32,7 +32,8 @@ export function surfacePairing(options: SurfacePairingOptions) {
     const state = controller.state();
     const move = pairingMove({ surfaceVisible: surfaceVisible(), state });
     if (move === "start") pairing.start();
-    if (move === "stop") pairing.stop();
+    if (move === "resume") pairing.resume();
+    if (move === "pause") pairing.pause();
   };
   // Starting emits a new status, so it waits until every listener has seen
   // the change that asked for it.

@@ -9,12 +9,13 @@ import {
   type CodeEvent,
   type CodeState,
   codeStep,
+  finishesWhenPaused,
   idleCode,
 } from "../../core/pairing/pairingCode.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
-import { pairingQr } from "../../core/pairing/pairingTerms.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import type { LanEndpoint } from "../lan/lanAddresses.ts";
+import { codeOffer } from "./codeOffer.ts";
 import {
   type DeviceAuthClient,
   pollDeviceToken,
@@ -56,16 +57,21 @@ export class PairingSession {
 
   start(): void {
     if (this.#run) return;
-    const run = new AbortController();
-    this.#run = run;
-    void this.#drive(run.signal)
-      .catch((error: unknown) => {
-        this.#options.logger.error("pairing", "Pairing session broke", error);
-        if (!run.signal.aborted) this.#advance(refusedByServer);
-      })
-      .finally(() => {
-        if (this.#run === run) this.#run = null;
-      });
+    this.#launch({ kind: "begin", online: this.#options.isOnline() });
+  }
+
+  resume(): void {
+    if (this.#run || this.#code.status.kind !== "offering") return;
+    this.#launch({ kind: "resumed", now: Date.now() });
+  }
+
+  pause(): void {
+    if (this.#code.status.kind !== "offering") {
+      this.stop();
+      return;
+    }
+    this.#run?.abort();
+    this.#run = null;
   }
 
   stop(): void {
@@ -80,12 +86,24 @@ export class PairingSession {
     this.#options.onStatus(idleCode.status);
   }
 
-  async #drive(signal: AbortSignal): Promise<void> {
-    const online = this.#options.isOnline();
-    let effect = this.#advance({ kind: "begin", online });
-    while (effect !== "none" && !signal.aborted) {
+  #launch(first: CodeEvent): void {
+    const run = new AbortController();
+    this.#run = run;
+    void this.#drive(first, run.signal)
+      .catch((error: unknown) => {
+        this.#options.logger.error("pairing", "Pairing session broke", error);
+        if (!run.signal.aborted) this.#advance(refusedByServer);
+      })
+      .finally(() => {
+        if (this.#run === run) this.#run = null;
+      });
+  }
+
+  async #drive(first: CodeEvent, signal: AbortSignal): Promise<void> {
+    let effect = this.#advance(first);
+    while (effect !== "none") {
       const event = await this.#perform(effect, signal);
-      if (signal.aborted) return;
+      if (signal.aborted && !finishesWhenPaused(effect, event)) return;
       effect = this.#advance(event);
     }
   }
@@ -130,23 +148,7 @@ export class PairingSession {
     }
     const open = { code: requested.code, pairingSecret: randomSecret() };
     if (!signal.aborted) this.#claim = { open, sessionToken: null };
-    return { kind: "issued", offer: this.#offer(open) };
-  }
-
-  #offer(open: OpenCode): Extract<PairingStatus, { kind: "offering" }> {
-    const { identity, device, lanEndpoint, lanListening } = this.#options;
-    const lan = lanEndpoint() ?? undefined;
-    const { userCode, expiresAt } = open.code;
-    const qr = pairingQr({
-      userCode,
-      displayName: device().displayName,
-      desktopPublicKey: identity.encodedPublicKey(),
-      pairingSecret: open.pairingSecret,
-      expiresAt,
-      lan,
-    });
-    const reachableOnLan = lan !== undefined && lanListening();
-    return { kind: "offering", qr, expiresAt, reachableOnLan };
+    return { kind: "issued", offer: codeOffer(this.#options, open) };
   }
 
   async #awaitNetwork(signal: AbortSignal): Promise<CodeEvent> {
@@ -162,10 +164,11 @@ export class PairingSession {
     const { deviceCode, expiresAt } = claim.open.code;
     const dueAt = expiresAt * MS_PER_SECOND;
     let intervalMs = claim.open.code.intervalMs;
-    while (!signal.aborted && Date.now() < dueAt) {
+    const stillOffered = () => this.#code.status.kind === "offering";
+    while (!signal.aborted && stillOffered() && Date.now() < dueAt) {
       const waitMs = Math.min(intervalMs, dueAt - Date.now());
       await sleep(waitMs, undefined, { signal }).catch(() => null);
-      if (signal.aborted || Date.now() >= dueAt) break;
+      if (signal.aborted || !stillOffered() || Date.now() >= dueAt) break;
       const { authClient } = this.#options;
       const polled = await pollDeviceToken(authClient, deviceCode);
       if (polled.kind === "approved") {

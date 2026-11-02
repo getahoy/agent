@@ -117,7 +117,10 @@ export function createPairingServices(input: ServiceInput) {
       const [phone] = identity.pairedPhones();
       if (phone) phoneEndedPairing(parts, phone, "removed", false);
     },
-    signOut: () => signOutMac(parts),
+    signOut: () => {
+      pairing.stop();
+      return signOutMac(parts);
+    },
   };
 }
 

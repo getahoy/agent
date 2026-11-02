@@ -10,6 +10,7 @@ export type CodeEvent =
   | { kind: "online" }
   | { kind: "due" }
   | { kind: "approved" }
+  | { kind: "resumed"; now: number }
   | { kind: "paired"; phoneName: string; accountEmail: string }
   | { kind: "refused"; reason: PairingFailure };
 
@@ -24,7 +25,16 @@ export type CodeState = { status: PairingStatus; retried: boolean };
 
 export type CodeStep = { state: CodeState; effect: CodeEffect };
 
+const MS_PER_SECOND = 1000;
+const KEPT_CODE_MIN_LIFE_MS = 30_000;
+
 export const idleCode: CodeState = { status: { kind: "idle" }, retried: false };
+
+// The phone has already approved by then, so stopping would leave it linked
+// on the server while this Mac never saves it.
+export function finishesWhenPaused(effect: CodeEffect, event: CodeEvent) {
+  return event.kind === "approved" || effect === "complete";
+}
 
 function step(status: PairingStatus, effect: CodeEffect): CodeStep {
   return { state: { status, retried: false }, effect };
@@ -72,6 +82,12 @@ export function codeStep(state: CodeState, event: CodeEvent): CodeStep {
     case "approved":
       if (status.kind !== "offering") return unchanged;
       return step({ kind: "scanned", qr: status.qr }, "complete");
+    case "resumed": {
+      if (status.kind !== "offering") return unchanged;
+      const lifeMs = status.expiresAt * MS_PER_SECOND - event.now;
+      if (lifeMs < KEPT_CODE_MIN_LIFE_MS) return making;
+      return { state, effect: "poll" };
+    }
     case "paired": {
       const { phoneName, accountEmail } = event;
       return step({ kind: "paired", phoneName, accountEmail }, "none");
