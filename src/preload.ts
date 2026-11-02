@@ -16,6 +16,10 @@ const bridge: AgentBridge = {
     const receive = (_event: IpcRendererEvent, payload: unknown) => {
       const parsed = agentStateSchema.safeParse(payload);
       if (parsed.success) listener(parsed.data);
+      else {
+        const issues = JSON.stringify(parsed.error.issues);
+        ipcRenderer.send(bridgeChannels.devLog, "preload", issues);
+      }
     };
     ipcRenderer.on(bridgeChannels.state, receive);
     return () => ipcRenderer.removeListener(bridgeChannels.state, receive);
@@ -35,6 +39,8 @@ const bridge: AgentBridge = {
   openWindow: () => invoke(bridgeChannels.openWindow),
   quit: () => invoke(bridgeChannels.quit),
   setPopoverHeight: (height) => invoke(bridgeChannels.setPopoverHeight, height),
+  devLog: (scope, message) =>
+    ipcRenderer.send(bridgeChannels.devLog, scope, message),
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);

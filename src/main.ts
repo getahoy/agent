@@ -32,6 +32,7 @@ type ShellParts = {
   controller: AgentController;
   helper: HelperClient;
   services: PairingServices;
+  logger: Logger;
 };
 
 function createHelper(
@@ -138,7 +139,15 @@ async function startAgent(): Promise<void> {
   const identity = await IdentityStore.open(identityFile, logger);
   const device = await platform.deviceIdentity();
   const pairedPhones = identity.pairedPhones();
-  const controller = new AgentController(platform, settings, pairedPhones);
+  const trace = app.isPackaged
+    ? null
+    : (message: string) => logger.info("state", message);
+  const controller = new AgentController({
+    platform,
+    settings,
+    pairedPhones,
+    trace,
+  });
   const apiUrl = env.VITE_AHOY_API_URL;
   const command = { platform, controller, settings, identity, apiUrl, logger };
   const { helper, commands, onPhoneEnded } = createCommands(command);
@@ -152,7 +161,8 @@ async function startAgent(): Promise<void> {
     commands,
     onPhoneEnded,
   });
-  const mainWindow = wireShell({ platform, controller, helper, services });
+  const shell = { platform, controller, helper, services, logger };
+  const mainWindow = wireShell(shell);
   helper.start();
   controller.startPermissionPolling();
   services.monitor.start();

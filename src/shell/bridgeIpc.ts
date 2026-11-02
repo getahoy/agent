@@ -1,3 +1,4 @@
+import type { Logger } from "@getahoy/lib";
 import { bytes32Schema } from "@getahoy/protocol";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { z } from "zod";
@@ -14,6 +15,7 @@ import { fromOwnRenderer } from "./rendererGuard.ts";
 
 type BridgeParts = {
   controller: AgentController;
+  logger: Logger;
   platform: PlatformAdapter;
   services: PairingServices;
   setLanEnabled: (enabled: boolean) => Promise<void>;
@@ -74,6 +76,10 @@ export function registerBridge(parts: BridgeParts): void {
     parts.setPopoverHeight,
   );
   registerPairing(parts);
+  ipcMain.on(bridgeChannels.devLog, (event, scope: unknown, text: unknown) => {
+    if (app.isPackaged || !fromOwnRenderer(event)) return;
+    parts.logger.info(`renderer.${String(scope)}`, String(text));
+  });
   controller.onChange((state) => {
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(bridgeChannels.state, state);

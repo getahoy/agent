@@ -1,3 +1,4 @@
+import type { Logger } from "@getahoy/lib";
 import { app, type MenuItemConstructorOptions, Notification } from "electron";
 import { agentCopy } from "../copy/agentCopy.ts";
 import { macosMenubarIcon } from "../platform/macos/macosDevice.ts";
@@ -14,6 +15,7 @@ type SurfaceParts = {
   platform: PlatformAdapter;
   controller: AgentController;
   services: PairingServices;
+  logger: Logger;
 };
 
 function announceMenubarWhenOnboarded(
@@ -32,10 +34,18 @@ function announceMenubarWhenOnboarded(
   });
 }
 
-function developerMenuItems(): MenuItemConstructorOptions[] {
+function developerMenuItems(
+  services: PairingServices,
+): MenuItemConstructorOptions[] {
   if (app.isPackaged) return [];
   const gallery = new GalleryWindow();
-  return [{ label: agentCopy["menubar.gallery"], click: () => gallery.show() }];
+  return [
+    { label: agentCopy["menubar.gallery"], click: () => gallery.show() },
+    {
+      label: agentCopy["menubar.simulateRemoved"],
+      click: () => services.simulatePhoneRemoved(),
+    },
+  ];
 }
 
 function lanSwitch({ controller, services }: SurfaceParts) {
@@ -49,14 +59,14 @@ function lanSwitch({ controller, services }: SurfaceParts) {
 }
 
 export function createSurfaces(parts: SurfaceParts): MainWindow {
-  const { platform, controller, services } = parts;
-  const checkLinks = () => void services.monitor.check("routine");
+  const { platform, controller, services, logger } = parts;
+  const { monitor } = services;
   const mainWindow = new MainWindow(
     platform.lifecycle,
     () => services.pairing.stop(),
-    checkLinks,
+    () => void monitor.check("window"),
   );
-  const popover = new PopoverWindow(checkLinks);
+  const popover = new PopoverWindow(() => void monitor.check("popover"));
   const openWindow = () => {
     popover.hide();
     mainWindow.show();
@@ -66,12 +76,13 @@ export function createSurfaces(parts: SurfaceParts): MainWindow {
     togglePopover: (bounds) => popover.toggle(bounds),
     openWindow,
     quit: () => app.quit(),
-    extraMenuItems: developerMenuItems(),
+    extraMenuItems: developerMenuItems(services),
   });
   tray.render(controller.state());
   controller.onChange((state) => tray.render(state));
   registerBridge({
     controller,
+    logger,
     platform,
     services,
     setLanEnabled: lanSwitch(parts),

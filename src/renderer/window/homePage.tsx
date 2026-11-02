@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { agentCopy, helperStatusCopy } from "../../copy/agentCopy.ts";
 import type { AgentState } from "../../core/appState/appState.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
@@ -26,6 +27,14 @@ export function HomePage({ state }: HomePageProps) {
   const link = phoneLink(state);
   const pairing = link.kind === "none" || state.pairing.kind === "paired";
   const ended = shownEndedNotice(state);
+  useEffect(() => {
+    const phones = state.pairedPhones.length;
+    const shown = ended ? "shown" : "null";
+    window.ahoy.devLog(
+      "home",
+      `render: ${phones} phones, pairing ${state.pairing.kind}, notice ${shown}`,
+    );
+  });
   return (
     <>
       {ended ? (

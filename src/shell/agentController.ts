@@ -18,6 +18,23 @@ const PERMISSION_POLL_MS = 2000;
 
 type StateListener = (state: AgentState) => void;
 
+type AgentControllerOptions = {
+  platform: PlatformAdapter;
+  settings: Settings;
+  pairedPhones: readonly PairedPhone[];
+  trace: ((message: string) => void) | null;
+};
+
+const TRACED_FACTS = ["pairedPhones", "pairing", "endedNotice"] as const;
+// The Error line, caller() and #update come first in the stack.
+const OWN_FRAMES = 3;
+
+function caller(): string {
+  const frames = new Error().stack?.split("\n") ?? [];
+  const callers = frames.slice(OWN_FRAMES, OWN_FRAMES + 2);
+  return callers.map((frame) => frame.trim()).join(" < ");
+}
+
 function summarise(phones: readonly PairedPhone[]): PhoneSummary[] {
   return phones.map(({ publicKey, displayName, accountEmail, pairedAt }) => ({
     publicKey,
@@ -33,14 +50,13 @@ export class AgentController {
   #settings: Settings;
   #facts: AgentFacts;
   #pollTimer: NodeJS.Timeout | null = null;
+  readonly #trace: ((message: string) => void) | null;
 
-  constructor(
-    platform: PlatformAdapter,
-    settings: Settings,
-    pairedPhones: readonly PairedPhone[],
-  ) {
+  constructor(options: AgentControllerOptions) {
+    const { platform, settings, pairedPhones } = options;
     this.#platform = platform;
     this.#settings = settings;
+    this.#trace = options.trace;
     this.#facts = {
       onboardingStep: settings.onboardingStep,
       permissions: platform.permissions.read(),
@@ -160,6 +176,10 @@ export class AgentController {
   }
 
   #update(change: Partial<AgentFacts>): void {
+    const traced = TRACED_FACTS.filter((key) => key in change);
+    if (this.#trace && traced.length > 0) {
+      this.#trace(`${traced.join(", ")} by ${caller()}`);
+    }
     this.#facts = { ...this.#facts, ...change };
     const state = this.state();
     for (const listener of this.#listeners) listener(state);

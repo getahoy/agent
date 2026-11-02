@@ -1,5 +1,6 @@
 import type { Logger, RequestResult } from "@getahoy/lib";
 import type { EndReason } from "@getahoy/protocol";
+import { app } from "electron";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import { listPairingLinks, unlinkPairing } from "./pairingApi.ts";
@@ -17,7 +18,7 @@ type LinkMonitorOptions = {
   ) => void;
 };
 
-export type CheckReason = "wake" | "routine";
+export type CheckReason = "start" | "interval" | "wake" | "window" | "popover";
 
 function settled(result: RequestResult<unknown>): boolean {
   if (result.code === "success") return true;
@@ -34,9 +35,9 @@ export class LinkMonitor {
   }
 
   start(): void {
-    void this.check("routine");
+    void this.check("start");
     this.#timer = setInterval(
-      () => void this.check("routine"),
+      () => void this.check("interval"),
       CHECK_INTERVAL_MS,
     );
   }
@@ -47,7 +48,7 @@ export class LinkMonitor {
   }
 
   async check(reason: CheckReason): Promise<void> {
-    const { apiUrl, identity, onPeerEnded } = this.#options;
+    const { apiUrl, identity, logger, onPeerEnded } = this.#options;
     const sessionToken = identity.sessionToken();
     if (!sessionToken) return;
     await this.flushUnlinks();
@@ -57,12 +58,18 @@ export class LinkMonitor {
       sessionToken,
       body: { device },
     });
+    const phones = identity.pairedPhones();
+    const trace = (message: string) => {
+      if (!app.isPackaged) logger.info("links", message);
+    };
+    trace(`check (${reason}): ${listed.code}, ${phones.length} phones`);
     if (listed.code === "error") return;
-    for (const phone of identity.pairedPhones()) {
+    for (const phone of phones) {
       const link = listed.data.links.find(
         (candidate) => candidate.peerPublicKey === phone.publicKey,
       );
       if (!link || link.active) continue;
+      trace(`link ended on the server (${link.reason})`);
       onPeerEnded(phone, link.reason ?? "removed", reason === "wake");
     }
   }

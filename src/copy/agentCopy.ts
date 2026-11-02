@@ -77,6 +77,7 @@ export const agentCopy = {
   "menubar.quit": "Quit Ahoy",
   "menubar.quitShortcut": "⌘Q",
   "menubar.gallery": "Component gallery",
+  "menubar.simulateRemoved": "Simulate: phone removed this Mac",
   "popover.pairTitle": "Pair your iPhone to get started",
   "popover.showQr": "Show QR code",
   "notification.title": "Ahoy is in your menubar",

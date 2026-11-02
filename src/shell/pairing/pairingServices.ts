@@ -84,7 +84,10 @@ export function createPairingServices(input: ServiceInput) {
     logger,
     isLocked: () => controller.state().screenLocked,
     onConnectedPhones: (keys) => controller.setConnectedPhones(keys),
-    onGoodbye: (phone, reason) => handlePhoneGoodbye(parts, phone, reason),
+    onGoodbye: (phone, reason) => {
+      if (!app.isPackaged) logger.info("lan", `Goodbye received (${reason})`);
+      handlePhoneGoodbye(parts, phone, reason);
+    },
     commands,
   });
   const monitor = new LinkMonitor({
@@ -109,6 +112,10 @@ export function createPairingServices(input: ServiceInput) {
     pairing,
     monitor,
     unpairPhone: (publicKey: string) => unpairPhone(parts, publicKey),
+    simulatePhoneRemoved: () => {
+      const [phone] = identity.pairedPhones();
+      if (phone) phoneEndedPairing(parts, phone, "removed", false);
+    },
     signOut: () => signOutMac(parts),
   };
 }

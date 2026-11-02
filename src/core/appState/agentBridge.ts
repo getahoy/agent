@@ -19,6 +19,7 @@ export const bridgeChannels = {
   openWindow: "agent:open-window",
   quit: "agent:quit",
   setPopoverHeight: "agent:set-popover-height",
+  devLog: "agent:dev-log",
 } as const;
 
 export const popoverHeightSchema = z.number().positive().finite();
@@ -42,4 +43,5 @@ export type AgentBridge = {
   openWindow: () => Promise<void>;
   quit: () => Promise<void>;
   setPopoverHeight: (height: number) => Promise<void>;
+  devLog: (scope: string, message: string) => void;
 };
