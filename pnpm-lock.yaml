@@ -205,15 +205,15 @@ importers:
       motion:
         specifier: ^14.8.0
         version: 14.8.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      qrcode-generator:
+        specifier: ^2.0.4
+        version: 2.0.4
       react:
         specifier: 19.3.0
         version: 19.3.0
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
-      react-qrcode-logo:
-        specifier: ^4.1.0
-        version: 4.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       write-file-atomic:
         specifier: ^8.0.0
         version: 8.0.0
@@ -1711,12 +1711,6 @@ packages:
     resolution: {integrity: sha512-JDk8dgif51OjFoDE70+OT9ICyYr+69HlmihNwp1+Nsfbna3t5sIiCa9ZJktDmQ4/1b/rn26hIAR2uYXDMr5r0Q==}
     peerDependencies:
       react: ^19.3.0
-
-  react-qrcode-logo@4.1.0:
-    resolution: {integrity: sha512-drcieitJFX3u66XpFn+4PxsCzrQo5nAMXsyOtiuTZCJPUQwGwysIlr14MjKbXDhBNz3iOqM8/yV5K1mllt/mTw==}
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
 
   react-reconciler@0.33.0:
     resolution: {integrity: sha512-KetWRytFv1epdpJc3J4G75I4WrplZE5jOL7Yq0p34+OVOKF4Se7WrdIdVC45XsSSmUTlht2FM/fM1FZb1mfQeA==}
@@ -3387,12 +3381,6 @@ snapshots:
     dependencies:
       react: 19.3.0
       scheduler: 0.28.0
-
-  react-qrcode-logo@4.1.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
-    dependencies:
-      qrcode-generator: 2.0.4
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
 
   react-reconciler@0.33.0(react@19.3.1):
     dependencies:
