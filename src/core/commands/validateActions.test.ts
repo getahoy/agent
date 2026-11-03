@@ -98,13 +98,25 @@ const draft = {
   browser: null,
 } as const;
 
-test("a draft address must be spoken", () => {
+function recipient(action: InterpretAction, transcript: string) {
+  const validation = validateActions([action], transcript, APPS);
+  if (validation.kind !== "valid") return "rejected";
+  const [intent] = validation.intents;
+  return intent?.kind === "draftEmail" ? intent.to : "not a draft";
+}
+
+test("a draft keeps an address only when all of it was spoken", () => {
   const spoken = "draft a mail to jake bauer at gmail dot com about credits";
-  assert.equal(validateActions([draft], spoken, APPS).kind, "valid");
-  const other = "draft a mail to rahul about credits";
-  assert.equal(validateActions([draft], other, APPS).kind, "rejected");
-  const broken = { ...draft, to: "jakebauer" };
-  assert.equal(validateActions([broken], spoken, APPS).kind, "rejected");
+  assert.equal(recipient(draft, spoken), "jakebauer@gmail.com");
+  assert.equal(recipient(draft, "draft a mail to rahul about credits"), null);
+  assert.equal(recipient({ ...draft, to: "jakebauer" }, spoken), null);
+});
+
+test("a guessed domain clears the address but keeps the draft", () => {
+  const guessed = { ...draft, to: "samar@gmail.com" };
+  assert.equal(recipient(guessed, "email Samar"), null);
+  const spoken = "email samar at gmail dot com";
+  assert.equal(recipient(guessed, spoken), "samar@gmail.com");
 });
 
 test("a draft is always alone, so nothing can send it", () => {
