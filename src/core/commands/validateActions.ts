@@ -1,6 +1,6 @@
 import type { InterpretAction } from "@getahoy/protocol";
 import { installedBrowser } from "./browsers.ts";
-import { allowsEmailDraft } from "./emailRules.ts";
+import { spokenRecipient } from "./emailRules.ts";
 import type { Intent } from "./intent.ts";
 import { allowsShortcut } from "./shortcutRules.ts";
 import { isSiteHost } from "./siteHost.ts";
@@ -70,9 +70,10 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
     case "switchTab":
       if (!said(action.match, transcript)) return null;
       return withBrowser(action, installedApps);
-    case "draftEmail":
-      if (!allowsEmailDraft(action, transcript)) return null;
-      return withBrowser(action, installedApps);
+    case "draftEmail": {
+      const to = spokenRecipient(action, transcript);
+      return withBrowser({ ...action, to }, installedApps);
+    }
     default: {
       const unhandled: never = action;
       throw new Error(`Unhandled action ${JSON.stringify(unhandled)}`);

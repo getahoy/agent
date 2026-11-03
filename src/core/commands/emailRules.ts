@@ -7,13 +7,21 @@ function lettersOf(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-export function allowsEmailDraft(
+function spokenDomain(domain: string): string {
+  return lettersOf(domain.replace(/\./g, " dot "));
+}
+
+// The interpreter can guess a full address from a bare name, so both halves must have been said.
+export function spokenRecipient(
   draft: EmailDraft,
   transcript: string,
-): boolean {
-  if (draft.to === null) return true;
-  if (!EMAIL_ADDRESS.test(draft.to)) return false;
-  const [localPart = ""] = draft.to.split("@");
-  const spoken = lettersOf(localPart);
-  return spoken !== "" && lettersOf(transcript).includes(spoken);
+): string | null {
+  if (draft.to === null || !EMAIL_ADDRESS.test(draft.to)) return null;
+  const [localPart = "", domain = ""] = draft.to.split("@");
+  const heard = lettersOf(transcript);
+  const local = lettersOf(localPart);
+  const saidLocal = local !== "" && heard.includes(local);
+  const saidDomain =
+    heard.includes(spokenDomain(domain)) || heard.includes(lettersOf(domain));
+  return saidLocal && saidDomain ? draft.to : null;
 }
