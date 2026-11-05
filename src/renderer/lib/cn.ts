@@ -13,6 +13,8 @@ export const cn = createCn({
             "caption",
             "ui",
             "body-sm",
+            "dialog-title",
+            "dialog-body",
             "row",
             "card-title",
             "title",
