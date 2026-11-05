@@ -1,24 +1,24 @@
 import { agentCopy } from "../../copy/agentCopy.ts";
-import { Switch } from "../components/ui/switch.tsx";
-import { useAgentActions } from "../hooks/useAgentActions.ts";
+import { ListenToggle } from "../listen/listenToggle.tsx";
+import { OffDurationChoices } from "../listen/offDurationChoices.tsx";
+import { useListenSwitch } from "../listen/useListenSwitch.ts";
 
 type PopoverHeaderProps = { lanEnabled: boolean };
 
 export function PopoverHeader({ lanEnabled }: PopoverHeaderProps) {
-  const actions = useAgentActions();
+  const listen = useListenSwitch(lanEnabled);
   return (
-    <header className="flex items-center justify-between py-0.5 pr-1 pl-1.5">
-      <span className="font-display text-card-title lowercase">
-        {agentCopy["app.name"]}
-      </span>
-      <span className="flex items-center gap-2 text-ui">
-        <span aria-hidden="true">{agentCopy["menubar.enabled"]}</span>
-        <Switch
-          aria-label={agentCopy["menubar.enabled"]}
-          checked={lanEnabled}
-          onCheckedChange={(enabled) => void actions.setLanEnabled(enabled)}
-        />
-      </span>
+    <header className="flex flex-col gap-2 py-0.5 pr-1 pl-1.5">
+      <div className="flex items-center justify-between">
+        <span className="font-display text-card-title lowercase">
+          {agentCopy["app.name"]}
+        </span>
+        <span className="flex items-center gap-2 text-ui">
+          <span aria-hidden="true">{agentCopy["menubar.enabled"]}</span>
+          <ListenToggle listen={listen} />
+        </span>
+      </div>
+      <OffDurationChoices listen={listen} />
     </header>
   );
 }

@@ -12,6 +12,7 @@ import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { createInterpreter } from "./shell/interpret/interpretApi.ts";
+import { ListenSwitch } from "./shell/lan/listenSwitch.ts";
 import type { MainWindow } from "./shell/mainWindow.ts";
 import {
   createPairingServices,
@@ -32,6 +33,7 @@ type ShellParts = {
   controller: AgentController;
   helper: HelperClient;
   services: PairingServices;
+  listen: ListenSwitch;
   logger: Logger;
 };
 
@@ -88,6 +90,14 @@ function wireShell(parts: ShellParts): MainWindow {
   app.on("second-instance", () => mainWindow.show());
   app.on("activate", () => mainWindow.show());
   return mainWindow;
+}
+
+function startParts(parts: ShellParts): void {
+  parts.helper.start();
+  parts.controller.startPermissionPolling();
+  parts.services.monitor.start();
+  parts.services.phoneLink.start();
+  parts.listen.start();
 }
 
 type CommandParts = {
@@ -151,6 +161,11 @@ async function startAgent(): Promise<void> {
   const apiUrl = env.VITE_AHOY_API_URL;
   const command = { platform, controller, settings, identity, apiUrl, logger };
   const { helper, commands, onPhoneEnded } = createCommands(command);
+  const listen = new ListenSwitch({
+    controller,
+    endSessions: (reason) => services.phoneLink.endAll(reason),
+    openWindow: () => mainWindow.show(),
+  });
   const services = createPairingServices({
     apiUrl,
     port: LAN_PORT,
@@ -160,13 +175,11 @@ async function startAgent(): Promise<void> {
     controller,
     commands,
     onPhoneEnded,
+    onPhoneRefused: () => listen.phoneRefused(),
   });
-  const shell = { platform, controller, helper, services, logger };
+  const shell = { platform, controller, helper, services, listen, logger };
   const mainWindow = wireShell(shell);
-  helper.start();
-  controller.startPermissionPolling();
-  services.monitor.start();
-  if (settings.lanEnabled) services.phoneLink.start();
+  startParts(shell);
   if (!app.getLoginItemSettings().wasOpenedAtLogin) mainWindow.show();
 }
 

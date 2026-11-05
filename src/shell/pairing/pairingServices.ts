@@ -1,10 +1,12 @@
 import type { Logger } from "@getahoy/lib";
 import {
   type DeviceDescription,
+  type GoodbyeReason,
   type Hello,
   PROTOCOL_VERSION,
 } from "@getahoy/protocol";
 import { app, net } from "electron";
+import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { DeviceIdentity } from "../../ports/platform.ts";
 import type { AgentController } from "../agentController.ts";
 import type { CommandReceiver } from "../commands/commandReceiver.ts";
@@ -28,6 +30,7 @@ type ServiceInput = {
   controller: AgentController;
   commands: CommandReceiver;
   onPhoneEnded: () => void;
+  onPhoneRefused: () => void;
 };
 
 function localHello(device: DeviceIdentity): Hello {
@@ -66,31 +69,44 @@ function createPairingSession(
     lanListening: () => controller.state().lanEnabled,
     isOnline: () => net.isOnline(),
     logger,
-    onStatus: (status) =>
-      controller.setPairing(status, identity.pairedPhones()),
+    onStatus: (status) => {
+      controller.setPairing(status, identity.pairedPhones());
+      if (status.kind === "paired") void controller.turnListeningOn();
+    },
     onReplaced: (phones) => {
       for (const phone of phones) phoneLink.end(phone.publicKey, "replaced");
     },
   });
 }
 
-export function createPairingServices(input: ServiceInput) {
-  const { apiUrl, port, logger, identity, device, controller, commands } =
-    input;
-  const authClient = createDeviceAuthClient(apiUrl);
-  const phoneLink = new PhoneLink({
+function createPhoneLink(
+  input: ServiceInput,
+  onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void,
+): PhoneLink {
+  const { port, logger, identity, device, controller, commands } = input;
+  return new PhoneLink({
     port,
     identity,
     localHello: localHello(device),
     logger,
     isLocked: () => controller.state().screenLocked,
+    isListening: () => controller.state().lanEnabled,
+    onRefused: input.onPhoneRefused,
     onConnectedPhones: (keys) => controller.setConnectedPhones(keys),
     onGoodbye: (phone, reason) => {
       if (!app.isPackaged) logger.info("lan", `Goodbye received (${reason})`);
-      handlePhoneGoodbye(parts, phone, reason);
+      onGoodbye(phone, reason);
     },
     commands,
   });
+}
+
+export function createPairingServices(input: ServiceInput) {
+  const { apiUrl, logger, identity, controller } = input;
+  const authClient = createDeviceAuthClient(apiUrl);
+  const phoneLink = createPhoneLink(input, (phone, reason) =>
+    handlePhoneGoodbye(parts, phone, reason),
+  );
   const monitor = new LinkMonitor({
     apiUrl,
     identity,

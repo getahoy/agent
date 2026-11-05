@@ -12,6 +12,7 @@ const blockedAppSchema = z.object({
 const settingsSchema = z.object({
   onboardingStep: onboardingStepSchema,
   lanEnabled: z.boolean().default(true),
+  lanOffUntil: z.int().nullable().default(null),
   blockedApps: z.array(blockedAppSchema).default([...DEFAULT_BLOCKED_APPS]),
 });
 
@@ -20,6 +21,7 @@ export type Settings = z.infer<typeof settingsSchema>;
 const defaultSettings: Settings = {
   onboardingStep: "welcome",
   lanEnabled: true,
+  lanOffUntil: null,
   blockedApps: [...DEFAULT_BLOCKED_APPS],
 };
 

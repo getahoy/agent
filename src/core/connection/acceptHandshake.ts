@@ -22,7 +22,6 @@ type HandshakeDecision =
       reply: Uint8Array;
       channel: SecureChannel;
       phone: PairedPhone;
-      hello: Hello;
     };
 
 type HandshakeInput = {
@@ -59,15 +58,8 @@ export function acceptHandshake(input: HandshakeInput): HandshakeDecision {
     const reply = responder.reply(encodeJson(versionMismatch)).message;
     return { outcome: "closing", reply };
   }
-  const hello = helloSchema.safeParse(payload);
-  if (!hello.success) return DROPPED;
+  if (!helloSchema.safeParse(payload).success) return DROPPED;
   const welcome: HandshakeReply = { type: "welcome", hello: input.localHello };
   const { message, channel } = responder.reply(encodeJson(welcome));
-  return {
-    outcome: "accepted",
-    reply: message,
-    channel,
-    phone,
-    hello: hello.data,
-  };
+  return { outcome: "accepted", reply: message, channel, phone };
 }

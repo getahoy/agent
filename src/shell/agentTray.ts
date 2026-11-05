@@ -25,7 +25,6 @@ export class AgentTray {
   constructor(actions: TrayActions) {
     this.#actions = actions;
     this.#tray = new Tray(actions.menubarIcon("noPhone"));
-    this.#tray.setToolTip(agentCopy["app.name"]);
     this.#tray.setIgnoreDoubleClickEvents(true);
     this.#menu = Menu.buildFromTemplate([
       { label: agentCopy["menubar.open"], click: actions.openWindow },
@@ -39,5 +38,7 @@ export class AgentTray {
 
   render(state: AgentState): void {
     this.#tray.setImage(this.#actions.menubarIcon(menubarStatus(state)));
+    const tooltip = state.lanEnabled ? "app.name" : "menubar.off";
+    this.#tray.setToolTip(agentCopy[tooltip]);
   }
 }

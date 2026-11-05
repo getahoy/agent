@@ -109,9 +109,19 @@ export class AgentController {
     this.#update({ onboardingStep });
   }
 
-  async setLanEnabled(lanEnabled: boolean): Promise<void> {
-    await this.#saveSettings({ lanEnabled });
-    this.#update({ lanEnabled, connectedPhoneKeys: [] });
+  lanOffUntil(): number | null {
+    return this.#settings.lanOffUntil;
+  }
+
+  // State first: a phone handshaking during the file write sees the new answer.
+  turnListeningOn(): Promise<void> {
+    this.#update({ lanEnabled: true });
+    return this.#saveSettings({ lanEnabled: true, lanOffUntil: null });
+  }
+
+  turnListeningOff(lanOffUntil: number | null): Promise<void> {
+    this.#update({ lanEnabled: false, connectedPhoneKeys: [] });
+    return this.#saveSettings({ lanEnabled: false, lanOffUntil });
   }
 
   setPairing(pairing: PairingStatus, pairedPhones: readonly PairedPhone[]) {

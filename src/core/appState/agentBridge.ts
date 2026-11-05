@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Permission } from "../../ports/platform.ts";
 import type { AgentState, OnboardingStep } from "./appState.ts";
+import type { OffDuration } from "./listenOff.ts";
 
 export const bridgeChannels = {
   getState: "agent:get-state",
@@ -14,7 +15,8 @@ export const bridgeChannels = {
   requestNewPhone: "agent:request-new-phone",
   cancelNewPhone: "agent:cancel-new-phone",
   finishPairing: "agent:finish-pairing",
-  setLanEnabled: "agent:set-lan-enabled",
+  turnOn: "agent:turn-on",
+  turnOff: "agent:turn-off",
   openWindow: "agent:open-window",
   quit: "agent:quit",
   setPopoverHeight: "agent:set-popover-height",
@@ -37,7 +39,8 @@ export type AgentBridge = {
   requestNewPhone: () => Promise<void>;
   cancelNewPhone: () => Promise<void>;
   finishPairing: () => Promise<void>;
-  setLanEnabled: (enabled: boolean) => Promise<void>;
+  turnOn: () => Promise<void>;
+  turnOff: (duration: OffDuration) => Promise<void>;
   openWindow: () => Promise<void>;
   quit: () => Promise<void>;
   setPopoverHeight: (height: number) => Promise<void>;

@@ -18,7 +18,9 @@ type PhoneSessionOptions = {
   findPhone: (publicKey: Uint8Array) => PairedPhone | null;
   findEnded: (publicKey: Uint8Array) => EndReason | null;
   isLocked: () => boolean;
+  isListening: () => boolean;
   handshakeTimeoutMs: number;
+  onRefused: (phone: PairedPhone) => void;
   onConnected: (phone: PairedPhone, session: PhoneSession) => void;
   onDisconnected: (phone: PairedPhone, session: PhoneSession) => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
@@ -88,7 +90,7 @@ export class PhoneSession {
   #handle(frame: Frame, channel: SecureChannel, phone: PairedPhone): void {
     switch (frame.type) {
       case "ready":
-        this.#markConnected(channel, phone);
+        this.#ready(channel, phone);
         return;
       case "goodbye":
         this.#options.onGoodbye(phone, frame.reason);
@@ -135,8 +137,19 @@ export class PhoneSession {
     this.#phase = { kind: "awaitingReady", channel, phone };
   }
 
-  #markConnected(channel: SecureChannel, phone: PairedPhone): void {
+  // Refused at ready, not at hello: the phone's session is listening by then,
+  // and a switch turned off mid-handshake still applies.
+  #ready(channel: SecureChannel, phone: PairedPhone): void {
     if (this.#phase.kind === "connected") return;
+    if (!this.#options.isListening()) {
+      this.end("turned_off");
+      this.#options.onRefused(phone);
+      return;
+    }
+    this.#markConnected(channel, phone);
+  }
+
+  #markConnected(channel: SecureChannel, phone: PairedPhone): void {
     clearTimeout(this.#handshakeTimer);
     this.#phase = { kind: "connected", channel, phone };
     this.sendStatus(this.#options.isLocked());

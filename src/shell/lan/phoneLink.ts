@@ -15,6 +15,8 @@ type PhoneLinkOptions = {
   localHello: Hello;
   logger: Logger;
   isLocked: () => boolean;
+  isListening: () => boolean;
+  onRefused: (phone: PairedPhone) => void;
   onConnectedPhones: (publicKeys: string[]) => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
   commands: CommandReceiver;
@@ -55,16 +57,20 @@ export class PhoneLink {
   }
 
   #accept(stream: FrameStream): void {
-    const { identity, localHello, logger, isLocked, onGoodbye, commands } =
-      this.#options;
+    const { identity, localHello, logger, onGoodbye, commands } = this.#options;
     new PhoneSession({
       stream,
       localKeys: identity.keyPair(),
       localHello,
       findPhone: (publicKey) => identity.pairedPhone(publicKey),
       findEnded: (publicKey) => identity.endReason(publicKey),
-      isLocked,
+      isLocked: this.#options.isLocked,
+      isListening: this.#options.isListening,
       handshakeTimeoutMs: HANDSHAKE_TIMEOUT_MS,
+      onRefused: (phone) => {
+        logger.info("lan", "Phone refused, listening is off");
+        this.#options.onRefused(phone);
+      },
       onConnected: (phone, session) => {
         logger.info("lan", `Phone connected (${phone.platform})`);
         this.#sessions.set(phone.publicKey, session);

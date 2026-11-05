@@ -1,15 +1,17 @@
 import type { Logger } from "@getahoy/lib";
 import { bytes32Schema } from "@getahoy/protocol";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { z } from "zod";
+import type { z } from "zod";
 import {
   bridgeChannels,
   permissionSchema,
   popoverHeightSchema,
 } from "../core/appState/agentBridge.ts";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
+import { offDurationSchema } from "../core/appState/listenOff.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import type { AgentController } from "./agentController.ts";
+import type { ListenSwitch } from "./lan/listenSwitch.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
 import { fromOwnRenderer } from "./rendererGuard.ts";
 
@@ -18,7 +20,7 @@ type BridgeParts = {
   logger: Logger;
   platform: PlatformAdapter;
   services: PairingServices;
-  setLanEnabled: (enabled: boolean) => Promise<void>;
+  listen: ListenSwitch;
   startPairing: () => void;
   openWindow: () => void;
   setPopoverHeight: (height: number) => void;
@@ -43,7 +45,7 @@ function handleParsed<T>(
 }
 
 function registerPairing(parts: BridgeParts) {
-  const { controller, services, setLanEnabled } = parts;
+  const { controller, services, listen } = parts;
   const { pairing } = services;
   handle(bridgeChannels.startPairing, () => parts.startPairing());
   handle(bridgeChannels.signOut, () => services.signOut());
@@ -56,7 +58,10 @@ function registerPairing(parts: BridgeParts) {
   });
   handle(bridgeChannels.finishPairing, () => controller.finishPairing());
   handleParsed(bridgeChannels.unpairPhone, bytes32Schema, services.unpairPhone);
-  handleParsed(bridgeChannels.setLanEnabled, z.boolean(), setLanEnabled);
+  handle(bridgeChannels.turnOn, () => listen.turnOn());
+  handleParsed(bridgeChannels.turnOff, offDurationSchema, (duration) =>
+    listen.turnOff(duration),
+  );
 }
 
 export function registerBridge(parts: BridgeParts): void {

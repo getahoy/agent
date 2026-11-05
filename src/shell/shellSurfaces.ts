@@ -7,6 +7,7 @@ import type { AgentController } from "./agentController.ts";
 import { AgentTray } from "./agentTray.ts";
 import { registerBridge } from "./bridgeIpc.ts";
 import { GalleryWindow } from "./galleryWindow.ts";
+import type { ListenSwitch } from "./lan/listenSwitch.ts";
 import { MainWindow } from "./mainWindow.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
 import { surfacePairing } from "./pairing/surfacePairing.ts";
@@ -16,6 +17,7 @@ type SurfaceParts = {
   platform: PlatformAdapter;
   controller: AgentController;
   services: PairingServices;
+  listen: ListenSwitch;
   logger: Logger;
 };
 
@@ -49,18 +51,8 @@ function developerMenuItems(
   ];
 }
 
-function lanSwitch({ controller, services }: SurfaceParts) {
-  const { phoneLink } = services;
-  return async (enabled: boolean) => {
-    if (!enabled) phoneLink.endAll("turned_off");
-    await controller.setLanEnabled(enabled);
-    if (enabled) phoneLink.start();
-    else phoneLink.stop();
-  };
-}
-
 export function createSurfaces(parts: SurfaceParts): MainWindow {
-  const { platform, controller, services, logger } = parts;
+  const { platform, controller, services, listen, logger } = parts;
   const { monitor } = services;
   const pairing = surfacePairing({
     controller,
@@ -97,7 +89,7 @@ export function createSurfaces(parts: SurfaceParts): MainWindow {
     logger,
     platform,
     services,
-    setLanEnabled: lanSwitch(parts),
+    listen,
     startPairing: pairing.start,
     openWindow,
     setPopoverHeight: (height) => popover.setHeight(height),

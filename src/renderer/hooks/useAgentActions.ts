@@ -1,4 +1,5 @@
 import type { OnboardingStep } from "../../core/appState/appState.ts";
+import type { OffDuration } from "../../core/appState/listenOff.ts";
 import type { Permission } from "../../ports/platform.ts";
 
 export function useAgentActions() {
@@ -14,7 +15,8 @@ export function useAgentActions() {
     requestNewPhone: () => ahoy.requestNewPhone(),
     cancelNewPhone: () => ahoy.cancelNewPhone(),
     finishPairing: () => ahoy.finishPairing(),
-    setLanEnabled: (enabled: boolean) => ahoy.setLanEnabled(enabled),
+    turnOn: () => ahoy.turnOn(),
+    turnOff: (duration: OffDuration) => ahoy.turnOff(duration),
     openWindow: () => ahoy.openWindow(),
     quit: () => ahoy.quit(),
   };
