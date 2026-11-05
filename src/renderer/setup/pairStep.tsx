@@ -40,6 +40,7 @@ export function PairStep({ state }: PairStepProps) {
       <PairingPanel
         status={state.pairing}
         place={state.pairingNewPhone ? "newPhone" : "setup"}
+        listening={state.lanEnabled}
       />
       {replacing ? (
         <Button

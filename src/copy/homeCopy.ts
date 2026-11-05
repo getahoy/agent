@@ -1,6 +1,5 @@
 export const homeCopy = {
   connected: "Connected",
-  off: "Ahoy is off. Your phone cannot connect.",
   pairNew: "Pair a new phone",
   lastConnected: "Last connected",
   signedInAs: "Signed in as",

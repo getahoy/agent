@@ -7,6 +7,7 @@ import { ListRow } from "../components/ui/listRow.tsx";
 import { Text } from "../components/ui/text.tsx";
 import { useAgentActions } from "../hooks/useAgentActions.ts";
 import { usePendingAction } from "../hooks/usePendingAction.ts";
+import { OffNotice } from "../listen/offNotice.tsx";
 import { phoneLink } from "../phone/phoneLink.ts";
 import { PairedPhoneRow } from "./pairedPhoneRow.tsx";
 
@@ -21,6 +22,7 @@ export function PhonePage({ state, onPairFirst }: PhonePageProps) {
       <Text as="h1" variant="title">
         {agentCopy["nav.phone"]}
       </Text>
+      {link.kind === "off" ? <OffNotice /> : null}
       <ListGroup label={agentCopy["nav.phone"]}>
         {link.kind === "none" ? (
           <ListRow title={agentCopy["menubar.noPhone"]} />

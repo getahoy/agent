@@ -2,10 +2,12 @@ import { agentCopy } from "../../copy/agentCopy.ts";
 import { Button } from "../components/ui/button.tsx";
 import { StatusPill } from "../components/ui/statusPill.tsx";
 import { Text } from "../components/ui/text.tsx";
+import { OffNotice } from "../listen/offNotice.tsx";
 
 type PairingDoneProps = {
   phoneName: string;
   accountEmail: string;
+  listening: boolean;
   pending: boolean;
   onFinish: () => void;
 };
@@ -13,6 +15,7 @@ type PairingDoneProps = {
 export function PairingDone({
   phoneName,
   accountEmail,
+  listening,
   pending,
   onFinish,
 }: PairingDoneProps) {
@@ -22,11 +25,17 @@ export function PairingDone({
       className="flex flex-col items-center gap-5 text-center"
     >
       <StatusPill label={`${agentCopy["pair.pairedWith"]} ${phoneName}`} />
-      <Text as="h1" variant="display">
-        {agentCopy["pair.tryTitle"]}{" "}
-        <em>{agentCopy["pair.tryTitleEmphasis"]}</em>
-      </Text>
-      <Text variant="body">{agentCopy["pair.tryHint"]}</Text>
+      {listening ? (
+        <>
+          <Text as="h1" variant="display">
+            {agentCopy["pair.tryTitle"]}{" "}
+            <em>{agentCopy["pair.tryTitleEmphasis"]}</em>
+          </Text>
+          <Text variant="body">{agentCopy["pair.tryHint"]}</Text>
+        </>
+      ) : (
+        <OffNotice />
+      )}
       <Text variant="muted">
         {agentCopy["pair.account"]}: {accountEmail}
       </Text>

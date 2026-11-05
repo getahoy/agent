@@ -56,7 +56,7 @@ export function homeLine(kind: PhoneLinkKind, phone: string): string {
     case "locked":
       return agentCopy["menubar.locked"];
     case "off":
-      return homeCopy.off;
+      return agentCopy["listen.off"];
     default: {
       const unhandled: never = kind;
       return unhandled;

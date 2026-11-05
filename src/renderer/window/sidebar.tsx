@@ -9,6 +9,9 @@ import {
 import { agentCopy } from "../../copy/agentCopy.ts";
 import { homeCopy } from "../../copy/homeCopy.ts";
 import { SidebarItem } from "../components/ui/sidebarItem.tsx";
+import { ListenToggle } from "../listen/listenToggle.tsx";
+import { OffDurationChoices } from "../listen/offDurationChoices.tsx";
+import { useListenSwitch } from "../listen/useListenSwitch.ts";
 import type { PhoneLink } from "../phone/phoneLink.ts";
 import { pillLabels } from "../phone/phoneLinkCopy.ts";
 import type { WindowPage } from "./windowPage.ts";
@@ -32,11 +35,13 @@ function footerLine(link: PhoneLink): string {
 type SidebarProps = {
   active: WindowPage;
   link: PhoneLink;
+  lanEnabled: boolean;
   onSelect: (page: WindowPage) => void;
 };
 
-export function Sidebar({ active, link, onSelect }: SidebarProps) {
+export function Sidebar({ active, link, lanEnabled, onSelect }: SidebarProps) {
   const live = link.kind === "connected";
+  const listen = useListenSwitch(lanEnabled);
   return (
     <aside className="flex w-sidebar shrink-0 flex-col gap-0.5 border-rope border-r bg-linen px-2.5 pt-13 pb-3.5">
       <nav
@@ -53,13 +58,17 @@ export function Sidebar({ active, link, onSelect }: SidebarProps) {
           />
         ))}
       </nav>
-      <p className="mt-auto flex items-center gap-2 overflow-hidden px-2.5 py-2 text-caption text-driftwood">
-        <span
-          aria-hidden="true"
-          className={`size-1.5 shrink-0 rounded-pill ${live ? "bg-kelp" : "bg-fog"}`}
-        />
-        <span className="truncate">{footerLine(link)}</span>
-      </p>
+      <div className="mt-auto flex flex-col gap-2 px-2.5 py-2">
+        <OffDurationChoices listen={listen} />
+        <div className="flex items-center gap-2 text-caption text-driftwood">
+          <span
+            aria-hidden="true"
+            className={`size-1.5 shrink-0 rounded-pill ${live ? "bg-kelp" : "bg-fog"}`}
+          />
+          <span className="min-w-0 flex-1 truncate">{footerLine(link)}</span>
+          <ListenToggle listen={listen} />
+        </div>
+      </div>
     </aside>
   );
 }

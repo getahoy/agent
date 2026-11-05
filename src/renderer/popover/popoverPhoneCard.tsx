@@ -1,7 +1,6 @@
 import type { AgentState, PhoneSummary } from "../../core/appState/appState.ts";
 import { Card } from "../components/ui/card.tsx";
 import { StatusPill } from "../components/ui/statusPill.tsx";
-import { cn } from "../lib/cn.ts";
 import { LastHeard } from "../phone/lastHeard.tsx";
 import { PhoneGlyph } from "../phone/phoneGlyph.tsx";
 import type { PhoneLinkKind } from "../phone/phoneLink.ts";
@@ -18,9 +17,8 @@ export function PopoverPhoneCard({
   phone,
   lastHeard,
 }: PopoverPhoneCardProps) {
-  const quiet = kind === "off" || kind === "locked";
   return (
-    <Card surface="glass" className={cn(kind === "off" && "opacity-55")}>
+    <Card surface="glass">
       <div className="flex items-center gap-2.5">
         <PhoneGlyph size="sm" />
         <div className="flex min-w-0 flex-1 flex-col gap-px">
@@ -35,7 +33,7 @@ export function PopoverPhoneCard({
           tone={kind === "connected" ? "live" : "quiet"}
         />
       </div>
-      {lastHeard && !quiet ? (
+      {lastHeard && kind !== "locked" ? (
         <div className="border-hairline border-t pt-2.5">
           <LastHeard heard={lastHeard} size="popover" />
         </div>

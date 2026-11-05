@@ -3,6 +3,7 @@ import { agentCopy, helperStatusCopy } from "../../copy/agentCopy.ts";
 import type { AgentState } from "../../core/appState/appState.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
 import { Text } from "../components/ui/text.tsx";
+import { OffNotice } from "../listen/offNotice.tsx";
 import { EndedMessage } from "../pairing/endedMessage.tsx";
 import { PairingPanel } from "../pairing/pairingPanel.tsx";
 import { shownEndedNotice } from "../pairing/shownEndedNotice.ts";
@@ -45,10 +46,16 @@ export function HomePage({ state }: HomePageProps) {
         </Text>
       )}
       {pairing ? (
-        <PairingPanel status={state.pairing} place={ended ? "ended" : "home"} />
-      ) : (
+        <PairingPanel
+          status={state.pairing}
+          place={ended ? "ended" : "home"}
+          listening={state.lanEnabled}
+        />
+      ) : null}
+      {!pairing && link.kind === "off" ? <OffNotice /> : null}
+      {!pairing && link.kind !== "off" ? (
         <PhoneStatusCard kind={link.kind} phone={link.phone} />
-      )}
+      ) : null}
       {state.lastHeard && !pairing ? (
         <LastHeard heard={state.lastHeard} size="window" />
       ) : null}
