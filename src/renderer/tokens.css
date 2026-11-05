@@ -174,7 +174,7 @@
   --width-setup: 440px;
   --width-dialog: 280px;
   --width-window: 760px;
-  --height-window: 540px;
+  --height-window: 560px;
 }
 
 @utility app-drag {

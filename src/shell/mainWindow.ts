@@ -4,7 +4,7 @@ import type { LifecycleController } from "../ports/platform.ts";
 import { loadSurface, secureWebPreferences } from "./rendererSurface.ts";
 
 const WINDOW_WIDTH = 760;
-const WINDOW_HEIGHT = 540;
+const WINDOW_HEIGHT = 560;
 const TRAFFIC_LIGHTS = { x: 18, y: 18 };
 const SAILCLOTH = "#f4f2ed";
 const NIGHT = "#121110";
