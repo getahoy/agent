@@ -13,8 +13,10 @@ export function failureReasonOf(
     case "needsChoice":
       return undefined;
     case "failed":
-    case "refused":
-      return outcome.reason ?? "other";
+    case "refused": {
+      const reason = outcome.reason ?? "other";
+      return reason === "choiceExpired" ? "other" : reason;
+    }
     default: {
       const unhandled: never = outcome.status;
       return unhandled;

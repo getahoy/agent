@@ -22,7 +22,7 @@ export type CommandOutcome = {
   message: string;
   choice?: Choice;
   speech?: SpeechCase;
-  reason?: FailureReason;
+  reason?: OutcomeReason;
   app?: string;
   via?: UnderstoodBy;
 };
@@ -31,9 +31,12 @@ export function spoken(outcome: CommandOutcome, speech: SpeechCase) {
   return { ...outcome, speech };
 }
 
+// Reasons the Mac tells apart before they reach the wire's closed set.
+export type OutcomeReason = FailureReason | "choiceExpired";
+
 export function because(
   outcome: CommandOutcome,
-  reason: FailureReason,
+  reason: OutcomeReason,
 ): CommandOutcome {
   return { ...outcome, reason };
 }

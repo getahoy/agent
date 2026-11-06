@@ -26,7 +26,8 @@ export type SpeechCase =
   | { kind: "manyTabs" }
   | { kind: "cancelled" }
   | { kind: "startOver" }
-  | { kind: "screenChanged" };
+  | { kind: "screenChanged" }
+  | { kind: "choiceExpired" };
 
 const MAX_LISTED_CHOICES = 3;
 
@@ -95,6 +96,8 @@ function line(speech: SpeechCase): string {
       return "Let's start over.";
     case "screenChanged":
       return "That screen changed. Ask again.";
+    case "choiceExpired":
+      return "That choice timed out. Say it again.";
     default: {
       const unhandled: never = speech;
       throw new Error(`Unhandled speech ${JSON.stringify(unhandled)}`);
