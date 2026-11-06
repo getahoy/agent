@@ -33,6 +33,11 @@ export const SCREEN_CHANGED = spoken(
   { kind: "screenChanged" },
 );
 
+const CHOICE_EXPIRED = spoken(
+  because(failed(commandCopy.choiceExpired), "choiceExpired"),
+  { kind: "choiceExpired" },
+);
+
 export class ChoiceBook {
   readonly #options: ChoiceBookOptions;
   #pending: Pending | null = null;
@@ -65,7 +70,7 @@ export class ChoiceBook {
   pick(parentId: string, number: number, owner: object) {
     const pending = this.#pending;
     if (pending?.parentId !== parentId || pending.owner !== owner) {
-      return Promise.resolve<CommandOutcome>(SCREEN_CHANGED);
+      return Promise.resolve<CommandOutcome>(CHOICE_EXPIRED);
     }
     this.expire();
     const known = pending.choice.options.some(
@@ -73,7 +78,7 @@ export class ChoiceBook {
     );
     return known
       ? pending.choice.pick(number)
-      : Promise.resolve(SCREEN_CHANGED);
+      : Promise.resolve(CHOICE_EXPIRED);
   }
 
   extend(choiceId: string, owner: object): void {

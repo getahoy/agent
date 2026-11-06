@@ -122,6 +122,13 @@ export const commandCopy = {
   confirmTarget: (label: string) =>
     `${capitalised(label)} can’t be undone. Confirm on your phone.`,
   screenChanged: "The screen changed, say it again.",
+  choiceExpired: "That choice timed out. Say it again.",
+  targetGone: (label: string) =>
+    `Couldn’t find “${capitalised(label)}” anymore. The screen probably changed.`,
+  otherApp: (now: string, was: string) =>
+    `You’re in ${now} now. Say it again in ${was}.`,
+  noneOfThese: "None of these",
+  noneChosen: "Okay, nothing clicked.",
   blockedApp:
     "Ahoy doesn’t click or type in this app. Change the list in Ahoy’s settings file.",
   breakerTripped:
