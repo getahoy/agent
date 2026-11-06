@@ -15,6 +15,14 @@ test("a failure keeps its own reason and falls back to other", () => {
   assert.equal(failureReasonOf(failed("That didn’t work")), "other");
 });
 
+test("an expired choice is told apart from a changed screen", () => {
+  const expired = because(failed("Timed out"), "choiceExpired");
+  const changed = because(failed("Changed"), "screenChanged");
+  assert.equal(expired.reason, "choiceExpired");
+  assert.equal(failureReasonOf(expired), "other");
+  assert.equal(failureReasonOf(changed), "screenChanged");
+});
+
 test("a refusal keeps its own reason and falls back to other", () => {
   const blocked = because(refused("Blocked"), "blockedApp");
   assert.equal(failureReasonOf(blocked), "blockedApp");
