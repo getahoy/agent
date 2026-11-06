@@ -4,7 +4,7 @@ import { historyCopy } from "../../copy/historyCopy.ts";
 import { needsRunConfirm } from "./historyView.ts";
 import type { Toast } from "./useToast.ts";
 
-export type EntryDialog = "runAgain" | "report" | null;
+type EntryDialog = "runAgain" | "report" | null;
 
 type ToolsOptions = { show: (toast: Toast) => void; reload: () => void };
 

@@ -32,7 +32,7 @@ export function spoken(outcome: CommandOutcome, speech: SpeechCase) {
 }
 
 // Reasons the Mac tells apart before they reach the wire's closed set.
-export type OutcomeReason = FailureReason | "choiceExpired";
+type OutcomeReason = FailureReason | "choiceExpired";
 
 export function because(
   outcome: CommandOutcome,

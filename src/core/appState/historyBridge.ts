@@ -23,7 +23,7 @@ export const historyChannels = {
   finished: "history:finished",
 } as const;
 
-export const ranAgainSchema = z.object({
+const ranAgainSchema = z.object({
   status: z.enum(COMMAND_STATUSES),
   message: z.string(),
 });
@@ -41,11 +41,7 @@ export const macHistoryQuerySchema = historyQuerySchema.omit({ macKey: true });
 
 export type MacHistoryQuery = z.infer<typeof macHistoryQuerySchema>;
 
-export const HISTORY_FAILURES = [
-  "signedOut",
-  "unreachable",
-  "refused",
-] as const;
+const HISTORY_FAILURES = ["signedOut", "unreachable", "refused"] as const;
 
 export type HistoryFailure = (typeof HISTORY_FAILURES)[number];
 
@@ -53,7 +49,7 @@ export type HistoryReply<T> =
   | { kind: "ok"; data: T }
   | { kind: "failed"; failure: HistoryFailure };
 
-export function historyReplySchema<T>(schema: z.ZodType<T>) {
+function historyReplySchema<T>(schema: z.ZodType<T>) {
   return z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("ok"), data: schema }),
     z.object({ kind: z.literal("failed"), failure: z.enum(HISTORY_FAILURES) }),

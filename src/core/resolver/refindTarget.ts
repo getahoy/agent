@@ -6,7 +6,7 @@ export type SeenApp = { pid: number; name: string };
 // A confirmed pick was already approved where it stood; a chosen one was not.
 export type PickKind = "chosen" | "confirmed";
 
-export type Refound =
+type Refound =
   | { kind: "click"; element: ScreenElement }
   | { kind: "confirm"; element: ScreenElement }
   | { kind: "offer"; elements: ScreenElement[] }

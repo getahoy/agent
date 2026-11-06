@@ -5,7 +5,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKDAY_WINDOW_DAYS = 6;
 const MS_PER_SECOND = 1000;
 
-export type HistoryDay = { title: string; entries: HistoryEntry[] };
+type HistoryDay = { title: string; entries: HistoryEntry[] };
 
 export type TimingSegment = {
   label: string;

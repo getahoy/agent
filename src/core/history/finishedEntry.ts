@@ -7,7 +7,7 @@ import type {
   UnderstoodBy,
 } from "@getahoy/protocol";
 
-export type FinishedTurn = {
+type FinishedTurn = {
   threadId: string;
   heard: string;
   status: CommandStatus;
