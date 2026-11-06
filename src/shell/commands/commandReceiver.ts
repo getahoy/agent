@@ -43,7 +43,7 @@ type CommandReceiverOptions = {
   isLocked: () => boolean;
   run: (text: string) => Promise<CommandOutcome>;
   onHeard: (text: string) => void;
-  onResult: (turn: Turn, owner: object) => void;
+  onResult: (turn: Turn, owner: object, heard: string | null) => void;
   onStopSpeech: (owner: object) => void;
   choices: ChoiceBook;
   logger: Logger;
@@ -128,7 +128,7 @@ export class CommandReceiver {
     logger.info("command", `${commandId} ${turn.status}`);
     this.#replies.get(commandId)?.(resultFrame(commandId, turn));
     this.#replies.delete(commandId);
-    onResult(turn, owner);
+    onResult(turn, owner, heard);
   }
 
   async #turnFor({ commandId, speakOn, work }: Queued): Promise<Turn> {

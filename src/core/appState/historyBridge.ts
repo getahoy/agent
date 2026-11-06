@@ -1,5 +1,6 @@
 import {
   COMMAND_STATUSES,
+  type HistoryEntry,
   type HistoryPage,
   type HistorySettings,
   historyChangedSchema,
@@ -19,6 +20,7 @@ export const historyChannels = {
   changeSettings: "history:change-settings",
   runAgain: "history:run-again",
   report: "history:report",
+  finished: "history:finished",
 } as const;
 
 export const ranAgainSchema = z.object({
@@ -78,4 +80,5 @@ export type HistoryBridge = {
   ) => Promise<HistoryReply<HistorySettings>>;
   runHistoryAgain: (heard: string) => Promise<HistoryReply<RanAgain>>;
   reportHistoryProblem: (input: ReportInput) => Promise<HistoryReply<Changed>>;
+  onHistoryFinished: (listener: (entry: HistoryEntry) => void) => () => void;
 };

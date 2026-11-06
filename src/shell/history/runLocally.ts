@@ -9,7 +9,7 @@ import type { CommandReceiver } from "../commands/commandReceiver.ts";
 // Runs on this Mac as if the phone had sent it, but silent: nobody is holding the phone.
 export function createLocalRun(commands: CommandReceiver) {
   const owner = {};
-  return (heard: string) =>
+  const run = (heard: string) =>
     new Promise<HistoryReply<RanAgain>>((resolve) => {
       const commandId = randomUUID();
       const request = {
@@ -25,6 +25,7 @@ export function createLocalRun(commands: CommandReceiver) {
       };
       commands.handle(request, reply, owner);
     });
+  return { run, owner };
 }
 
-export type LocalRun = ReturnType<typeof createLocalRun>;
+export type LocalRun = ReturnType<typeof createLocalRun>["run"];

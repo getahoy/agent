@@ -1,3 +1,4 @@
+import { historyEntrySchema } from "@getahoy/protocol";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 import type { z } from "zod";
 import {
@@ -36,6 +37,14 @@ const history: HistoryBridge = {
     ask(historyReplies.ranAgain, historyChannels.runAgain, heard),
   reportHistoryProblem: (input) =>
     ask(historyReplies.changed, historyChannels.report, input),
+  onHistoryFinished: (listener) => {
+    const receive = (_event: IpcRendererEvent, payload: unknown) => {
+      const parsed = historyEntrySchema.safeParse(payload);
+      if (parsed.success) listener(parsed.data);
+    };
+    ipcRenderer.on(historyChannels.finished, receive);
+    return () => ipcRenderer.removeListener(historyChannels.finished, receive);
+  },
 };
 
 const bridge: AgentBridge = {

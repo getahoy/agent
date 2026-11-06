@@ -10,9 +10,10 @@ import { AgentController } from "./shell/agentController.ts";
 import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
-import { createHistoryApi } from "./shell/history/historyApi.ts";
-import { registerHistoryBridge } from "./shell/history/historyIpc.ts";
-import { createLocalRun } from "./shell/history/runLocally.ts";
+import {
+  createHistoryWiring,
+  type FinishedListener,
+} from "./shell/history/historyWiring.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { createInterpreter } from "./shell/interpret/interpretApi.ts";
 import { ListenSwitch } from "./shell/lan/listenSwitch.ts";
@@ -110,6 +111,7 @@ type CommandParts = {
   identity: IdentityStore;
   apiUrl: string;
   logger: Logger;
+  onFinished: FinishedListener;
 };
 
 function createCommands(parts: CommandParts) {
@@ -129,7 +131,10 @@ function createCommands(parts: CommandParts) {
     isLocked,
     run: createCommandRunner({ helper, interpret, blockedApps, logger }),
     onHeard: (text) => controller.showLastHeard(text),
-    onResult: (turn, owner) => voice.speakTurn(turn, owner),
+    onResult: (turn, owner, heard) => {
+      voice.speakTurn(turn, owner);
+      parts.onFinished(turn, owner, heard);
+    },
     onStopSpeech: (owner) => voice.stop(owner),
     choices,
     logger,
@@ -155,15 +160,14 @@ async function startAgent(): Promise<void> {
   const trace = app.isPackaged
     ? null
     : (message: string) => logger.info("state", message);
-  const controller = new AgentController({
-    platform,
-    settings,
-    pairedPhones,
-    trace,
-  });
+  const state = { platform, settings, pairedPhones, trace };
+  const controller = new AgentController(state);
   const apiUrl = env.VITE_AHOY_API_URL;
+  const macName = device.displayName;
+  const history = createHistoryWiring({ apiUrl, identity, macName });
   const command = { platform, controller, settings, identity, apiUrl, logger };
-  const { helper, commands, onPhoneEnded } = createCommands(command);
+  const parts = { ...command, onFinished: history.finished };
+  const { helper, commands, onPhoneEnded } = createCommands(parts);
   const listen = new ListenSwitch({
     controller,
     endSessions: (reason) => services.phoneLink.endAll(reason),
@@ -180,8 +184,7 @@ async function startAgent(): Promise<void> {
     onPhoneEnded,
     onPhoneRefused: () => listen.phoneRefused(),
   });
-  const historyApi = createHistoryApi({ apiUrl, identity });
-  registerHistoryBridge(historyApi, createLocalRun(commands));
+  history.register(commands);
   const shell = { platform, controller, helper, services, listen, logger };
   const mainWindow = wireShell(shell);
   startParts(shell);
