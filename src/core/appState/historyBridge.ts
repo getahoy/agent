@@ -1,10 +1,12 @@
 import {
+  COMMAND_STATUSES,
   type HistoryPage,
   type HistorySettings,
   historyChangedSchema,
   historyPageSchema,
   historyQuerySchema,
   historySettingsSchema,
+  MAX_REPORT_NOTE_CHARS,
 } from "@getahoy/protocol";
 import { z } from "zod";
 
@@ -15,7 +17,23 @@ export const historyChannels = {
   clear: "history:clear",
   settings: "history:settings",
   changeSettings: "history:change-settings",
+  runAgain: "history:run-again",
+  report: "history:report",
 } as const;
+
+export const ranAgainSchema = z.object({
+  status: z.enum(COMMAND_STATUSES),
+  message: z.string(),
+});
+
+export type RanAgain = z.infer<typeof ranAgainSchema>;
+
+export const reportInputSchema = z.object({
+  id: z.uuid(),
+  note: z.string().max(MAX_REPORT_NOTE_CHARS),
+});
+
+export type ReportInput = z.infer<typeof reportInputSchema>;
 
 export const macHistoryQuerySchema = historyQuerySchema.omit({ macKey: true });
 
@@ -44,6 +62,7 @@ export const historyReplies = {
   page: historyReplySchema(historyPageSchema),
   changed: historyReplySchema(historyChangedSchema),
   settings: historyReplySchema(historySettingsSchema),
+  ranAgain: historyReplySchema(ranAgainSchema),
 };
 
 type Changed = z.infer<typeof historyChangedSchema>;
@@ -57,4 +76,6 @@ export type HistoryBridge = {
   changeHistorySettings: (
     keepHistory: boolean,
   ) => Promise<HistoryReply<HistorySettings>>;
+  runHistoryAgain: (heard: string) => Promise<HistoryReply<RanAgain>>;
+  reportHistoryProblem: (input: ReportInput) => Promise<HistoryReply<Changed>>;
 };

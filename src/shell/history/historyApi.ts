@@ -9,10 +9,12 @@ import type {
   HistoryFailure,
   HistoryReply,
   MacHistoryQuery,
+  ReportInput,
 } from "../../core/appState/historyBridge.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 
 const HISTORY = "/api/history";
+const SETTINGS = `${HISTORY}/settings`;
 
 type HistoryApiOptions = { apiUrl: string; identity: IdentityStore };
 
@@ -31,8 +33,8 @@ function failureOf(error: RequestError): HistoryFailure {
   return signedOut ? "signedOut" : "refused";
 }
 
-export function createHistoryApi({ apiUrl, identity }: HistoryApiOptions) {
-  async function call<T>(options: Call<T>): Promise<HistoryReply<T>> {
+function createCall({ apiUrl, identity }: HistoryApiOptions) {
+  return async <T>(options: Call<T>): Promise<HistoryReply<T>> => {
     const token = identity.sessionToken();
     if (!token) return { kind: "failed", failure: "signedOut" };
     const url = new URL(options.path, apiUrl);
@@ -48,11 +50,18 @@ export function createHistoryApi({ apiUrl, identity }: HistoryApiOptions) {
     });
     if (answer.code === "success") return { kind: "ok", data: answer.data };
     return { kind: "failed", failure: failureOf(answer.error) };
-  }
+  };
+}
 
+const entryPath = (id: string) => `${HISTORY}/${encodeURIComponent(id)}`;
+const changed = historyChangedSchema;
+const settings = historySettingsSchema;
+
+export function createHistoryApi(options: HistoryApiOptions) {
+  const call = createCall(options);
   // This Mac only ever reads its own history, so its key is set here, never by the page.
-  function list(query: MacHistoryQuery) {
-    const macKey = identity.encodedPublicKey();
+  const list = (query: MacHistoryQuery) => {
+    const macKey = options.identity.encodedPublicKey();
     const schema = historyPageSchema;
     if (query.q) {
       const body = { ...query, macKey };
@@ -61,22 +70,28 @@ export function createHistoryApi({ apiUrl, identity }: HistoryApiOptions) {
     const { status, cursor } = query;
     const params = { status, macKey, ...(cursor ? { cursor } : {}) };
     return call({ path: HISTORY, query: params, schema });
-  }
-
-  const entry = (id: string) => `${HISTORY}/${encodeURIComponent(id)}`;
-  const changed = historyChangedSchema;
-  const settings = historySettingsSchema;
+  };
+  const report = ({ id, note }: ReportInput) => {
+    const body = note.trim() ? { note: note.trim() } : {};
+    const path = `${entryPath(id)}/report`;
+    return call({ path, method: "POST", body, schema: changed });
+  };
   return {
     list,
+    report,
     remove: (id: string) =>
-      call({ path: entry(id), method: "DELETE", schema: changed }),
+      call({ path: entryPath(id), method: "DELETE", schema: changed }),
     restore: (id: string) =>
-      call({ path: `${entry(id)}/restore`, method: "POST", schema: changed }),
+      call({
+        path: `${entryPath(id)}/restore`,
+        method: "POST",
+        schema: changed,
+      }),
     clear: () => call({ path: HISTORY, method: "DELETE", schema: changed }),
-    settings: () => call({ path: `${HISTORY}/settings`, schema: settings }),
+    settings: () => call({ path: SETTINGS, schema: settings }),
     changeSettings: (keepHistory: boolean) =>
       call({
-        path: `${HISTORY}/settings`,
+        path: SETTINGS,
         method: "PATCH",
         body: { keepHistory },
         schema: settings,

@@ -32,6 +32,10 @@ const history: HistoryBridge = {
   historySettings: () => ask(historyReplies.settings, historyChannels.settings),
   changeHistorySettings: (keep) =>
     ask(historyReplies.settings, historyChannels.changeSettings, keep),
+  runHistoryAgain: (heard) =>
+    ask(historyReplies.ranAgain, historyChannels.runAgain, heard),
+  reportHistoryProblem: (input) =>
+    ask(historyReplies.changed, historyChannels.report, input),
 };
 
 const bridge: AgentBridge = {
