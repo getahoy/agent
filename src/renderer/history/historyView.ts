@@ -65,6 +65,27 @@ export function totalMs(timings: HistoryTimings): number | null {
   return segments.reduce((total, segment) => total + segment.ms, 0);
 }
 
+// History keeps the words, not the action, so the words decide what deserves a second look.
+const RISKY_WORDS = /\b(close|quit|exit|e-?mail|mail|draft)\b/i;
+
+export const needsRunConfirm = (heard: string) => RISKY_WORDS.test(heard);
+
+export function reportLines(entry: HistoryEntry) {
+  const timings = timingSegments(entry.timings)
+    .map((segment) => `${segment.label} ${seconds(segment.ms)}s`)
+    .join(" · ");
+  const fields = historyCopy.reportFields;
+  const lines: [string, string | null][] = [
+    [fields.heard, entry.heard],
+    [fields.did, entry.did],
+    [fields.status, entry.status],
+    [fields.app, entry.app],
+    [fields.reason, entry.reason],
+    [fields.timings, timings || null],
+  ];
+  return lines.flatMap(([label, text]) => (text ? [{ label, text }] : []));
+}
+
 export function whyOf(entry: HistoryEntry) {
   const { why } = historyCopy;
   switch (entry.status) {

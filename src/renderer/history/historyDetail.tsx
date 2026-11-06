@@ -1,6 +1,6 @@
 import type { HistoryEntry, HistoryFollowUp } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
-import { Button } from "../components/ui/button.tsx";
+import { DetailActions, type EntryHandlers } from "./detailActions.tsx";
 import { DetailEyebrow } from "./detailEyebrow.tsx";
 import { DetailFollowUp } from "./detailFollowUp.tsx";
 import { DetailOutcome } from "./detailOutcome.tsx";
@@ -19,11 +19,10 @@ const followUpKey = (followUp: HistoryFollowUp) =>
 
 type HistoryDetailProps = {
   entry: HistoryEntry | null;
-  onCopy: (entry: HistoryEntry) => void;
-  onDelete: (entry: HistoryEntry) => void;
+  handlers: EntryHandlers;
 };
 
-export function HistoryDetail({ entry, onCopy, onDelete }: HistoryDetailProps) {
+export function HistoryDetail({ entry, handlers }: HistoryDetailProps) {
   if (!entry) {
     return (
       <p className="m-auto px-10 text-center text-body-sm text-driftwood">
@@ -58,22 +57,7 @@ export function HistoryDetail({ entry, onCopy, onDelete }: HistoryDetailProps) {
           <span className="text-driftwood text-ui">{via.note}</span>
         </section>
       ) : null}
-      <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          className="flex-1"
-          onClick={() => onCopy(entry)}
-        >
-          {historyCopy.copy}
-        </Button>
-        <Button
-          variant="quietDestructive"
-          className="flex-1"
-          onClick={() => onDelete(entry)}
-        >
-          {historyCopy.delete}
-        </Button>
-      </div>
+      <DetailActions entry={entry} {...handlers} />
     </article>
   );
 }
