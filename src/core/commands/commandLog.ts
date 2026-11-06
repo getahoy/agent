@@ -1,4 +1,9 @@
-import type { CommandChoice, CommandStatus } from "@getahoy/protocol";
+import type {
+  CommandChoice,
+  CommandStatus,
+  FailureReason,
+  UnderstoodBy,
+} from "@getahoy/protocol";
 import type { Area } from "../resolver/elementArea.ts";
 import type { SpeechCase } from "../voice/buildSpeech.ts";
 
@@ -17,10 +22,20 @@ export type CommandOutcome = {
   message: string;
   choice?: Choice;
   speech?: SpeechCase;
+  reason?: FailureReason;
+  app?: string;
+  via?: UnderstoodBy;
 };
 
 export function spoken(outcome: CommandOutcome, speech: SpeechCase) {
   return { ...outcome, speech };
+}
+
+export function because(
+  outcome: CommandOutcome,
+  reason: FailureReason,
+): CommandOutcome {
+  return { ...outcome, reason };
 }
 
 export const done = (message: string): CommandOutcome => ({
