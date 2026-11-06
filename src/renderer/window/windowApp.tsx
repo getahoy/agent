@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import type { AgentState } from "../../core/appState/appState.ts";
+import { cn } from "../lib/cn.ts";
 import { useFade } from "../lib/motion.ts";
 import { phoneLink } from "../phone/phoneLink.ts";
 import { PageContent } from "./pageContent.tsx";
@@ -23,7 +24,12 @@ export function WindowApp({ state, initialPage }: WindowAppProps) {
       />
       <motion.main
         key={page}
-        className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-10 pt-12 pb-8"
+        className={cn(
+          "flex min-w-0 flex-1 flex-col",
+          page === "history"
+            ? "overflow-hidden"
+            : "gap-6 overflow-y-auto px-10 pt-12 pb-8",
+        )}
         {...fade}
       >
         <PageContent page={page} state={state} onNavigate={setPage} />

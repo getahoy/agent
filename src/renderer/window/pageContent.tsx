@@ -1,4 +1,5 @@
 import type { AgentState } from "../../core/appState/appState.ts";
+import { HistoryPage } from "../history/historyPage.tsx";
 import { PermissionList } from "../permissions/permissionList.tsx";
 import { PermissionsTitle } from "../permissions/permissionsTitle.tsx";
 import { AccountPage } from "./accountPage.tsx";
@@ -17,6 +18,8 @@ export function PageContent({ page, state, onNavigate }: PageContentProps) {
   switch (page) {
     case "home":
       return <HomePage state={state} />;
+    case "history":
+      return <HistoryPage />;
     case "phone":
       return <PhonePage state={state} onPairFirst={() => onNavigate("home")} />;
     case "permissions":

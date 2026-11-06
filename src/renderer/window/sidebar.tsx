@@ -1,4 +1,5 @@
 import {
+  History,
   House,
   type LucideIcon,
   ShieldCheck,
@@ -18,6 +19,7 @@ import type { WindowPage } from "./windowPage.ts";
 
 const pages: readonly { page: WindowPage; icon: LucideIcon }[] = [
   { page: "home", icon: House },
+  { page: "history", icon: History },
   { page: "phone", icon: Smartphone },
   { page: "permissions", icon: ShieldCheck },
   { page: "settings", icon: SlidersHorizontal },

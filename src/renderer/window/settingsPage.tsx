@@ -2,6 +2,7 @@ import { agentCopy } from "../../copy/agentCopy.ts";
 import { ListGroup } from "../components/ui/listGroup.tsx";
 import { ListRow } from "../components/ui/listRow.tsx";
 import { Text } from "../components/ui/text.tsx";
+import { HistorySettingsGroup } from "../history/historySettingsGroup.tsx";
 import { ListenToggle } from "../listen/listenToggle.tsx";
 import { OffDurationChoices } from "../listen/offDurationChoices.tsx";
 import { useListenSwitch } from "../listen/useListenSwitch.ts";
@@ -22,6 +23,7 @@ export function SettingsPage({ lanEnabled }: SettingsPageProps) {
         />
       </ListGroup>
       <OffDurationChoices listen={listen} />
+      <HistorySettingsGroup />
     </>
   );
 }
