@@ -1,6 +1,7 @@
 import type { HistoryEntry, HistoryStatus } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
+import { DetailEyebrow } from "./detailEyebrow.tsx";
 import { seconds, totalMs, whyOf } from "./historyView.ts";
 import { StatusMark } from "./statusMark.tsx";
 
@@ -37,9 +38,7 @@ export function DetailOutcome({ entry }: { entry: HistoryEntry }) {
       </section>
       {why ? (
         <section className="flex flex-col gap-1 rounded-group bg-sailcloth px-3.5 py-3">
-          <span className="font-medium font-mono text-driftwood text-label uppercase">
-            {why.label}
-          </span>
+          <DetailEyebrow>{why.label}</DetailEyebrow>
           <span className="text-body-sm">{why.text}</span>
         </section>
       ) : null}

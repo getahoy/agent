@@ -1,6 +1,7 @@
 import type { HistoryTimings } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
+import { DetailEyebrow } from "./detailEyebrow.tsx";
 import { seconds, type TimingSegment, timingSegments } from "./historyView.ts";
 
 // Class names must be written out whole for the style compiler to find them.
@@ -37,9 +38,7 @@ export function DetailTimings({ timings }: { timings: HistoryTimings }) {
   return (
     <section className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between">
-        <span className="font-medium font-mono text-driftwood text-label uppercase">
-          {historyCopy.timeWent}
-        </span>
+        <DetailEyebrow>{historyCopy.timeWent}</DetailEyebrow>
         <span className="font-medium font-mono text-caption">
           {seconds(total)}s
         </span>

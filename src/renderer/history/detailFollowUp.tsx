@@ -1,6 +1,7 @@
 import type { HistoryFollowUp } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
+import { DetailEyebrow } from "./detailEyebrow.tsx";
 import { seconds } from "./historyView.ts";
 
 export function DetailFollowUp({ followUp }: { followUp: HistoryFollowUp }) {
@@ -8,9 +9,7 @@ export function DetailFollowUp({ followUp }: { followUp: HistoryFollowUp }) {
   const waited = waitedMs === null ? null : seconds(waitedMs);
   return (
     <div className="flex flex-col gap-2 border-rope border-l-2 pl-3.5">
-      <span className="font-medium font-mono text-driftwood text-label uppercase">
-        {historyCopy.ahoyAsked}
-      </span>
+      <DetailEyebrow>{historyCopy.ahoyAsked}</DetailEyebrow>
       <span className="font-display text-question">{followUp.question}</span>
       <ul className="flex flex-col gap-1.5">
         {followUp.options.map((option) => {
@@ -37,12 +36,10 @@ export function DetailFollowUp({ followUp }: { followUp: HistoryFollowUp }) {
         })}
       </ul>
       {said === null ? null : (
-        <>
-          <span className="mt-1.5 font-medium font-mono text-driftwood text-label uppercase">
-            {historyCopy.youSaid(waited)}
-          </span>
+        <span className="mt-1.5 flex flex-col gap-2">
+          <DetailEyebrow>{historyCopy.youSaid(waited)}</DetailEyebrow>
           <span className="font-display text-question italic">“{said}”</span>
-        </>
+        </span>
       )}
     </div>
   );
