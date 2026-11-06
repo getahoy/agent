@@ -1,31 +1,47 @@
-import type { HistoryEntry, HistoryFilter } from "@getahoy/protocol";
+import type { HistoryEntry } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
-import { blankFor } from "./historyBlankKind.ts";
-import type { MacListState } from "./historyListState.ts";
+import { mergeFinished } from "../../core/history/finishedEntry.ts";
+import { blankFor, type ListPhase } from "./historyBlankKind.ts";
+import {
+  HistoryLoadError,
+  type HistoryPages,
+  type ListView,
+} from "./historyQueries.ts";
 
 type PageInput = {
-  list: MacListState;
-  filter: HistoryFilter;
-  search: string;
-  hidden: ReadonlySet<string>;
+  view: ListView;
+  pages: HistoryPages | undefined;
+  finished: readonly HistoryEntry[];
+  pending: boolean;
+  error: unknown;
   keepHistory: boolean | null;
   cleared: boolean;
 };
 
+function phaseOf({ pending, pages, error }: PageInput): ListPhase {
+  if (pending) return "loading";
+  return error && !pages ? "failed" : "ready";
+}
+
 export function pageView(input: PageInput) {
-  const { list, filter, search, keepHistory, cleared } = input;
+  const { view, pages, keepHistory, cleared, error } = input;
   const off = keepHistory === false;
-  const entries: HistoryEntry[] = off
-    ? []
-    : list.entries.filter((entry) => !input.hidden.has(entry.id));
-  const plain = filter === "all" && !search.trim();
+  const server = pages?.pages.flatMap((page) => page.entries) ?? [];
+  const entries = off ? [] : mergeFinished(server, input.finished, view);
+  const plain = view.filter === "all" && !view.search;
+  const failure = error instanceof HistoryLoadError ? error.failure : "refused";
+  const shown = { phase: phaseOf(input), keepHistory, cleared };
   const count = entries.length;
-  const { phase, failure, summary } = list;
-  const shown = { phase, failure, keepHistory, cleared, count };
+  const summary = pages?.pages[0]?.summary ?? null;
   return {
     entries,
-    blank: blankFor({ ...shown, filter, search }),
-    notice: list.stale ? historyCopy.couldNotRefresh : null,
+    blank: blankFor({
+      ...shown,
+      ...view,
+      count,
+      failure: error ? failure : null,
+    }),
+    notice: error && pages ? historyCopy.couldNotRefresh : null,
     summary:
       plain && summary
         ? historyCopy.summary(summary.lastSevenDays, summary.didntGoThrough)

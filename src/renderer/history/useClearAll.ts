@@ -3,12 +3,7 @@ import { historyCopy } from "../../copy/historyCopy.ts";
 import { useClearHistory } from "./useClearHistory.ts";
 import type { Toast } from "./useToast.ts";
 
-type ClearAllOptions = {
-  reload: () => Promise<void>;
-  show: (toast: Toast) => void;
-};
-
-export function useClearAll({ reload, show }: ClearAllOptions) {
+export function useClearAll(show: (toast: Toast) => void) {
   const { clear, clearing } = useClearHistory();
   const [cleared, setCleared] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -18,8 +13,7 @@ export function useClearAll({ reload, show }: ClearAllOptions) {
     setConfirming(false);
     if (done) setCleared(true);
     else show({ text: historyCopy.couldNotClear, undo: null });
-    void reload();
-  }, [clear, reload, show]);
+  }, [clear, show]);
 
   return { cleared, confirming, setConfirming, clearing, clearAll };
 }

@@ -1,12 +1,15 @@
 import type { HistoryEntry, HistoryFilter } from "@getahoy/protocol";
 import { useState } from "react";
+import { useDebounce } from "react-haiku";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { pageView } from "./historyPageView.ts";
+import { useFinishedEntries, useHistoryQuery } from "./historyQueries.ts";
 import { useClearAll } from "./useClearAll.ts";
-import { useEntryDeletion } from "./useEntryDeletion.ts";
-import { useHistoryList } from "./useHistoryList.ts";
+import { useDeleteEntry } from "./useDeleteEntry.ts";
 import { useHistorySettings } from "./useHistorySettings.ts";
 import { useToast } from "./useToast.ts";
+
+const SEARCH_DELAY_MS = 300;
 
 function useListView() {
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -17,15 +20,24 @@ function useListView() {
 
 export function useHistoryPage() {
   const view = useListView();
-  const list = useHistoryList(view);
+  const search = useDebounce(view.search, SEARCH_DELAY_MS).trim();
+  const settled = { filter: view.filter, search };
+  const query = useHistoryQuery(settled);
+  const finished = useFinishedEntries();
   const toasts = useToast();
-  const { reload } = list;
   const { show } = toasts;
-  const { hidden, deleteEntry } = useEntryDeletion({ reload, show });
+  const deletion = useDeleteEntry(show);
   const { keepHistory } = useHistorySettings();
-  const clearing = useClearAll({ reload, show });
-  const { cleared } = clearing;
-  const shown = pageView({ list, ...view, hidden, keepHistory, cleared });
+  const clearing = useClearAll(show);
+  const shown = pageView({
+    view: settled,
+    pages: query.data,
+    finished,
+    pending: query.isPending,
+    error: query.error,
+    keepHistory,
+    cleared: clearing.cleared,
+  });
   const selected =
     shown.entries.find((entry) => entry.id === view.selected) ?? null;
   const copy = (entry: HistoryEntry) => {
@@ -35,12 +47,12 @@ export function useHistoryPage() {
   };
   const deleteSelected = (entry: HistoryEntry) => {
     view.setSelected(null);
-    void deleteEntry(entry.id);
+    deletion.mutate(entry.id);
   };
   const undo = () => {
     toasts.toast?.undo?.();
     toasts.dismiss();
   };
   const actions = { copy, deleteSelected, undo };
-  return { view, list, toasts, selected, ...shown, ...clearing, ...actions };
+  return { view, query, toasts, selected, ...shown, ...clearing, ...actions };
 }

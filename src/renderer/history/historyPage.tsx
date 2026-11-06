@@ -9,8 +9,8 @@ import { useHistoryPage } from "./useHistoryPage.ts";
 
 export function HistoryPage() {
   const page = useHistoryPage();
-  const { view, list, toasts, blank } = page;
-  const retry = () => void list.reload();
+  const { view, query, toasts, blank } = page;
+  const retry = () => void query.refetch();
   const tools = useEntryTools({ show: toasts.show, reload: retry });
   const handlers = {
     running: tools.running,
@@ -35,7 +35,11 @@ export function HistoryPage() {
         onFilter={view.setFilter}
         onOpen={view.setSelected}
         onClear={() => page.setConfirming(true)}
-        onNearEnd={() => void list.loadMore()}
+        onNearEnd={() => {
+          if (query.hasNextPage && !query.isFetchingNextPage) {
+            void query.fetchNextPage();
+          }
+        }}
       />
       <div className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
         <HistoryDetail entry={page.selected} handlers={handlers} />

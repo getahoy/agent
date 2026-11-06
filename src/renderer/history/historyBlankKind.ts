@@ -1,6 +1,7 @@
 import type { HistoryFilter } from "@getahoy/protocol";
 import type { HistoryFailure } from "../../core/appState/historyBridge.ts";
-import type { ListPhase } from "./historyListState.ts";
+
+export type ListPhase = "loading" | "ready" | "failed";
 
 export type BlankKind =
   | "loading"
