@@ -60,6 +60,7 @@
     "qrcode-generator": "^2.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-haiku": "^2.4.1",
     "write-file-atomic": "^8.0.0",
     "ws": "^8.22.0",
     "zod": "4.6.7"

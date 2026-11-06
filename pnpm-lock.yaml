@@ -214,6 +214,9 @@ importers:
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
+      react-haiku:
+        specifier: ^2.4.1
+        version: 2.4.1(react@19.3.0)
       write-file-atomic:
         specifier: ^8.0.0
         version: 8.0.0
@@ -1711,6 +1714,11 @@ packages:
     resolution: {integrity: sha512-JDk8dgif51OjFoDE70+OT9ICyYr+69HlmihNwp1+Nsfbna3t5sIiCa9ZJktDmQ4/1b/rn26hIAR2uYXDMr5r0Q==}
     peerDependencies:
       react: ^19.3.0
+
+  react-haiku@2.4.1:
+    resolution: {integrity: sha512-8f3JVL+VvmkHhd3OFQCtY46vmPJuVqNeaYH7aoZsh7mACvsafu3Sh3xvynBciaWi6/cl7ABIe9pR+Ur1kSJ69Q==}
+    peerDependencies:
+      react: '>=16.8.0'
 
   react-reconciler@0.33.0:
     resolution: {integrity: sha512-KetWRytFv1epdpJc3J4G75I4WrplZE5jOL7Yq0p34+OVOKF4Se7WrdIdVC45XsSSmUTlht2FM/fM1FZb1mfQeA==}
@@ -3381,6 +3389,10 @@ snapshots:
     dependencies:
       react: 19.3.0
       scheduler: 0.28.0
+
+  react-haiku@2.4.1(react@19.3.0):
+    dependencies:
+      react: 19.3.0
 
   react-reconciler@0.33.0(react@19.3.1):
     dependencies:
