@@ -2,6 +2,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { MAX_CHOICE_LABEL_CHARS, MAX_CHOICES } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
 import {
+  because,
   type CommandOutcome,
   done,
   failed,
@@ -125,7 +126,7 @@ export async function runClick(
   helper: HelperClient,
 ): Promise<CommandOutcome> {
   const before = await takeScreen(helper);
-  if (!before) return failed(commandCopy.noWindow);
+  if (!before) return because(failed(commandCopy.noWindow), "nothingSelected");
   const screen = { helper, before };
   const found = resolveTarget(before.elements, before.window, label);
   if (found.kind === "one") return clickOrConfirm(screen, found.target);
@@ -136,6 +137,9 @@ export async function runClick(
   if (near.length > 0) {
     return offerTargets(screen, near, { kind: "near", label });
   }
-  const missing = failed(commandCopy.noTarget(label));
+  const missing = because(
+    failed(commandCopy.noTarget(label)),
+    "targetNotFound",
+  );
   return spoken(missing, { kind: "notFound", label });
 }

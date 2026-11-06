@@ -9,6 +9,7 @@ export type Turn = CommandOutcome & {
   threadId: string;
   round: number;
   speakOn: SpeakTarget;
+  onMacMs?: number;
 };
 
 type TurnContext = {

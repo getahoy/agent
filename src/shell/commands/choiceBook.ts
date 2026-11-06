@@ -1,6 +1,7 @@
 import { CHOICE_TTL_MS, type SpeakTarget } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
 import {
+  because,
   type Choice,
   type CommandOutcome,
   failed,
@@ -27,9 +28,10 @@ type Pending = OpenChoice & {
 
 type ChoiceBookOptions = { clearOverlay: () => void };
 
-export const SCREEN_CHANGED = spoken(failed(commandCopy.screenChanged), {
-  kind: "screenChanged",
-});
+export const SCREEN_CHANGED = spoken(
+  because(failed(commandCopy.screenChanged), "screenChanged"),
+  { kind: "screenChanged" },
+);
 
 export class ChoiceBook {
   readonly #options: ChoiceBookOptions;

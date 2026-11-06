@@ -1,5 +1,6 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
 import {
+  because,
   type CommandOutcome,
   done,
   failed,
@@ -67,7 +68,8 @@ function nothingFound(intent: TabIntent, listed: readonly Listed[]) {
   }
   const denied = listed.find(({ list }) => list.kind === "notAllowed");
   if (denied) return failed(commandCopy.allowControl(denied.browser));
-  return failed(commandCopy.noTab(intent.match, intent.browser));
+  const noTab = failed(commandCopy.noTab(intent.match, intent.browser));
+  return because(noTab, "targetNotFound");
 }
 
 function actedMessage(intent: TabIntent): string {

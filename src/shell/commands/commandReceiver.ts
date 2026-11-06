@@ -103,19 +103,20 @@ export class CommandReceiver {
     this.#replies.set(commandId, reply);
     if (decision.kind === "running") return;
     this.#log = startCommand(this.#log, commandId);
+    const receivedAt = performance.now();
     this.#queue = this.#queue
-      .then(() => this.#execute(queued))
+      .then(() => this.#execute(queued, receivedAt))
       .catch(() => this.#options.logger.warn("command", `${commandId} broke`));
   }
 
-  async #execute(queued: Queued): Promise<void> {
+  async #execute(queued: Queued, receivedAt: number): Promise<void> {
     const { commandId, owner, heard } = queued;
     const { choices, onHeard, onResult, logger } = this.#options;
     if (heard) onHeard(heard);
     const paused = this.#breaker.tripped && heard !== null;
-    const turn = paused
-      ? this.#pausedTurn(queued)
-      : await this.#turnFor(queued);
+    const ran = paused ? this.#pausedTurn(queued) : await this.#turnFor(queued);
+    const onMacMs = Math.round(performance.now() - receivedAt);
+    const turn = { ...ran, onMacMs };
     if (!paused) this.#recordForBreaker(turn);
     const offerable = paused || !this.#breaker.tripped;
     if (turn.choice && offerable) {

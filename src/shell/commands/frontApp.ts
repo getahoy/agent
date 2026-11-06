@@ -18,7 +18,7 @@ async function askFrontmost(script: string): Promise<string | null> {
   return answer === "" ? null : answer;
 }
 
-async function frontAppName(): Promise<string | null> {
+export async function frontAppName(): Promise<string | null> {
   const bundle = path.basename((await askFrontmost(FRONT_PATH)) ?? "");
   if (!bundle.endsWith(APP_EXTENSION)) return null;
   return bundle.slice(0, -APP_EXTENSION.length);

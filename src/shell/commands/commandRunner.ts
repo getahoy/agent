@@ -1,12 +1,15 @@
 import type { Logger } from "@getahoy/lib";
+import type { UnderstoodBy } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
 import {
+  because,
   type CommandOutcome,
   done,
   failed,
   refused,
 } from "../../core/commands/commandLog.ts";
 import type { Intent, ParsedCommand } from "../../core/commands/intent.ts";
+import { appOfIntent } from "../../core/commands/outcomeDetails.ts";
 import { parseCommand } from "../../core/commands/parseCommand.ts";
 import { validateActions } from "../../core/commands/validateActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
@@ -15,7 +18,7 @@ import {
   isBlockedApp,
 } from "../../core/safety/blockedApps.ts";
 import type { Interpreter } from "../interpret/interpretApi.ts";
-import { frontBundleId, waitUntilFrontmost } from "./frontApp.ts";
+import { frontAppName, frontBundleId, waitUntilFrontmost } from "./frontApp.ts";
 import { installedApps } from "./installedApps.ts";
 import { runIntent } from "./runIntent.ts";
 
@@ -32,28 +35,40 @@ const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
   "type",
 ]);
 
+function withApp(outcome: CommandOutcome, app: string | null) {
+  return app ? { ...outcome, app } : outcome;
+}
+
+function understood(outcome: CommandOutcome, via: UnderstoodBy) {
+  return { ...outcome, via };
+}
+
 // Not knowing which app is in front counts as blocked: the list must fail closed.
 async function runGuarded(
   intent: Intent,
   options: CommandRunnerOptions,
 ): Promise<CommandOutcome> {
-  if (SCREEN_INTENTS.has(intent.kind)) {
-    const front = await frontBundleId();
-    if (!front || isBlockedApp(front, options.blockedApps)) {
-      return refused(commandCopy.blockedApp);
-    }
+  if (!SCREEN_INTENTS.has(intent.kind)) {
+    const outcome = await runIntent(intent, options.helper);
+    return withApp(outcome, appOfIntent(intent));
   }
-  return runIntent(intent, options.helper);
+  const [front, frontName] = await Promise.all([
+    frontBundleId(),
+    frontAppName(),
+  ]);
+  if (!front || isBlockedApp(front, options.blockedApps)) {
+    const blocked = because(refused(commandCopy.blockedApp), "blockedApp");
+    return withApp(blocked, frontName);
+  }
+  return withApp(await runIntent(intent, options.helper), frontName);
 }
 
 type Unmatched = Extract<ParsedCommand, { kind: "unknownApp" | "unsupported" }>;
 
 function notUnderstood(parsed: Unmatched): CommandOutcome {
-  return failed(
-    parsed.kind === "unknownApp"
-      ? commandCopy.noSuchApp(parsed.name)
-      : commandCopy.cannotDoYet,
-  );
+  if (parsed.kind === "unsupported") return failed(commandCopy.cannotDoYet);
+  const noSuchApp = failed(commandCopy.noSuchApp(parsed.name));
+  return because(noSuchApp, "unknownApp");
 }
 
 function appBeforeInput(intent: Intent, next: Intent | undefined) {
@@ -68,16 +83,18 @@ async function runInOrder(
   options: CommandRunnerOptions,
 ): Promise<CommandOutcome> {
   const messages: string[] = [];
+  let actedOn: string | null = null;
   for (const [index, intent] of intents.entries()) {
     const outcome = await runGuarded(intent, options);
     if (outcome.status !== "done") return outcome;
+    actedOn = outcome.app ?? actedOn;
     messages.push(outcome.message);
     const app = appBeforeInput(intent, intents[index + 1]);
     if (app && !(await waitUntilFrontmost(app))) {
-      return failed(commandCopy.notInFront(app));
+      return withApp(failed(commandCopy.notInFront(app)), app);
     }
   }
-  return done(messages.join(", "));
+  return withApp(done(messages.join(", ")), actedOn);
 }
 
 async function viaInterpreter(
@@ -110,14 +127,16 @@ export function createCommandRunner(options: CommandRunnerOptions) {
     const parsed = parseCommand(text, apps);
     switch (parsed.kind) {
       case "intent":
-        return runGuarded(parsed.intent, options);
+        return understood(await runGuarded(parsed.intent, options), "rules");
       case "ambiguous": {
         const message = commandCopy.which(parsed.apps);
-        return { status: "needsChoice", message };
+        return understood({ status: "needsChoice", message }, "rules");
       }
       case "unknownApp":
-      case "unsupported":
-        return viaInterpreter(text, apps, parsed, options);
+      case "unsupported": {
+        const outcome = await viaInterpreter(text, apps, parsed, options);
+        return understood(outcome, "ai");
+      }
       default: {
         const unhandled: never = parsed;
         throw new Error(`Unhandled command ${JSON.stringify(unhandled)}`);
