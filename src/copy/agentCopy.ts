@@ -7,6 +7,7 @@ export const agentCopy = {
   "error.retry": "Try again",
   "nav.label": "Ahoy sections",
   "nav.home": "Home",
+  "nav.history": "History",
   "nav.phone": "Phone",
   "nav.permissions": "Permissions",
   "nav.settings": "Settings",

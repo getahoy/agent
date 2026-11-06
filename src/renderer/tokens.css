@@ -41,6 +41,7 @@
   --hover: light-dark(rgba(23, 22, 20, 0.07), rgba(255, 255, 255, 0.08));
   --scrim: rgba(0, 0, 0, 0.18);
   --switch-thumb: #ffffff;
+  --on-tag: #ffffff;
 }
 
 @theme inline {
@@ -66,6 +67,7 @@
   --color-hover: var(--hover);
   --color-scrim: var(--scrim);
   --color-switch-thumb: var(--switch-thumb);
+  --color-on-tag: var(--on-tag);
   --color-qr-ink: var(--qr-ink);
   --color-qr-paper: var(--qr-paper);
   --color-qr-track: var(--qr-track);
@@ -114,6 +116,15 @@
   --text-heard: 24px;
   --text-heard--line-height: 1.15;
   --text-heard--letter-spacing: -0.01em;
+  --text-entry: 17px;
+  --text-entry--line-height: 1.25;
+  --text-entry--letter-spacing: -0.01em;
+  --text-question: 18px;
+  --text-question--line-height: 1.25;
+  --text-question--letter-spacing: -0.01em;
+  --text-outcome: 16px;
+  --text-outcome--line-height: 1.35;
+  --text-outcome--letter-spacing: -0.015em;
 
   --spacing: 4px;
 
@@ -122,6 +133,7 @@
   --radius-thumb: 10px;
   --radius-popover: 12px;
   --radius-dialog: 14px;
+  --radius-entry: 13px;
   --radius-group: 16px;
   --radius-qr: 20px;
   --radius-pill: 9999px;
@@ -142,6 +154,7 @@
 
   --animate-qr-spin: qr-spin 900ms linear infinite;
   --animate-qr-pulse: qr-pulse 900ms linear infinite;
+  --animate-breathe: qr-pulse 1600ms ease-in-out infinite;
   --animate-qr-reveal: qr-fade 320ms var(--ease-out);
   --animate-qr-fade: qr-fade 240ms;
   --animate-qr-rise: qr-rise 240ms var(--ease-out);
@@ -184,6 +197,7 @@
 
   --width-popover: 340px;
   --width-sidebar: 200px;
+  --width-history-list: 290px;
   --width-setup: 440px;
   --width-dialog: 280px;
   --width-window: 760px;
