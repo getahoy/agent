@@ -2,6 +2,8 @@ import type { HistoryEntry, HistoryFilter } from "@getahoy/protocol";
 import { useState } from "react";
 import { useDebounce } from "react-haiku";
 import { historyCopy } from "../../copy/historyCopy.ts";
+import { waitsForFirstLoad } from "../../core/history/historyFirstLoad.ts";
+import { useFirstLoad } from "../hooks/useFirstLoad.ts";
 import { pageView } from "./historyPageView.ts";
 import { useFinishedEntries, useHistoryQuery } from "./historyQueries.ts";
 import { useClearAll } from "./useClearAll.ts";
@@ -38,6 +40,13 @@ export function useHistoryPage() {
     keepHistory,
     cleared: clearing.cleared,
   });
+  const firstLoad = useFirstLoad(
+    waitsForFirstLoad({
+      pending: query.isPending,
+      cachedPages: query.data?.pages.length ?? 0,
+      localEntries: finished.length,
+    }),
+  );
   const selected =
     shown.entries.find((entry) => entry.id === view.selected) ?? null;
   const copy = (entry: HistoryEntry) => {
@@ -54,5 +63,6 @@ export function useHistoryPage() {
     toasts.dismiss();
   };
   const actions = { copy, deleteSelected, undo };
-  return { view, query, toasts, selected, ...shown, ...clearing, ...actions };
+  const state = { view, query, toasts, selected, firstLoad };
+  return { ...state, ...shown, ...clearing, ...actions };
 }

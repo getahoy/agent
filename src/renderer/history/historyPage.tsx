@@ -42,7 +42,9 @@ export function HistoryPage() {
         }}
       />
       <div className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto bg-paper">
-        <HistoryDetail entry={page.selected} handlers={handlers} />
+        {page.firstLoad.showLoader ? null : (
+          <HistoryDetail entry={page.selected} handlers={handlers} />
+        )}
       </div>
       <HistoryToast toast={toasts.toast} onUndo={page.undo} />
       <EntryDialogs entry={page.selected} tools={tools} />

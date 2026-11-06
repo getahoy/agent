@@ -18,6 +18,9 @@ export const historyCopy = {
   emptyTitle: "Nothing here yet.",
   emptyBody:
     "Everything you ask this Mac to do, and what it did, will be kept here.",
+  loading: "Loading your history…",
+  loadingSlow: "Still loading your history…",
+  loadingSlowHint: "This can take a moment on a slow connection.",
   errorTitle: "Couldn’t load your history.",
   errorBody: "Your entries are safe. Check your connection and try again.",
   signedOutBody: "Sign in on the Mac to see its history.",
