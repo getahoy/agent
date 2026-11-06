@@ -2,9 +2,9 @@ import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { frameLabelCopy, pairingCodeCopy } from "../../copy/pairingCodeCopy.ts";
 import { Button } from "../components/ui/button.tsx";
+import { PennantSpinner } from "../components/ui/pennantSpinner.tsx";
 import { QrCode } from "../components/ui/qrCode.tsx";
 import { QrScannedMark } from "../components/ui/qrScannedMark.tsx";
-import { QrSpinner } from "../components/ui/qrSpinner.tsx";
 import { cn } from "../lib/cn.ts";
 import type { CodeLook, FrameView } from "./codeView.ts";
 
@@ -59,7 +59,7 @@ export function QrFrame({
         {view.scanned ? <QrScannedMark /> : null}
         {view.spinner ? (
           <span className="absolute inset-0 flex items-center justify-center">
-            <QrSpinner />
+            <PennantSpinner size="qr" />
           </span>
         ) : null}
         {view.newCode ? (
