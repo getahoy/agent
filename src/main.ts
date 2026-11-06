@@ -10,6 +10,8 @@ import { AgentController } from "./shell/agentController.ts";
 import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
+import { createHistoryApi } from "./shell/history/historyApi.ts";
+import { registerHistoryBridge } from "./shell/history/historyIpc.ts";
 import { IdentityStore } from "./shell/identity/identityStore.ts";
 import { createInterpreter } from "./shell/interpret/interpretApi.ts";
 import { ListenSwitch } from "./shell/lan/listenSwitch.ts";
@@ -177,6 +179,7 @@ async function startAgent(): Promise<void> {
     onPhoneEnded,
     onPhoneRefused: () => listen.phoneRefused(),
   });
+  registerHistoryBridge(createHistoryApi({ apiUrl, identity }));
   const shell = { platform, controller, helper, services, listen, logger };
   const mainWindow = wireShell(shell);
   startParts(shell);

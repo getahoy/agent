@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Permission } from "../../ports/platform.ts";
 import type { AgentState, OnboardingStep } from "./appState.ts";
+import type { HistoryBridge } from "./historyBridge.ts";
 import type { OffDuration } from "./listenOff.ts";
 
 export const bridgeChannels = {
@@ -27,7 +28,7 @@ export const popoverHeightSchema = z.number().positive().finite();
 
 export const permissionSchema = z.enum(["accessibility", "screenRecording"]);
 
-export type AgentBridge = {
+export type AgentBridge = HistoryBridge & {
   getState: () => Promise<AgentState>;
   onState: (listener: (state: AgentState) => void) => () => void;
   completeStep: (step: OnboardingStep) => Promise<void>;

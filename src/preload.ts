@@ -1,15 +1,41 @@
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
+import type { z } from "zod";
 import {
   type AgentBridge,
   bridgeChannels,
 } from "./core/appState/agentBridge.ts";
 import { type AgentState, agentStateSchema } from "./core/appState/appState.ts";
+import {
+  type HistoryBridge,
+  historyChannels,
+  historyReplies,
+} from "./core/appState/historyBridge.ts";
 
 const invoke = async (channel: string, ...args: unknown[]) => {
   await ipcRenderer.invoke(channel, ...args);
 };
 
+const FAILED = { kind: "failed", failure: "refused" } as const;
+
+async function ask<T>(schema: z.ZodType<T>, channel: string, input?: unknown) {
+  const parsed = schema.safeParse(await ipcRenderer.invoke(channel, input));
+  return parsed.success ? parsed.data : FAILED;
+}
+
+const history: HistoryBridge = {
+  loadHistory: (query) => ask(historyReplies.page, historyChannels.list, query),
+  removeHistoryEntry: (id) =>
+    ask(historyReplies.changed, historyChannels.remove, id),
+  restoreHistoryEntry: (id) =>
+    ask(historyReplies.changed, historyChannels.restore, id),
+  clearHistory: () => ask(historyReplies.changed, historyChannels.clear),
+  historySettings: () => ask(historyReplies.settings, historyChannels.settings),
+  changeHistorySettings: (keep) =>
+    ask(historyReplies.settings, historyChannels.changeSettings, keep),
+};
+
 const bridge: AgentBridge = {
+  ...history,
   getState: async () =>
     agentStateSchema.parse(await ipcRenderer.invoke(bridgeChannels.getState)),
   onState: (listener: (state: AgentState) => void) => {
