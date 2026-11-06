@@ -34,7 +34,7 @@ export const historyCopy = {
   chooseEntry: "Choose an entry to see what happened.",
   keepHistory: "Keep history",
   keepHistoryDetail:
-    "What you said and what Ahoy did, kept in your account for 90 days.",
+    "Ahoy keeps a history of what you said and what it did in your account for 90 days. Speech audio is never stored.",
   clearHistory: "Clear history…",
   clearTitle: "Clear all history?",
   clearBody:
