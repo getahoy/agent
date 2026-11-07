@@ -18,29 +18,22 @@ const followUpKey = (followUp: HistoryFollowUp) =>
   [followUp.question, followUp.said, followUp.waitedMs].join("|");
 
 type HistoryDetailProps = {
-  entry: HistoryEntry | null;
+  entry: HistoryEntry;
   handlers: EntryHandlers;
 };
 
 export function HistoryDetail({ entry, handlers }: HistoryDetailProps) {
-  if (!entry) {
-    return (
-      <p className="m-auto px-10 text-center text-body-sm text-driftwood">
-        {historyCopy.chooseEntry}
-      </p>
-    );
-  }
   const startedAt = new Date(entry.startedAt);
   const day = dayLabel(startedAt, new Date());
   const eyebrow = [day, timeLabel(startedAt), entry.macName].join(" · ");
   const long = entry.heard.length > LONG_HEARD_CHARS;
   const via = entry.via ? understood[entry.via] : null;
   return (
-    <article className="flex flex-col gap-6 px-7 pt-9 pb-8">
+    <article className="flex flex-col gap-6.5 px-6 pb-10">
       <header className="flex flex-col gap-2.5">
         <DetailEyebrow>{eyebrow}</DetailEyebrow>
         <h2
-          className={`font-display italic ${long ? "text-card-title" : "text-heard"}`}
+          className={`font-display italic ${long ? "text-entry-heard-long" : "text-entry-heard"}`}
         >
           “{entry.heard}”
         </h2>
@@ -53,7 +46,7 @@ export function HistoryDetail({ entry, handlers }: HistoryDetailProps) {
       {via ? (
         <section className="flex flex-col gap-1">
           <DetailEyebrow>{historyCopy.understoodBy}</DetailEyebrow>
-          <span className="font-medium text-body-sm">{via.title}</span>
+          <span className="font-medium text-row">{via.title}</span>
           <span className="text-driftwood text-ui">{via.note}</span>
         </section>
       ) : null}

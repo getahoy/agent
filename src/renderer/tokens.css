@@ -117,14 +117,23 @@
   --text-heard--line-height: 1.15;
   --text-heard--letter-spacing: -0.01em;
   --text-entry: 17px;
-  --text-entry--line-height: 1.25;
-  --text-entry--letter-spacing: -0.01em;
+  --text-entry--line-height: 1.3;
+  --text-entry--letter-spacing: -0.005em;
+  --text-entry-heard: 26px;
+  --text-entry-heard--line-height: 1.15;
+  --text-entry-heard--letter-spacing: -0.015em;
+  --text-entry-heard-long: 21px;
+  --text-entry-heard-long--line-height: 1.2;
+  --text-entry-heard-long--letter-spacing: -0.015em;
+  --text-summary: 21px;
+  --text-summary--line-height: 1.15;
+  --text-summary--letter-spacing: -0.01em;
   --text-question: 18px;
   --text-question--line-height: 1.25;
   --text-question--letter-spacing: -0.01em;
-  --text-outcome: 16px;
-  --text-outcome--line-height: 1.35;
-  --text-outcome--letter-spacing: -0.015em;
+  --text-outcome: 17px;
+  --text-outcome--line-height: 1.4;
+  --text-outcome--letter-spacing: -0.011em;
 
   --spacing: 4px;
 
@@ -133,7 +142,7 @@
   --radius-thumb: 10px;
   --radius-popover: 12px;
   --radius-dialog: 14px;
-  --radius-entry: 13px;
+  --radius-entry: 14px;
   --radius-group: 16px;
   --radius-qr: 20px;
   --radius-pill: 9999px;
@@ -143,6 +152,8 @@
   --shadow-dialog:
     0 0 0 0.5px var(--hairline-dialog), 0 20px 50px -10px rgba(0, 0, 0, 0.35);
   --shadow-thumb: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-drawer:
+    -1px 0 0 var(--rope), -24px 0 48px -24px rgba(23, 22, 20, 0.28);
   --shadow-qr-pill:
     0 1px 0 rgba(23, 22, 20, 0.04), 0 16px 40px -16px rgba(23, 22, 20, 0.4);
 
@@ -158,6 +169,18 @@
   --animate-qr-reveal: qr-fade 320ms var(--ease-out);
   --animate-qr-fade: qr-fade 240ms;
   --animate-qr-rise: qr-rise 240ms var(--ease-out);
+  --animate-drawer-in: drawer-in 240ms var(--ease-out) both;
+
+  @keyframes drawer-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 
   @keyframes qr-spin {
     to {
@@ -197,7 +220,8 @@
 
   --width-popover: 340px;
   --width-sidebar: 200px;
-  --width-history-list: 290px;
+  --width-drawer: 320px;
+  --container-entry-row: 560px;
   --width-setup: 440px;
   --width-dialog: 280px;
   --width-report: 360px;

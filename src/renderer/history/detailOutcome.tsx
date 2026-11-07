@@ -39,7 +39,7 @@ export function DetailOutcome({ entry }: { entry: HistoryEntry }) {
       {why ? (
         <section className="flex flex-col gap-1 rounded-group bg-sailcloth px-3.5 py-3">
           <DetailEyebrow>{why.label}</DetailEyebrow>
-          <span className="text-body-sm">{why.text}</span>
+          <span className="text-row">{why.text}</span>
         </section>
       ) : null}
     </>

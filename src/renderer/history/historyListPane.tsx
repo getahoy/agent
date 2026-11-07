@@ -31,6 +31,9 @@ const NEAR_END_PX = 120;
 export function HistoryListPane(props: HistoryListPaneProps) {
   const { firstLoad } = props;
   const fade = firstLoad.fadeIn && "animate-qr-fade";
+  const dim =
+    props.selected !== null &&
+    "opacity-40 focus-within:opacity-100 hover:opacity-100";
   const scrolled = (event: UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
     const left = scrollHeight - scrollTop - clientHeight;
@@ -48,16 +51,21 @@ export function HistoryListPane(props: HistoryListPaneProps) {
   return (
     <div
       onScroll={scrolled}
-      className="flex h-full w-history-list shrink-0 flex-col overflow-y-auto border-rope border-r px-2 pt-12 pb-6"
+      className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto px-7 pt-12 pb-8"
     >
-      <h1 className="px-2.5 pb-2.5 font-display text-title">
+      <h1 className="px-3 pb-2.5 font-display text-title">
         {historyCopy.title}
       </h1>
       {firstLoad.showLoader ? (
         <HistoryLoading busy={firstLoad.busy} />
       ) : (
         <div className={cn("flex flex-col", fade)}>
-          <div className="flex flex-col gap-2.5 px-2.5 pb-2">
+          <div
+            className={cn(
+              "flex max-w-entry-row flex-col gap-2.5 px-3 pb-2 transition-opacity duration-240",
+              dim,
+            )}
+          >
             <HistoryListTools {...props} />
           </div>
           {props.blank}

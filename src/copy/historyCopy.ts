@@ -34,7 +34,9 @@ export const historyCopy = {
   nothingFailedBody: "Every command went through.",
   offTitle: "History is off.",
   offBody: "Turn on Keep history in Settings to start again.",
-  chooseEntry: "Choose an entry to see what happened.",
+  entry: "Entry",
+  closeEntry: "Close entry",
+  closeEntryHint: "Close (Esc)",
   keepHistory: "Keep history",
   keepHistoryDetail:
     "Ahoy keeps a history of what you said and what it did in your account for 90 days. Speech audio is never stored.",

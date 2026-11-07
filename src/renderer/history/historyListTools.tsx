@@ -20,7 +20,7 @@ export function HistoryListTools(props: HistoryListToolsProps) {
         </span>
       ) : null}
       {props.summary ? (
-        <span className="text-driftwood text-ui">{props.summary}</span>
+        <span className="font-display text-summary">{props.summary}</span>
       ) : null}
       <HistorySearch value={props.search} onChange={props.onSearch} />
       <HistoryFilters filter={props.filter} onChange={props.onFilter} />

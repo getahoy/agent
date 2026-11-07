@@ -16,7 +16,18 @@ function useListView() {
   const [filter, setFilter] = useState<HistoryFilter>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  return { filter, search, selected, setFilter, setSearch, setSelected };
+  const close = () => {
+    setSelected(null);
+    if (selected) focusRow(selected);
+  };
+  const open = (id: string) => (id === selected ? close() : setSelected(id));
+  const choice = { selected, setSelected, open, close };
+  return { filter, search, setFilter, setSearch, ...choice };
+}
+
+function focusRow(id: string) {
+  const row = `[data-entry-id="${CSS.escape(id)}"]`;
+  document.querySelector<HTMLElement>(row)?.focus();
 }
 
 export function useHistoryPage() {
