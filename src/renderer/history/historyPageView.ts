@@ -42,9 +42,7 @@ export function pageView(input: PageInput) {
       failure: error ? failure : null,
     }),
     notice: error && pages ? historyCopy.couldNotRefresh : null,
-    summary: summary
-      ? historyCopy.summary(summary.lastSevenDays, summary.didntGoThrough)
-      : null,
+    summary: summary ? historyCopy.summary[view.filter](summary) : null,
     canClear: plain && count > 0,
   };
 }

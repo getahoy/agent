@@ -1,11 +1,26 @@
-import type { FailureReason, HistoryStatus } from "@getahoy/protocol";
+import type {
+  FailureReason,
+  HistoryFilter,
+  HistoryPage,
+  HistoryStatus,
+} from "@getahoy/protocol";
+
+type SummaryCounts = NonNullable<HistoryPage["summary"]>;
 
 export const historyCopy = {
   title: "History",
-  summary: (lastSevenDays: number, didntGoThrough: number) =>
-    didntGoThrough > 0
-      ? `${lastSevenDays} in the last 7 days · ${didntGoThrough} didn’t go through`
-      : `${lastSevenDays} in the last 7 days`,
+  summary: {
+    all: ({ lastSevenDays, didntGoThrough }: SummaryCounts) =>
+      didntGoThrough > 0
+        ? `${lastSevenDays} in the last 7 days · ${didntGoThrough} didn’t go through`
+        : `${lastSevenDays} in the last 7 days`,
+    done: ({ wentThrough }: SummaryCounts) =>
+      wentThrough === undefined
+        ? null
+        : `${wentThrough} went through in the last 7 days`,
+    failed: ({ didntGoThrough }: SummaryCounts) =>
+      `${didntGoThrough} didn’t go through in the last 7 days`,
+  } satisfies Record<HistoryFilter, (counts: SummaryCounts) => string | null>,
   searchPlaceholder: "Search what you said",
   searchLabel: "Search history",
   clearSearch: "Clear search",
