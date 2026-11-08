@@ -55,7 +55,7 @@ export function HistoryListPane(props: HistoryListPaneProps) {
   return (
     <div
       onScroll={scrolled}
-      className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto px-7 pt-12 pb-8"
+      className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto wrap-break-word px-7 pt-12 pb-8"
     >
       <div className="flex max-w-entry-row items-center justify-between px-3 pb-2.5">
         <h1 className="font-display text-title">{historyCopy.title}</h1>

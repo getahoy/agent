@@ -29,7 +29,7 @@ export function HistoryDetail({ entry, handlers }: HistoryDetailProps) {
   const long = entry.heard.length > LONG_HEARD_CHARS;
   const via = entry.via ? understood[entry.via] : null;
   return (
-    <article className="flex flex-col gap-6.5 px-6 pb-10">
+    <article className="flex min-w-0 flex-col gap-6.5 wrap-break-word px-6 pb-10">
       <header className="flex flex-col gap-2.5">
         <DetailEyebrow>{eyebrow}</DetailEyebrow>
         <h2

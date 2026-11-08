@@ -26,24 +26,24 @@ export function DetailActions({ entry, ...handlers }: DetailActionsProps) {
           {handlers.running ? historyCopy.runningAgain : historyCopy.runAgain}
         </Button>
       ) : null}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="secondary"
-          className="flex-1"
+          className="grow"
           onClick={() => handlers.onCopy(entry)}
         >
           {historyCopy.copy}
         </Button>
         <Button
           variant="secondary"
-          className="flex-2"
+          className="grow"
           onClick={() => handlers.onReport(entry)}
         >
           {historyCopy.report}
         </Button>
         <Button
           variant="quietDestructive"
-          className="flex-1"
+          className="grow"
           onClick={() => handlers.onDelete(entry)}
         >
           {historyCopy.delete}
