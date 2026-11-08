@@ -48,7 +48,9 @@ export function useHistoryPage() {
   const finished = useFinishedEntries();
   const deletion = useDeleteEntry();
   const { keepHistory } = useHistorySettings();
-  const clearing = useClearAll();
+  const pages = query.data?.pages ?? [];
+  const listed = pages.some((page) => page.entries.length > 0);
+  const clearing = useClearAll(listed || finished.length > 0);
   const refreshing = useRefreshHistory(settled);
   const shown = pageView({
     view: settled,
@@ -58,6 +60,7 @@ export function useHistoryPage() {
     finished,
     pending: query.isPending,
     error: query.error,
+    manualFailure: query.errorUpdatedAt === refreshing.failedAt,
     keepHistory,
     cleared: clearing.cleared,
   });

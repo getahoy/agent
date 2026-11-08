@@ -16,6 +16,7 @@ type PageInput = {
   finished: readonly HistoryEntry[];
   pending: boolean;
   error: unknown;
+  manualFailure: boolean;
   keepHistory: boolean | null;
   cleared: boolean;
 };
@@ -45,7 +46,10 @@ export function pageView(input: PageInput) {
   return {
     entries,
     blank,
-    notice: error && pages ? historyCopy.couldNotRefresh : null,
+    notice:
+      error && pages && !input.manualFailure
+        ? historyCopy.couldNotRefresh
+        : null,
     summary: noHistory ? null : line,
     summaryPending: !noHistory && !summary && input.summaryPending,
     canClear: plain && count > 0,
