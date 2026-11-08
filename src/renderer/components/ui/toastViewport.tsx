@@ -4,7 +4,7 @@ export function ToastViewport() {
   const { toasts } = Toast.useToastManager();
   return (
     <Toast.Portal>
-      <Toast.Viewport className="pointer-events-none fixed inset-x-0 bottom-5 flex h-9 justify-center">
+      <Toast.Viewport className="pointer-events-none fixed inset-x-0 bottom-5 z-60 flex h-9 justify-center">
         {toasts.map((shown) => (
           <Toast.Root
             key={shown.id}
