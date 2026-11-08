@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { historyCopy } from "../../copy/historyCopy.ts";
+import { toast } from "../components/ui/toast.tsx";
 import {
   dropFinished,
   HISTORY_KEY,
@@ -7,7 +8,6 @@ import {
   type HistoryPages,
   withoutEntry,
 } from "./historyQueries.ts";
-import type { Toast } from "./useToast.ts";
 
 async function remove(id: string) {
   const reply = await window.ahoy.removeHistoryEntry(id);
@@ -20,7 +20,7 @@ async function restore(id: string) {
 }
 
 // The row leaves every cached list at once; a failure puts the lists back as they were.
-export function useDeleteEntry(show: (toast: Toast) => void) {
+export function useDeleteEntry() {
   const client = useQueryClient();
   const refresh = () => client.invalidateQueries({ queryKey: HISTORY_KEY });
   const undo = useMutation({ mutationFn: restore, onSettled: refresh });
@@ -41,9 +41,12 @@ export function useDeleteEntry(show: (toast: Toast) => void) {
       for (const [key, pages] of context?.before ?? []) {
         client.setQueryData(key, pages);
       }
-      show({ text: historyCopy.couldNotDelete, undo: null });
+      toast(historyCopy.couldNotDelete);
     },
     onSuccess: (_done, id) =>
-      show({ text: historyCopy.deleted, undo: () => undo.mutate(id) }),
+      toast(historyCopy.deleted, {
+        label: historyCopy.undo,
+        onAction: () => undo.mutate(id),
+      }),
   });
 }

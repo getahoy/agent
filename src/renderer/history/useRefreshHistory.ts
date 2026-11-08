@@ -1,15 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
+import { toast } from "../components/ui/toast.tsx";
 import { HISTORY_KEY, historyKey, type ListView } from "./historyQueries.ts";
-import type { Toast } from "./useToast.ts";
 
 const REFRESH_KEY = "r";
 
-export function useRefreshHistory(
-  view: ListView,
-  show: (toast: Toast) => void,
-) {
+export function useRefreshHistory(view: ListView) {
   const client = useQueryClient();
   const running = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -21,7 +18,7 @@ export function useRefreshHistory(
     running.current = false;
     setRefreshing(false);
     if (client.getQueryState(historyKey(view))?.status === "error") {
-      show({ text: historyCopy.couldNotRefresh, undo: null });
+      toast(historyCopy.couldNotRefresh);
     }
   };
   useEffect(() => {

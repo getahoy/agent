@@ -3,15 +3,14 @@ import { EntryDialogs } from "./entryDialogs.tsx";
 import { HistoryBlank } from "./historyBlank.tsx";
 import { HistoryDrawer } from "./historyDrawer.tsx";
 import { HistoryListPane } from "./historyListPane.tsx";
-import { HistoryToast } from "./historyToast.tsx";
 import { useEntryTools } from "./useEntryTools.ts";
 import { useHistoryPage } from "./useHistoryPage.ts";
 
 export function HistoryPage() {
   const page = useHistoryPage();
-  const { view, query, toasts, blank } = page;
+  const { view, query, blank } = page;
   const retry = () => void query.refetch();
-  const tools = useEntryTools({ show: toasts.show, reload: retry });
+  const tools = useEntryTools(retry);
   const handlers = {
     running: tools.running,
     onRunAgain: tools.runAgain,
@@ -48,7 +47,6 @@ export function HistoryPage() {
           onClose={view.close}
         />
       ) : null}
-      <HistoryToast toast={toasts.toast} onUndo={page.undo} />
       <EntryDialogs entry={page.selected} tools={tools} />
       <ClearHistoryDialog
         open={page.confirming}

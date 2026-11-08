@@ -2,6 +2,7 @@ import type { HistoryEntry, HistoryFilter } from "@getahoy/protocol";
 import { useState } from "react";
 import { useDebounce } from "react-haiku";
 import { historyCopy } from "../../copy/historyCopy.ts";
+import { toast } from "../components/ui/toast.tsx";
 import { useFirstLoad } from "../hooks/useFirstLoad.ts";
 import { pageView } from "./historyPageView.ts";
 import { useFinishedEntries, useHistoryQuery } from "./historyQueries.ts";
@@ -9,7 +10,6 @@ import { useClearAll } from "./useClearAll.ts";
 import { useDeleteEntry } from "./useDeleteEntry.ts";
 import { useHistorySettings } from "./useHistorySettings.ts";
 import { useRefreshHistory } from "./useRefreshHistory.ts";
-import { useToast } from "./useToast.ts";
 
 const SEARCH_DELAY_MS = 300;
 
@@ -46,12 +46,10 @@ export function useHistoryPage() {
   const query = useHistoryQuery(settled);
   const overall = useHistoryQuery({ filter: "all", search: "" });
   const finished = useFinishedEntries();
-  const toasts = useToast();
-  const { show } = toasts;
-  const deletion = useDeleteEntry(show);
+  const deletion = useDeleteEntry();
   const { keepHistory } = useHistorySettings();
-  const clearing = useClearAll(show);
-  const refreshing = useRefreshHistory(settled, show);
+  const clearing = useClearAll();
+  const refreshing = useRefreshHistory(settled);
   const shown = pageView({
     view: settled,
     pages: query.data,
@@ -67,18 +65,15 @@ export function useHistoryPage() {
     shown.entries.find((entry) => entry.id === view.selected) ?? null;
   const copy = (entry: HistoryEntry) => {
     const text = historyCopy.copiedText(entry.heard, entry.did);
-    const copied = { text: historyCopy.copied, undo: null };
-    void navigator.clipboard.writeText(text).then(() => show(copied));
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => toast(historyCopy.copied));
   };
   const deleteSelected = (entry: HistoryEntry) => {
     view.setSelected(null);
     deletion.mutate(entry.id);
   };
-  const undo = () => {
-    toasts.toast?.undo?.();
-    toasts.dismiss();
-  };
-  const actions = { copy, deleteSelected, undo };
-  const state = { view, query, toasts, selected, firstLoad };
+  const actions = { copy, deleteSelected };
+  const state = { view, query, selected, firstLoad };
   return { ...state, ...shown, ...clearing, ...refreshing, ...actions };
 }

@@ -1,18 +1,15 @@
 import type { HistoryEntry } from "@getahoy/protocol";
 import { useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
+import { toast } from "../components/ui/toast.tsx";
 import { needsRunConfirm } from "./historyView.ts";
-import type { Toast } from "./useToast.ts";
 
 type EntryDialog = "runAgain" | "report" | null;
 
-type ToolsOptions = { show: (toast: Toast) => void; reload: () => void };
-
-export function useEntryTools({ show, reload }: ToolsOptions) {
+export function useEntryTools(reload: () => void) {
   const [dialog, setDialog] = useState<EntryDialog>(null);
   const [running, setRunning] = useState(false);
   const [sending, setSending] = useState(false);
-  const toast = (text: string) => show({ text, undo: null });
 
   const run = async (entry: HistoryEntry) => {
     setDialog(null);
