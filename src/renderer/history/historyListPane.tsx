@@ -16,6 +16,7 @@ type HistoryListPaneProps = {
   selected: string | null;
   notice: string | null;
   summary: string | null;
+  summaryPending: boolean;
   search: string;
   filter: HistoryFilter;
   blank: ReactNode;

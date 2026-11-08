@@ -170,6 +170,18 @@
   --animate-qr-fade: qr-fade 240ms;
   --animate-qr-rise: qr-rise 240ms var(--ease-out);
   --animate-drawer-in: drawer-in 240ms var(--ease-out) both;
+  --animate-fade-in-fast: qr-fade 150ms var(--ease-out);
+  --animate-skeleton: skeleton-pulse 1600ms ease-in-out infinite;
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
 
   @keyframes drawer-in {
     from {

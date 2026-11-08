@@ -12,6 +12,7 @@ type PageInput = {
   view: ListView;
   pages: HistoryPages | undefined;
   summary: HistoryPage["summary"];
+  summaryPending: boolean;
   finished: readonly HistoryEntry[];
   pending: boolean;
   error: unknown;
@@ -33,16 +34,20 @@ export function pageView(input: PageInput) {
   const failure = error instanceof HistoryLoadError ? error.failure : "refused";
   const shown = { phase: phaseOf(input), keepHistory, cleared };
   const count = entries.length;
+  const blank = blankFor({
+    ...shown,
+    ...view,
+    count,
+    failure: error ? failure : null,
+  });
+  const noHistory = blank === "empty" || blank === "cleared" || blank === "off";
+  const line = summary ? historyCopy.summary[view.filter](summary) : null;
   return {
     entries,
-    blank: blankFor({
-      ...shown,
-      ...view,
-      count,
-      failure: error ? failure : null,
-    }),
+    blank,
     notice: error && pages ? historyCopy.couldNotRefresh : null,
-    summary: summary ? historyCopy.summary[view.filter](summary) : null,
+    summary: noHistory ? null : line,
+    summaryPending: !noHistory && !summary && input.summaryPending,
     canClear: plain && count > 0,
   };
 }

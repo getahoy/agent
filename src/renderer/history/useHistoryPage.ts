@@ -54,6 +54,7 @@ export function useHistoryPage() {
     view: settled,
     pages: query.data,
     summary: overall.data?.pages[0]?.summary ?? null,
+    summaryPending: !overall.data && overall.fetchStatus === "fetching",
     finished,
     pending: query.isPending,
     error: query.error,
