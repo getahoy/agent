@@ -8,6 +8,7 @@ import { useFinishedEntries, useHistoryQuery } from "./historyQueries.ts";
 import { useClearAll } from "./useClearAll.ts";
 import { useDeleteEntry } from "./useDeleteEntry.ts";
 import { useHistorySettings } from "./useHistorySettings.ts";
+import { useRefreshHistory } from "./useRefreshHistory.ts";
 import { useToast } from "./useToast.ts";
 
 const SEARCH_DELAY_MS = 300;
@@ -50,6 +51,7 @@ export function useHistoryPage() {
   const deletion = useDeleteEntry(show);
   const { keepHistory } = useHistorySettings();
   const clearing = useClearAll(show);
+  const refreshing = useRefreshHistory(settled, show);
   const shown = pageView({
     view: settled,
     pages: query.data,
@@ -78,5 +80,5 @@ export function useHistoryPage() {
   };
   const actions = { copy, deleteSelected, undo };
   const state = { view, query, toasts, selected, firstLoad };
-  return { ...state, ...shown, ...clearing, ...actions };
+  return { ...state, ...shown, ...clearing, ...refreshing, ...actions };
 }

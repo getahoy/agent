@@ -6,6 +6,7 @@ import { cn } from "../lib/cn.ts";
 import { HistoryDays } from "./historyDays.tsx";
 import { HistoryListTools } from "./historyListTools.tsx";
 import { HistoryLoading } from "./historyLoading.tsx";
+import { HistoryRefresh } from "./historyRefresh.tsx";
 
 type FirstLoad = { busy: boolean; showLoader: boolean; fadeIn: boolean };
 
@@ -19,6 +20,8 @@ type HistoryListPaneProps = {
   filter: HistoryFilter;
   blank: ReactNode;
   canClear: boolean;
+  refreshing: boolean;
+  refresh: () => Promise<void>;
   onSearch: (text: string) => void;
   onFilter: (filter: HistoryFilter) => void;
   onOpen: (id: string) => void;
@@ -53,9 +56,13 @@ export function HistoryListPane(props: HistoryListPaneProps) {
       onScroll={scrolled}
       className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto px-7 pt-12 pb-8"
     >
-      <h1 className="px-3 pb-2.5 font-display text-title">
-        {historyCopy.title}
-      </h1>
+      <div className="flex max-w-entry-row items-center justify-between px-3 pb-2.5">
+        <h1 className="font-display text-title">{historyCopy.title}</h1>
+        <HistoryRefresh
+          refreshing={props.refreshing}
+          onRefresh={() => void props.refresh()}
+        />
+      </div>
       <div
         className={cn(
           "flex max-w-entry-row flex-col gap-2.5 px-3 pb-2 transition-opacity duration-240",

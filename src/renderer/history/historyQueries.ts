@@ -46,9 +46,12 @@ async function loadPage(view: ListView, cursor: string | null) {
   return reply.data;
 }
 
+export const historyKey = (view: ListView) =>
+  [...HISTORY_KEY, view.filter, view.search] as const;
+
 export function useHistoryQuery(view: ListView) {
   return useInfiniteQuery({
-    queryKey: [...HISTORY_KEY, view.filter, view.search],
+    queryKey: historyKey(view),
     queryFn: ({ pageParam }) => loadPage(view, pageParam),
     initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,

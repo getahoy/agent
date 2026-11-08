@@ -72,6 +72,11 @@ export class MainWindow {
       webPreferences: secureWebPreferences(),
     });
     loadSurface(window, "window");
+    // The default menu reloads the window on ⌘R; the page refreshes History instead.
+    window.webContents.on("before-input-event", (_event, input) => {
+      const refreshKey = input.meta && input.key.toLowerCase() === "r";
+      window.webContents.setIgnoreMenuShortcuts(refreshKey);
+    });
     // macOS sends hide and show when the window is minimised, covered or on
     // another Space, not only when it is closed.
     window.on("show", () => this.#setVisible(true));

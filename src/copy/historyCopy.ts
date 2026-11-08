@@ -15,6 +15,8 @@ export const historyCopy = {
   yesterday: "Yesterday",
   working: "Working on this Mac…",
   couldNotRefresh: "Couldn’t refresh",
+  refresh: "Refresh history",
+  refreshHint: "Refresh (⌘R)",
   emptyTitle: "Nothing here yet.",
   emptyBody:
     "Everything you ask this Mac to do, and what it did, will be kept here.",
