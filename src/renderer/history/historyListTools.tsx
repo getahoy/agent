@@ -19,9 +19,9 @@ export function HistoryListTools(props: HistoryListToolsProps) {
           {props.notice}
         </span>
       ) : null}
-      {props.summary ? (
-        <span className="font-display text-summary">{props.summary}</span>
-      ) : null}
+      <span className="min-h-lh font-display text-summary">
+        {props.summary}
+      </span>
       <HistorySearch value={props.search} onChange={props.onSearch} />
       <HistoryFilters filter={props.filter} onChange={props.onFilter} />
     </>

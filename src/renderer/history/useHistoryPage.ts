@@ -43,6 +43,7 @@ export function useHistoryPage() {
   const search = useDebounce(view.search, SEARCH_DELAY_MS).trim();
   const settled = { filter: view.filter, search };
   const query = useHistoryQuery(settled);
+  const overall = useHistoryQuery({ filter: "all", search: "" });
   const finished = useFinishedEntries();
   const toasts = useToast();
   const { show } = toasts;
@@ -52,6 +53,7 @@ export function useHistoryPage() {
   const shown = pageView({
     view: settled,
     pages: query.data,
+    summary: overall.data?.pages[0]?.summary ?? null,
     finished,
     pending: query.isPending,
     error: query.error,

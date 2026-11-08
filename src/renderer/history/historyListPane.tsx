@@ -56,18 +56,18 @@ export function HistoryListPane(props: HistoryListPaneProps) {
       <h1 className="px-3 pb-2.5 font-display text-title">
         {historyCopy.title}
       </h1>
+      <div
+        className={cn(
+          "flex max-w-entry-row flex-col gap-2.5 px-3 pb-2 transition-opacity duration-240",
+          dim,
+        )}
+      >
+        <HistoryListTools {...props} />
+      </div>
       {firstLoad.showLoader ? (
         <HistoryLoading busy={firstLoad.busy} />
       ) : (
         <div className={cn("flex flex-col", fade)}>
-          <div
-            className={cn(
-              "flex max-w-entry-row flex-col gap-2.5 px-3 pb-2 transition-opacity duration-240",
-              dim,
-            )}
-          >
-            <HistoryListTools {...props} />
-          </div>
           {props.blank}
           <HistoryDays
             entries={props.entries}

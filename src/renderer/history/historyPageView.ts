@@ -1,4 +1,4 @@
-import type { HistoryEntry } from "@getahoy/protocol";
+import type { HistoryEntry, HistoryPage } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { mergeFinished } from "../../core/history/finishedEntry.ts";
 import { blankFor, type ListPhase } from "./historyBlankKind.ts";
@@ -11,6 +11,7 @@ import {
 type PageInput = {
   view: ListView;
   pages: HistoryPages | undefined;
+  summary: HistoryPage["summary"];
   finished: readonly HistoryEntry[];
   pending: boolean;
   error: unknown;
@@ -24,7 +25,7 @@ function phaseOf({ pending, pages, error }: PageInput): ListPhase {
 }
 
 export function pageView(input: PageInput) {
-  const { view, pages, keepHistory, cleared, error } = input;
+  const { view, pages, summary, keepHistory, cleared, error } = input;
   const off = keepHistory === false;
   const server = pages?.pages.flatMap((page) => page.entries) ?? [];
   const entries = off ? [] : mergeFinished(server, input.finished, view);
@@ -32,7 +33,6 @@ export function pageView(input: PageInput) {
   const failure = error instanceof HistoryLoadError ? error.failure : "refused";
   const shown = { phase: phaseOf(input), keepHistory, cleared };
   const count = entries.length;
-  const summary = pages?.pages[0]?.summary ?? null;
   return {
     entries,
     blank: blankFor({
@@ -42,10 +42,9 @@ export function pageView(input: PageInput) {
       failure: error ? failure : null,
     }),
     notice: error && pages ? historyCopy.couldNotRefresh : null,
-    summary:
-      plain && summary
-        ? historyCopy.summary(summary.lastSevenDays, summary.didntGoThrough)
-        : null,
+    summary: summary
+      ? historyCopy.summary(summary.lastSevenDays, summary.didntGoThrough)
+      : null,
     canClear: plain && count > 0,
   };
 }
