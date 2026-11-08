@@ -21,8 +21,16 @@ function useListView() {
     if (selected) focusRow(selected);
   };
   const open = (id: string) => (id === selected ? close() : setSelected(id));
-  const choice = { selected, setSelected, open, close };
-  return { filter, search, setFilter, setSearch, ...choice };
+  return {
+    filter,
+    search,
+    selected,
+    setFilter,
+    setSearch,
+    setSelected,
+    open,
+    close,
+  };
 }
 
 function focusRow(id: string) {

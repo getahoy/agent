@@ -39,7 +39,7 @@ export function HistoryDrawer({
       ref={drawer}
       role="dialog"
       aria-label={historyCopy.entry}
-      className="absolute inset-y-0 right-0 z-10 flex w-drawer animate-drawer-in flex-col overflow-y-auto bg-paper shadow-drawer motion-reduce:animate-qr-fade"
+      className="absolute inset-y-0 right-0 flex w-drawer animate-drawer-in flex-col overflow-y-auto bg-paper shadow-drawer motion-reduce:animate-qr-fade"
     >
       <div className="flex h-13 shrink-0 justify-end px-2 pt-2">
         <button
