@@ -23,7 +23,11 @@ async function restore(id: string) {
 export function useDeleteEntry() {
   const client = useQueryClient();
   const refresh = () => client.invalidateQueries({ queryKey: HISTORY_KEY });
-  const undo = useMutation({ mutationFn: restore, onSettled: refresh });
+  const undo = useMutation({
+    mutationFn: restore,
+    onError: () => toast(historyCopy.couldNotUndo),
+    onSettled: refresh,
+  });
   return useMutation({
     mutationFn: remove,
     onMutate: async (id: string) => {

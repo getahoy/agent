@@ -120,6 +120,7 @@ export const historyCopy = {
   deleted: "Deleted",
   undo: "Undo",
   couldNotDelete: "Couldn’t delete that entry. Try again.",
+  couldNotUndo: "Couldn’t undo",
   copiedText: (heard: string, did: string | null) =>
     did ? `“${heard}” → ${did}` : `“${heard}”`,
   why: {
