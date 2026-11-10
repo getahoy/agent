@@ -7,6 +7,10 @@ import "./tokens.css";
 import { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { AgentApp } from "./agentApp.tsx";
+import {
+  AppearanceProvider,
+  seedStoredAppearance,
+} from "./appearance/appearanceProvider.tsx";
 import { ErrorBoundary } from "./components/errorBoundary.tsx";
 import { PopoverApp } from "./popover/popoverApp.tsx";
 
@@ -33,11 +37,15 @@ function SurfaceApp() {
   return <AgentApp />;
 }
 
+seedStoredAppearance();
+
 const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <ErrorBoundary>
-      <SurfaceApp />
+      <AppearanceProvider>
+        <SurfaceApp />
+      </AppearanceProvider>
     </ErrorBoundary>,
   );
 }
