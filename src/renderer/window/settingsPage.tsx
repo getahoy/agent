@@ -1,4 +1,5 @@
 import { agentCopy } from "../../copy/agentCopy.ts";
+import { AppearanceGroup } from "../appearance/appearanceGroup.tsx";
 import { ListGroup } from "../components/ui/listGroup.tsx";
 import { ListRow } from "../components/ui/listRow.tsx";
 import { Text } from "../components/ui/text.tsx";
@@ -23,6 +24,7 @@ export function SettingsPage({ lanEnabled }: SettingsPageProps) {
         />
       </ListGroup>
       <OffDurationChoices listen={listen} />
+      <AppearanceGroup />
       <HistorySettingsGroup />
     </>
   );
