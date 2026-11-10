@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Permission } from "../../ports/platform.ts";
+import type { Appearance, ResolvedTheme } from "../appearance/appearance.ts";
 import type { AgentState, OnboardingStep } from "./appState.ts";
 import type { HistoryBridge } from "./historyBridge.ts";
 import type { OffDuration } from "./listenOff.ts";
@@ -22,6 +23,8 @@ export const bridgeChannels = {
   quit: "agent:quit",
   setPopoverHeight: "agent:set-popover-height",
   devLog: "agent:dev-log",
+  appearance: "agent:appearance",
+  changeAppearance: "agent:change-appearance",
 } as const;
 
 export const popoverHeightSchema = z.number().positive().finite();
@@ -46,4 +49,6 @@ export type AgentBridge = HistoryBridge & {
   quit: () => Promise<void>;
   setPopoverHeight: (height: number) => Promise<void>;
   devLog: (scope: string, message: string) => void;
+  initialAppearance: Appearance;
+  changeAppearance: (appearance: Appearance) => Promise<ResolvedTheme>;
 };

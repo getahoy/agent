@@ -1,5 +1,10 @@
 import type { Logger } from "@getahoy/lib";
-import { app, type MenuItemConstructorOptions, Notification } from "electron";
+import {
+  app,
+  type MenuItemConstructorOptions,
+  Notification,
+  nativeTheme,
+} from "electron";
 import { agentCopy } from "../copy/agentCopy.ts";
 import { macosMenubarIcon } from "../platform/macos/macosDevice.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
@@ -53,7 +58,8 @@ function developerMenuItems(
 
 export function createSurfaces(parts: SurfaceParts): MainWindow {
   const { platform, controller, services, listen, logger } = parts;
-  const { monitor } = services;
+  // Set before any window exists, so its first paint is already right.
+  nativeTheme.themeSource = controller.appearance();
   const pairing = surfacePairing({
     controller,
     pairing: services.pairing,
@@ -65,10 +71,10 @@ export function createSurfaces(parts: SurfaceParts): MainWindow {
   const mainWindow = new MainWindow(
     platform.lifecycle,
     pairing.visibilityChanged,
-    () => void monitor.check("window"),
+    () => void services.monitor.check("window"),
   );
   const popover = new PopoverWindow(
-    () => void monitor.check("popover"),
+    () => void services.monitor.check("popover"),
     pairing.visibilityChanged,
   );
   const openWindow = () => {

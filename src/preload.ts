@@ -2,6 +2,10 @@ import { historyEntrySchema } from "@getahoy/protocol";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 import type { z } from "zod";
 import {
+  appearanceSchema,
+  resolvedThemeSchema,
+} from "./core/appearance/appearance.ts";
+import {
   type AgentBridge,
   bridgeChannels,
 } from "./core/appState/agentBridge.ts";
@@ -80,6 +84,15 @@ const bridge: AgentBridge = {
   setPopoverHeight: (height) => invoke(bridgeChannels.setPopoverHeight, height),
   devLog: (scope, message) =>
     ipcRenderer.send(bridgeChannels.devLog, scope, message),
+  initialAppearance: appearanceSchema
+    .catch("system")
+    .parse(ipcRenderer.sendSync(bridgeChannels.appearance)),
+  changeAppearance: async (appearance) =>
+    resolvedThemeSchema
+      .catch("light")
+      .parse(
+        await ipcRenderer.invoke(bridgeChannels.changeAppearance, appearance),
+      ),
 };
 
 contextBridge.exposeInMainWorld("ahoy", bridge);

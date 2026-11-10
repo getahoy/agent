@@ -11,6 +11,7 @@ import { onboardingStepSchema } from "../core/appState/appState.ts";
 import { offDurationSchema } from "../core/appState/listenOff.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import type { AgentController } from "./agentController.ts";
+import { registerAppearance } from "./appearanceIpc.ts";
 import type { ListenSwitch } from "./lan/listenSwitch.ts";
 import type { PairingServices } from "./pairing/pairingServices.ts";
 import { fromOwnRenderer } from "./rendererGuard.ts";
@@ -82,6 +83,7 @@ export function registerBridge(parts: BridgeParts): void {
     parts.setPopoverHeight,
   );
   registerPairing(parts);
+  registerAppearance(controller, parts.logger);
   ipcMain.on(bridgeChannels.devLog, (event, scope: unknown, text: unknown) => {
     if (app.isPackaged || !fromOwnRenderer(event)) return;
     parts.logger.info(`renderer.${String(scope)}`, String(text));
