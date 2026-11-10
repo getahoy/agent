@@ -1,3 +1,4 @@
+import type { Appearance } from "../core/appearance/appearance.ts";
 import {
   type AgentFacts,
   type AgentState,
@@ -13,6 +14,7 @@ import type { PairedPhone } from "../core/pairing/pairedPhone.ts";
 import type { PairingStatus } from "../core/pairing/pairingStatus.ts";
 import type { PlatformAdapter } from "../ports/platform.ts";
 import { type Settings, writeSettings } from "./settingsStore.ts";
+import { traceCaller } from "./traceCaller.ts";
 
 const PERMISSION_POLL_MS = 2000;
 
@@ -26,14 +28,6 @@ type AgentControllerOptions = {
 };
 
 const TRACED_FACTS = ["pairedPhones", "pairing", "endedNotice"] as const;
-// The Error line, caller() and #update come first in the stack.
-const OWN_FRAMES = 3;
-
-function caller(): string {
-  const frames = new Error().stack?.split("\n") ?? [];
-  const callers = frames.slice(OWN_FRAMES, OWN_FRAMES + 2);
-  return callers.map((frame) => frame.trim()).join(" < ");
-}
 
 function summarise(phones: readonly PairedPhone[]): PhoneSummary[] {
   return phones.map(({ publicKey, displayName, accountEmail, pairedAt }) => ({
@@ -113,6 +107,14 @@ export class AgentController {
     return this.#settings.lanOffUntil;
   }
 
+  appearance(): Appearance {
+    return this.#settings.appearance;
+  }
+
+  setAppearance(appearance: Appearance): Promise<void> {
+    return this.#saveSettings({ appearance });
+  }
+
   // State first: a phone handshaking during the file write sees the new answer.
   turnListeningOn(): Promise<void> {
     this.#update({ lanEnabled: true });
@@ -188,7 +190,7 @@ export class AgentController {
   #update(change: Partial<AgentFacts>): void {
     const traced = TRACED_FACTS.filter((key) => key in change);
     if (this.#trace && traced.length > 0) {
-      this.#trace(`${traced.join(", ")} by ${caller()}`);
+      this.#trace(`${traced.join(", ")} by ${traceCaller()}`);
     }
     this.#facts = { ...this.#facts, ...change };
     const state = this.state();

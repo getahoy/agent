@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
+import { appearanceSchema } from "../core/appearance/appearance.ts";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
 import { DEFAULT_BLOCKED_APPS } from "../core/safety/blockedApps.ts";
 
@@ -14,6 +15,7 @@ const settingsSchema = z.object({
   lanEnabled: z.boolean().default(true),
   lanOffUntil: z.int().nullable().default(null),
   blockedApps: z.array(blockedAppSchema).default([...DEFAULT_BLOCKED_APPS]),
+  appearance: appearanceSchema.catch("system"),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -23,6 +25,7 @@ const defaultSettings: Settings = {
   lanEnabled: true,
   lanOffUntil: null,
   blockedApps: [...DEFAULT_BLOCKED_APPS],
+  appearance: "system",
 };
 
 function parseJson(text: string): unknown {
