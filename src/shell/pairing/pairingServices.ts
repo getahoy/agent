@@ -1,5 +1,6 @@
 import type { Logger } from "@getahoy/lib";
 import {
+  COMMAND_LOOKUP_CAPABILITY,
   type DeviceDescription,
   type GoodbyeReason,
   type Hello,
@@ -37,7 +38,7 @@ function localHello(device: DeviceIdentity): Hello {
     protocolVersion: PROTOCOL_VERSION,
     platform: device.platform,
     appVersion: app.getVersion(),
-    capabilities: [...device.capabilities],
+    capabilities: [...device.capabilities, COMMAND_LOOKUP_CAPABILITY],
   };
 }
 

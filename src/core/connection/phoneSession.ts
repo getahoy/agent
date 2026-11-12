@@ -36,7 +36,14 @@ type PhoneSessionOptions = {
 
 export type PhoneRequest = Extract<
   Frame,
-  { type: "command" | "command.choose" | "choice.extend" | "speech.stop" }
+  {
+    type:
+      | "command"
+      | "command.choose"
+      | "command.lookup"
+      | "choice.extend"
+      | "speech.stop";
+  }
 >;
 
 type Phase =
@@ -104,6 +111,7 @@ export class PhoneSession {
         return;
       case "command":
       case "command.choose":
+      case "command.lookup":
       case "choice.extend":
       case "speech.stop":
         if (this.#phase.kind !== "connected") return;
@@ -113,6 +121,7 @@ export class PhoneSession {
       case "pong":
       case "command.received":
       case "command.result":
+      case "command.unknown":
         return;
       default: {
         const unhandled: never = frame;

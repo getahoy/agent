@@ -5,6 +5,7 @@ import {
   type CommandLog,
   type CommandOutcome,
   decideCommand,
+  decideLookup,
   done,
   emptyCommandLog,
   failed,
@@ -79,6 +80,9 @@ export class CommandReceiver {
         this.#enqueue({ commandId, reply, owner, speakOn, heard: null, work });
         return;
       }
+      case "command.lookup":
+        this.#lookUp(request.commandId, reply);
+        return;
       case "choice.extend":
         choices.extend(request.choiceId, owner);
         return;
@@ -90,6 +94,20 @@ export class CommandReceiver {
         throw new Error(`Unhandled request ${JSON.stringify(unhandled)}`);
       }
     }
+  }
+
+  #lookUp(commandId: string, reply: Reply): void {
+    const decision = decideLookup(this.#log, commandId);
+    if (decision.kind === "unknown") {
+      reply({ type: "command.unknown", commandId });
+      return;
+    }
+    reply({ type: "command.received", commandId });
+    if (decision.kind === "repeat") {
+      reply(resultFrame(commandId, decision.outcome));
+      return;
+    }
+    this.#replies.set(commandId, reply);
   }
 
   #enqueue(queued: Queued): void {
