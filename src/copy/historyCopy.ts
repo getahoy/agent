@@ -13,10 +13,7 @@ export const historyCopy = {
   entry: "Entry",
   closeEntry: "Close entry",
   closeEntryHint: "Close (Esc)",
-  keepHistoryDetail:
-    "Ahoy keeps a history of what you said and what it did in your account for 90 days. Speech audio is never stored.",
-  clearBody:
-    "This deletes every entry, on your iPhone and on your Macs. It can’t be undone.",
+  keepHistoryDetail: baseHistoryCopy.keepHistoryDisclosure(null),
   runAgain: "Run again on this Mac",
   runningAgain: "Running…",
   couldNotRun: "Couldn’t run that again.",
