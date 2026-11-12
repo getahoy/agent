@@ -9,8 +9,6 @@ const durations = {
   slow: motionDurationMs.slow / MS_PER_SECOND,
 } as const;
 
-const easings = motionEasing;
-
 const RISE_PX = 8;
 const POP_FROM_SCALE = 0.3;
 
@@ -29,18 +27,18 @@ const reducedFade: Entrance = {
 const rise: Entrance = {
   initial: { opacity: 0, y: RISE_PX },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: durations.base, ease: easings.out },
+  transition: { duration: durations.base, ease: motionEasing.out },
 };
 
 const pop: Entrance = {
   initial: { opacity: 0, scale: POP_FROM_SCALE },
   animate: { opacity: 1, scale: 1 },
-  transition: { duration: durations.base, ease: easings.spring },
+  transition: { duration: durations.base, ease: motionEasing.spring },
 };
 
 const fade: Entrance = {
   ...reducedFade,
-  transition: { duration: durations.base, ease: easings.out },
+  transition: { duration: durations.base, ease: motionEasing.out },
 };
 
 const MESSAGE_SECONDS = durations.slow;
@@ -55,7 +53,7 @@ const messageFade: Entrance = {
 const messageRise: Entrance = {
   initial: { opacity: 0, y: MESSAGE_RISE_PX },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: MESSAGE_SECONDS, ease: easings.out },
+  transition: { duration: MESSAGE_SECONDS, ease: motionEasing.out },
 };
 
 export function useMessageEnter(): Entrance {

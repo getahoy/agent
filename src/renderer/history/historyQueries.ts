@@ -1,14 +1,11 @@
 import {
+  type EntryView,
   HISTORY_KEY,
   HISTORY_STALE_MS,
   historyKey,
   queryOf,
 } from "@getahoy/lib";
-import type {
-  HistoryEntry,
-  HistoryFilter,
-  HistoryPage,
-} from "@getahoy/protocol";
+import type { HistoryEntry, HistoryPage } from "@getahoy/protocol";
 import {
   type InfiniteData,
   type QueryClient,
@@ -21,8 +18,6 @@ const FIRST_PAGE: string | null = null;
 
 const FINISHED_KEY = ["historyFinished"] as const;
 
-export type ListView = { filter: HistoryFilter; search: string };
-
 export type HistoryPages = InfiniteData<HistoryPage>;
 
 // The query library learns of a failure only from a throw; the bridge's failure kind rides along.
@@ -34,13 +29,13 @@ export class HistoryLoadError extends Error {
   }
 }
 
-async function loadPage(view: ListView, cursor: string | null) {
+async function loadPage(view: EntryView, cursor: string | null) {
   const reply = await window.ahoy.loadHistory(queryOf(view, cursor));
   if (reply.kind === "failed") throw new HistoryLoadError(reply.failure);
   return reply.data;
 }
 
-export function useHistoryQuery(view: ListView) {
+export function useHistoryQuery(view: EntryView) {
   return useInfiniteQuery({
     queryKey: historyKey(view),
     queryFn: ({ pageParam }) => loadPage(view, pageParam),

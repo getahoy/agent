@@ -1,14 +1,13 @@
-import { HISTORY_KEY, historyKey } from "@getahoy/lib";
+import { type EntryView, HISTORY_KEY, historyKey } from "@getahoy/lib";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { toast } from "../components/ui/toast.tsx";
-import type { ListView } from "./historyQueries.ts";
 
 const REFRESH_KEY = "r";
 const NO_FAILURE = -1;
 
-type RefreshOptions = { view: ListView; showing: boolean };
+type RefreshOptions = { view: EntryView; showing: boolean };
 
 // A failed manual refresh toasts only over a shown list; failedAt lets the page skip the stale line.
 export function useRefreshHistory({ view, showing }: RefreshOptions) {

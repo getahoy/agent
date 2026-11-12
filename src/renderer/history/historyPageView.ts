@@ -1,15 +1,16 @@
-import { blankFor, type ListPhase, listView } from "@getahoy/lib";
+import {
+  blankFor,
+  type EntryView,
+  type ListPhase,
+  listView,
+} from "@getahoy/lib";
 import type { HistoryEntry, HistoryPage } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { mergeFinished } from "../../core/history/finishedEntry.ts";
-import {
-  HistoryLoadError,
-  type HistoryPages,
-  type ListView,
-} from "./historyQueries.ts";
+import { HistoryLoadError, type HistoryPages } from "./historyQueries.ts";
 
 type PageInput = {
-  view: ListView;
+  view: EntryView;
   pages: HistoryPages | undefined;
   summary: HistoryPage["summary"];
   summaryPending: boolean;
