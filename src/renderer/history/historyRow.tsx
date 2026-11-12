@@ -1,4 +1,4 @@
-import { timeLabel } from "@getahoy/lib";
+import { rowDid, timeLabel } from "@getahoy/lib";
 import type { HistoryEntry } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
@@ -18,9 +18,7 @@ export function HistoryRow({
   onOpen,
 }: HistoryRowProps) {
   const running = entry.status === "running";
-  const did = running
-    ? historyCopy.working
-    : (entry.did ?? historyCopy.status[entry.status]);
+  const did = rowDid(entry, historyCopy.working);
   const time = timeLabel(new Date(entry.startedAt));
   return (
     <li>

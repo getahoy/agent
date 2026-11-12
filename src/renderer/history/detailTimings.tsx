@@ -1,4 +1,9 @@
-import { seconds, type TimingSegment, timingSegments } from "@getahoy/lib";
+import {
+  seconds,
+  type TimingSegment,
+  timingSegments,
+  timingShare,
+} from "@getahoy/lib";
 import type { HistoryTimings } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
@@ -27,7 +32,7 @@ const swatches: Record<TimingSegment["tone"], string> = {
 };
 
 function shareOf(ms: number, total: number): string {
-  const step = Math.max(1, Math.round((ms / total) * SHARES.length));
+  const step = timingShare(ms, total, SHARES.length);
   return SHARES[step - 1] ?? "grow-1";
 }
 

@@ -1,3 +1,4 @@
+import { canRunAgain } from "@getahoy/lib";
 import type { HistoryEntry } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { Button } from "../components/ui/button.tsx";
@@ -13,7 +14,7 @@ export type EntryHandlers = {
 type DetailActionsProps = EntryHandlers & { entry: HistoryEntry };
 
 export function DetailActions({ entry, ...handlers }: DetailActionsProps) {
-  const runnable = entry.status !== "blocked";
+  const runnable = canRunAgain(entry);
   return (
     <div className="flex flex-col gap-2">
       {runnable ? (
