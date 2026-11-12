@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { appearanceSchema } from "@getahoy/lib";
+import { appearanceSchema, parseStored } from "@getahoy/lib";
 import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
@@ -28,19 +28,9 @@ const defaultSettings: Settings = {
   appearance: "system",
 };
 
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
 export async function readSettings(filePath: string): Promise<Settings> {
   const text = await readFile(filePath, "utf8").catch(() => null);
-  if (text === null) return defaultSettings;
-  const parsed = settingsSchema.safeParse(parseJson(text));
-  return parsed.success ? parsed.data : defaultSettings;
+  return parseStored(settingsSchema, text) ?? defaultSettings;
 }
 
 export async function writeSettings(

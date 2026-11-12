@@ -5,7 +5,7 @@ import {
   generateKeyPair,
   type KeyPair,
 } from "@getahoy/crypto";
-import type { Logger } from "@getahoy/lib";
+import { type Logger, parseStored } from "@getahoy/lib";
 import { bytes32Schema, type EndReason } from "@getahoy/protocol";
 import { safeStorage } from "electron";
 import writeFileAtomic from "write-file-atomic";
@@ -55,17 +55,19 @@ function freshIdentity(): Identity {
   };
 }
 
-function decryptIdentity(sealed: Buffer): Identity | null {
+function decryptedText(sealed: Buffer): string | null {
   try {
-    const parsed = identitySchema.safeParse(
-      JSON.parse(safeStorage.decryptString(sealed)),
-    );
-    if (!parsed.success) return null;
-    const endedPhones = recentEndedPhones(parsed.data.endedPhones, Date.now());
-    return { ...parsed.data, endedPhones };
+    return safeStorage.decryptString(sealed);
   } catch {
     return null;
   }
+}
+
+function decryptIdentity(sealed: Buffer): Identity | null {
+  const identity = parseStored(identitySchema, decryptedText(sealed));
+  if (!identity) return null;
+  const endedPhones = recentEndedPhones(identity.endedPhones, Date.now());
+  return { ...identity, endedPhones };
 }
 
 export class IdentityStore {
