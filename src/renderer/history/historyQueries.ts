@@ -1,3 +1,9 @@
+import {
+  HISTORY_KEY,
+  HISTORY_STALE_MS,
+  historyKey,
+  queryOf,
+} from "@getahoy/lib";
 import type {
   HistoryEntry,
   HistoryFilter,
@@ -9,15 +15,10 @@ import {
   useInfiniteQuery,
   useQuery,
 } from "@tanstack/react-query";
-import type {
-  HistoryFailure,
-  MacHistoryQuery,
-} from "../../core/appState/historyBridge.ts";
+import type { HistoryFailure } from "../../core/appState/historyBridge.ts";
 
-const STALE_MS = 30_000;
 const FIRST_PAGE: string | null = null;
 
-export const HISTORY_KEY = ["history"] as const;
 const FINISHED_KEY = ["historyFinished"] as const;
 
 export type ListView = { filter: HistoryFilter; search: string };
@@ -33,21 +34,11 @@ export class HistoryLoadError extends Error {
   }
 }
 
-function queryOf({ filter, search }: ListView, cursor: string | null) {
-  const query: MacHistoryQuery = { status: filter };
-  if (search) query.q = search;
-  if (cursor) query.cursor = cursor;
-  return query;
-}
-
 async function loadPage(view: ListView, cursor: string | null) {
   const reply = await window.ahoy.loadHistory(queryOf(view, cursor));
   if (reply.kind === "failed") throw new HistoryLoadError(reply.failure);
   return reply.data;
 }
-
-export const historyKey = (view: ListView) =>
-  [...HISTORY_KEY, view.filter, view.search] as const;
 
 export function useHistoryQuery(view: ListView) {
   return useInfiniteQuery({
@@ -55,7 +46,7 @@ export function useHistoryQuery(view: ListView) {
     queryFn: ({ pageParam }) => loadPage(view, pageParam),
     initialPageParam: FIRST_PAGE,
     getNextPageParam: (last) => last.cursor,
-    staleTime: STALE_MS,
+    staleTime: HISTORY_STALE_MS,
   });
 }
 
@@ -76,16 +67,6 @@ export function addFinished(client: QueryClient, entry: HistoryEntry) {
     ...shown.filter((kept) => kept.id !== entry.id),
   ]);
   void client.invalidateQueries({ queryKey: HISTORY_KEY });
-}
-
-export function withoutEntry(pages: HistoryPages, id: string): HistoryPages {
-  return {
-    ...pages,
-    pages: pages.pages.map((page) => ({
-      ...page,
-      entries: page.entries.filter((entry) => entry.id !== id),
-    })),
-  };
 }
 
 export function dropFinished(client: QueryClient, id: string) {

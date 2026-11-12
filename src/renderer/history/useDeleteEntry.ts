@@ -1,12 +1,11 @@
+import { HISTORY_KEY, withoutEntries } from "@getahoy/lib";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { toast } from "../components/ui/toast.tsx";
 import {
   dropFinished,
-  HISTORY_KEY,
   HistoryLoadError,
   type HistoryPages,
-  withoutEntry,
 } from "./historyQueries.ts";
 
 async function remove(id: string) {
@@ -36,7 +35,7 @@ export function useDeleteEntry() {
         queryKey: HISTORY_KEY,
       });
       client.setQueriesData<HistoryPages>({ queryKey: HISTORY_KEY }, (pages) =>
-        pages ? withoutEntry(pages, id) : pages,
+        pages ? withoutEntries(pages, (entry) => entry.id !== id) : pages,
       );
       dropFinished(client, id);
       return { before };

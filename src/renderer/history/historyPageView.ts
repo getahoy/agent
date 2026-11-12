@@ -1,8 +1,7 @@
-import { summaryLine } from "@getahoy/lib";
+import { blankFor, type ListPhase, listView } from "@getahoy/lib";
 import type { HistoryEntry, HistoryPage } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { mergeFinished } from "../../core/history/finishedEntry.ts";
-import { blankFor, type ListPhase } from "./historyBlankKind.ts";
 import {
   HistoryLoadError,
   type HistoryPages,
@@ -28,31 +27,30 @@ function phaseOf({ pending, pages, error }: PageInput): ListPhase {
 }
 
 export function pageView(input: PageInput) {
-  const { view, pages, summary, keepHistory, cleared, error } = input;
-  const off = keepHistory === false;
+  const { view, pages, keepHistory, error } = input;
   const server = pages?.pages.flatMap((page) => page.entries) ?? [];
+  const off = keepHistory === false;
   const entries = off ? [] : mergeFinished(server, input.finished, view);
-  const plain = view.filter === "all" && !view.search;
-  const failure = error instanceof HistoryLoadError ? error.failure : "refused";
-  const shown = { phase: phaseOf(input), keepHistory, cleared };
-  const count = entries.length;
+  const signedOut =
+    error instanceof HistoryLoadError && error.failure === "signedOut";
   const blank = blankFor({
-    ...shown,
     ...view,
-    count,
-    failure: error ? failure : null,
+    phase: phaseOf(input),
+    keepHistory,
+    signedOut,
+    cleared: input.cleared,
+    count: entries.length,
   });
-  const noHistory = blank === "empty" || blank === "cleared" || blank === "off";
-  const line = summaryLine(view.filter, summary);
-  return {
-    entries,
+  const shown = listView({
+    ...view,
     blank,
-    notice:
-      error && pages && !input.manualFailure
-        ? historyCopy.couldNotRefresh
-        : null,
-    summary: noHistory ? null : line,
-    summaryPending: !noHistory && !summary && input.summaryPending,
-    canClear: plain && count > 0,
-  };
+    count: entries.length,
+    summary: input.summary,
+    summaryPending: input.summaryPending,
+    offline: false,
+    stale: Boolean(error) && pages !== undefined,
+    manualFailure: input.manualFailure,
+  });
+  const notice = shown.notice ? historyCopy.couldNotRefresh : null;
+  return { entries, blank, ...shown, notice };
 }
