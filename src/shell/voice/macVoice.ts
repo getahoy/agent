@@ -4,8 +4,9 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { Logger } from "@getahoy/lib";
+import type { ApiClient, Logger } from "@getahoy/lib";
 import { apiPaths } from "@getahoy/protocol";
+import { bearerClient } from "../api/bearerClient.ts";
 import type { Turn } from "../commands/commandTurns.ts";
 import { speechOf } from "../commands/resultFrame.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
@@ -25,11 +26,14 @@ type Utterance = { owner: object; abort: AbortController };
 
 export class MacVoice {
   readonly #options: MacVoiceOptions;
+  readonly #client: ApiClient;
   #current: Utterance | null = null;
   #sayVoice: Promise<string[]> | null = null;
 
   constructor(options: MacVoiceOptions) {
     this.#options = options;
+    const { apiUrl, identity } = options;
+    this.#client = bearerClient(apiUrl, () => identity.sessionToken());
   }
 
   speakTurn(turn: Turn, owner: object): void {
@@ -59,17 +63,14 @@ export class MacVoice {
   }
 
   async #fetchSpeech(text: string, signal: AbortSignal) {
-    const token = this.#options.identity.sessionToken();
-    if (!token) return null;
-    const url = new URL(apiPaths.speak, this.#options.apiUrl);
+    if (!this.#options.identity.sessionToken()) return null;
+    const url = this.#client.url(apiPaths.speak);
+    const headers = await this.#client.headers();
     const timeout = AbortSignal.timeout(SPEAK_TIMEOUT_MS);
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          authorization: `Bearer ${token}`,
-          "content-type": "application/json",
-        },
+        headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ text, voice: "default" }),
         signal: AbortSignal.any([signal, timeout]),
       });

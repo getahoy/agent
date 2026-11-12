@@ -1,9 +1,14 @@
-import type { Logger, RequestResult } from "@getahoy/lib";
+import {
+  failureKind,
+  type Logger,
+  pairingCalls,
+  type RequestResult,
+} from "@getahoy/lib";
 import type { EndReason } from "@getahoy/protocol";
 import { app } from "electron";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
+import { bearerClient } from "../api/bearerClient.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-import { listPairingLinks, unlinkPairing } from "./pairingApi.ts";
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
@@ -21,17 +26,19 @@ type LinkMonitorOptions = {
 export type CheckReason = "start" | "interval" | "wake" | "window" | "popover";
 
 function settled(result: RequestResult<unknown>): boolean {
-  if (result.code === "success") return true;
-  const { error } = result;
-  return error.kind === "api" && error.detail.code === "not_found";
+  return result.code === "success" || failureKind(result.error) === "notFound";
 }
 
 export class LinkMonitor {
   readonly #options: LinkMonitorOptions;
+  readonly #calls: ReturnType<typeof pairingCalls>;
   #timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: LinkMonitorOptions) {
     this.#options = options;
+    const { apiUrl, identity } = options;
+    const client = bearerClient(apiUrl, () => identity.sessionToken());
+    this.#calls = pairingCalls(client.call);
   }
 
   start(): void {
@@ -48,16 +55,10 @@ export class LinkMonitor {
   }
 
   async check(reason: CheckReason): Promise<void> {
-    const { apiUrl, identity, logger, onPeerEnded } = this.#options;
-    const sessionToken = identity.sessionToken();
-    if (!sessionToken) return;
+    const { identity, logger, onPeerEnded } = this.#options;
+    if (!identity.sessionToken()) return;
     await this.flushUnlinks();
-    const device = identity.encodedPublicKey();
-    const listed = await listPairingLinks({
-      apiUrl,
-      sessionToken,
-      body: { device },
-    });
+    const listed = await this.#calls.links(identity.encodedPublicKey());
     const phones = identity.pairedPhones();
     const trace = (message: string) => {
       if (!app.isPackaged) logger.info("links", message);
@@ -75,13 +76,11 @@ export class LinkMonitor {
   }
 
   async flushUnlinks(): Promise<void> {
-    const { apiUrl, identity, logger } = this.#options;
-    const sessionToken = identity.sessionToken();
-    if (!sessionToken) return;
+    const { identity, logger } = this.#options;
+    if (!identity.sessionToken()) return;
     const devicePublicKey = identity.encodedPublicKey();
     for (const unlink of identity.pendingUnlinks()) {
-      const body = { devicePublicKey, ...unlink };
-      const result = await unlinkPairing({ apiUrl, sessionToken, body });
+      const result = await this.#calls.unlink({ devicePublicKey, ...unlink });
       if (settled(result)) await identity.settleUnlink(unlink.peerPublicKey);
       else logger.warn("pairing", "Unlink queued, server not reachable");
     }

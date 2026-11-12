@@ -1,12 +1,12 @@
-import type { Logger } from "@getahoy/lib";
+import { type Logger, pairingCalls } from "@getahoy/lib";
 import type { DeviceDescription } from "@getahoy/protocol";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { CodeEvent } from "../../core/pairing/pairingCode.ts";
 import { pairingFailure } from "../../core/pairing/pairingStatus.ts";
 import { verifiedPhone } from "../../core/pairing/pairingTerms.ts";
+import { bearerClient } from "../api/bearerClient.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 import type { IssuedCode } from "./deviceFlow.ts";
-import { completePairing } from "./pairingApi.ts";
 
 export type OpenCode = { code: IssuedCode; pairingSecret: Uint8Array };
 
@@ -24,10 +24,10 @@ export async function completeClaim(
   sessionToken: string,
 ): Promise<CodeEvent> {
   const { apiUrl, identity, desktop, logger } = completion;
-  const completed = await completePairing({
-    apiUrl,
-    sessionToken,
-    body: { userCode: open.code.userCode, device: desktop },
+  const calls = pairingCalls(bearerClient(apiUrl, () => sessionToken).call);
+  const completed = await calls.complete({
+    userCode: open.code.userCode,
+    device: desktop,
   });
   if (completed.code === "error") {
     return { kind: "refused", reason: pairingFailure(completed.error) };
