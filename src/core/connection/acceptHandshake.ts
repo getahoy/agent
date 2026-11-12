@@ -4,7 +4,9 @@ import {
   startResponder,
 } from "@getahoy/crypto";
 import {
+  decodeJson,
   type EndReason,
+  encodeJson,
   type HandshakeReply,
   type Hello,
   helloSchema,
@@ -12,7 +14,6 @@ import {
   versionProbeSchema,
 } from "@getahoy/protocol";
 import type { PairedPhone } from "../pairing/pairedPhone.ts";
-import { decodeJson, encodeJson } from "./jsonBytes.ts";
 
 type HandshakeDecision =
   | { outcome: "dropped" }

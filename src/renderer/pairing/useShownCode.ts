@@ -1,5 +1,5 @@
+import { useSpinnerVisible } from "@getahoy/lib";
 import { useRef } from "react";
-import { useSpinner } from "../hooks/useSpinner.ts";
 import type { CodeStatus } from "./codeView.ts";
 
 const MAKING: ReadonlySet<CodeStatus["kind"]> = new Set([
@@ -11,7 +11,7 @@ const MAKING: ReadonlySet<CodeStatus["kind"]> = new Set([
 
 export function useShownCode(status: CodeStatus) {
   const making = MAKING.has(status.kind);
-  const spinning = useSpinner(making);
+  const spinning = useSpinnerVisible(making);
   const lastMaking = useRef(status);
   if (making) lastMaking.current = status;
   const shown = spinning && !making ? lastMaking.current : status;

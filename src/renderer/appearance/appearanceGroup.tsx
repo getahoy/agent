@@ -1,5 +1,5 @@
+import { appearanceSchema } from "@getahoy/lib";
 import { appearanceCopy } from "../../copy/appearanceCopy.ts";
-import { appearanceSchema } from "../../core/appearance/appearance.ts";
 import { Text } from "../components/ui/text.tsx";
 import { AppearanceTile } from "./appearanceTile.tsx";
 import { useAppearanceSwitch } from "./useAppearanceSwitch.ts";

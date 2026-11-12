@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { Logger } from "@getahoy/lib";
+import { apiPaths } from "@getahoy/protocol";
 import type { Turn } from "../commands/commandTurns.ts";
 import { speechOf } from "../commands/resultFrame.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
@@ -60,7 +61,7 @@ export class MacVoice {
   async #fetchSpeech(text: string, signal: AbortSignal) {
     const token = this.#options.identity.sessionToken();
     if (!token) return null;
-    const url = new URL("/api/speak", this.#options.apiUrl);
+    const url = new URL(apiPaths.speak, this.#options.apiUrl);
     const timeout = AbortSignal.timeout(SPEAK_TIMEOUT_MS);
     try {
       const response = await fetch(url, {

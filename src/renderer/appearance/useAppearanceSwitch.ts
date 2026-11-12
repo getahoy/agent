@@ -1,12 +1,12 @@
-import { useReducedMotion } from "motion/react";
-import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import {
   type Appearance,
   appearanceSchema,
   resolvedThemeSchema,
-} from "../../core/appearance/appearance.ts";
+} from "@getahoy/lib";
+import { useReducedMotion } from "motion/react";
+import { useTheme } from "next-themes";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { schemeSettled } from "./schemeSettled.ts";
 
 const CROSSFADE_DELAY_MS = 60;

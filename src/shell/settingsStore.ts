@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
+import { appearanceSchema } from "@getahoy/lib";
 import writeFileAtomic from "write-file-atomic";
 import { z } from "zod";
-import { appearanceSchema } from "../core/appearance/appearance.ts";
 import { onboardingStepSchema } from "../core/appState/appState.ts";
 import { DEFAULT_BLOCKED_APPS } from "../core/safety/blockedApps.ts";
 

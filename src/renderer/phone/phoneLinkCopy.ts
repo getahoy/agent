@@ -1,21 +1,13 @@
+import { endedWhen as endedWhenText } from "@getahoy/lib";
 import { agentCopy } from "../../copy/agentCopy.ts";
-import { endedWhenCopy } from "../../copy/endedCopy.ts";
+import { whileAsleepNote } from "../../copy/endedCopy.ts";
 import { homeCopy } from "../../copy/homeCopy.ts";
-import {
-  type EndedByPhone,
-  noticeAge,
-} from "../../core/pairing/endedByPhone.ts";
+import type { EndedByPhone } from "../../core/pairing/endedByPhone.ts";
 import type { PhoneLinkKind } from "./phoneLink.ts";
 
 export function endedWhen(notice: EndedByPhone, now: number): string {
-  const age = noticeAge(notice.at, now);
-  const when =
-    age.kind === "justNow"
-      ? endedWhenCopy.justNow
-      : age.kind === "minutes"
-        ? endedWhenCopy.minutes(age.count)
-        : endedWhenCopy.hours(age.count);
-  return notice.whileAsleep ? endedWhenCopy.whileAsleep(when) : when;
+  const awayNote = notice.whileAsleep ? whileAsleepNote : null;
+  return endedWhenText(notice.at, now, awayNote);
 }
 
 export const pillLabels: Record<PhoneLinkKind, string> = {

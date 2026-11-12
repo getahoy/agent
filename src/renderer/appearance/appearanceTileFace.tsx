@@ -1,4 +1,4 @@
-import type { ResolvedTheme } from "../../core/appearance/appearance.ts";
+import type { ResolvedTheme } from "@getahoy/lib";
 import { cn } from "../lib/cn.ts";
 
 const schemes: Record<ResolvedTheme, string> = {

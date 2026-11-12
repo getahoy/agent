@@ -1,8 +1,6 @@
+import { noticeShown } from "@getahoy/lib";
 import type { AgentState } from "../../core/appState/appState.ts";
-import {
-  type EndedByPhone,
-  noticeShown,
-} from "../../core/pairing/endedByPhone.ts";
+import type { EndedByPhone } from "../../core/pairing/endedByPhone.ts";
 
 export function shownEndedNotice(state: AgentState): EndedByPhone | null {
   const notice = state.endedNotice;

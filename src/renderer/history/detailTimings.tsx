@@ -1,8 +1,8 @@
+import { seconds, type TimingSegment, timingSegments } from "@getahoy/lib";
 import type { HistoryTimings } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
 import { DetailEyebrow } from "./detailEyebrow.tsx";
-import { seconds, type TimingSegment, timingSegments } from "./historyView.ts";
 
 // Class names must be written out whole for the style compiler to find them.
 const SHARES = [

@@ -1,128 +1,26 @@
-import type {
-  FailureReason,
-  HistoryFilter,
-  HistoryPage,
-  HistoryStatus,
-} from "@getahoy/protocol";
-
-type SummaryCounts = NonNullable<HistoryPage["summary"]>;
+import { historyCopy as baseHistoryCopy } from "@getahoy/lib";
+import type { FailureReason } from "@getahoy/protocol";
 
 export const historyCopy = {
-  title: "History",
-  summary: {
-    all: ({ lastSevenDays, didntGoThrough }: SummaryCounts) =>
-      didntGoThrough > 0
-        ? `${lastSevenDays} in the last 7 days · ${didntGoThrough} didn’t go through`
-        : `${lastSevenDays} in the last 7 days`,
-    done: ({ wentThrough }: SummaryCounts) =>
-      wentThrough === undefined
-        ? null
-        : `${wentThrough} went through in the last 7 days`,
-    failed: ({ didntGoThrough }: SummaryCounts) =>
-      `${didntGoThrough} didn’t go through in the last 7 days`,
-  } satisfies Record<HistoryFilter, (counts: SummaryCounts) => string | null>,
-  searchPlaceholder: "Search what you said",
-  searchLabel: "Search history",
-  clearSearch: "Clear search",
-  filterLabel: "Filter",
-  filters: { all: "All", done: "Done", failed: "Failed" },
-  today: "Today",
-  yesterday: "Yesterday",
+  ...baseHistoryCopy,
   working: "Working on this Mac…",
-  couldNotRefresh: "Couldn’t refresh",
   refresh: "Refresh history",
   refreshHint: "Refresh (⌘R)",
-  emptyTitle: "Nothing here yet.",
   emptyBody:
     "Everything you ask this Mac to do, and what it did, will be kept here.",
-  loading: "Loading your history…",
-  loadingSlow: "Still loading your history…",
-  loadingSlowHint: "This can take a moment on a slow connection.",
-  errorTitle: "Couldn’t load your history.",
-  errorBody: "Your entries are safe. Check your connection and try again.",
   signedOutBody: "Sign in on the Mac to see its history.",
-  tryAgain: "Try again",
-  clearedEyebrow: "Just now",
-  clearedTitle: "History cleared.",
-  clearedBody: "New commands will show up here.",
-  noMatchTitle: (query: string) => `Nothing matches “${query}”.`,
-  noMatchBody: "Search looks at what you said and what Ahoy did.",
-  nothingFailedTitle: "Nothing failed.",
-  nothingFailedBody: "Every command went through.",
-  offTitle: "History is off.",
   offBody: "Turn on Keep history in Settings to start again.",
   entry: "Entry",
   closeEntry: "Close entry",
   closeEntryHint: "Close (Esc)",
-  keepHistory: "Keep history",
   keepHistoryDetail:
     "Ahoy keeps a history of what you said and what it did in your account for 90 days. Speech audio is never stored.",
-  clearHistory: "Clear history…",
-  clearTitle: "Clear all history?",
   clearBody:
     "This deletes every entry, on your iPhone and on your Macs. It can’t be undone.",
-  clearConfirm: "Clear history",
-  cancel: "Cancel",
-  couldNotClear: "Couldn’t clear your history. Try again.",
-  status: {
-    running: "Running",
-    done: "Done",
-    choice: "Asked you, then done",
-    failed: "Didn’t work",
-    blocked: "Blocked",
-    cancelled: "Cancelled",
-  } satisfies Record<HistoryStatus, string>,
-  ahoyAsked: "Ahoy asked",
-  youSaid: (seconds: string | null) =>
-    seconds ? `You said · after ${seconds}s` : "You said",
-  where: (app: string | null, seconds: string | null) =>
-    [app ? `In ${app}` : null, seconds ? `${seconds}s` : null]
-      .filter((part) => part !== null)
-      .join(" · "),
-  whyFailed: "Why it didn’t work",
-  whyBlocked: "Why Ahoy stopped",
-  whyCancelled: "What happened",
-  timeWent: "Where the time went",
-  hearing: "Hearing you",
-  understanding: "Understanding",
-  onMac: "On the Mac",
-  waitedNote: (seconds: string) =>
-    `The ${seconds}s Ahoy waited for your answer isn’t counted.`,
-  understoodBy: "Understood by",
-  viaAi: "Smart (AI)",
-  viaAiNote: "Your words were sent to Ahoy’s AI to work out what you meant.",
-  viaRules: "Built-in rules",
-  viaRulesNote: "Matched one of Ahoy’s rules on this Mac. No AI was needed.",
   runAgain: "Run again on this Mac",
   runningAgain: "Running…",
   couldNotRun: "Couldn’t run that again.",
-  confirmRunTitle: "Run this again?",
-  confirmRunBody: (heard: string) =>
-    `“${heard}” can close an app or open an email draft.`,
-  confirmRun: "Run again",
-  report: "Report a problem",
-  reportBody: "This is exactly what will be sent. Nothing else is attached.",
-  reportNote: "Add a note (optional)",
-  reportSend: "Send report",
-  reportSent: "Thanks. We’ll look at this one.",
-  couldNotReport: "Couldn’t send the report. Try again.",
-  reportFields: {
-    heard: "What you said",
-    did: "What Ahoy did",
-    status: "Status",
-    app: "App",
-    reason: "Reason",
-    timings: "Timings",
-  },
-  copy: "Copy",
-  copied: "Copied",
-  delete: "Delete",
-  deleted: "Deleted",
-  undo: "Undo",
-  couldNotDelete: "Couldn’t delete that entry. Try again.",
-  couldNotUndo: "Couldn’t undo",
-  copiedText: (heard: string, did: string | null) =>
-    did ? `“${heard}” → ${did}` : `“${heard}”`,
+  viaRulesNote: "Matched one of Ahoy’s rules on this Mac. No AI was needed.",
   why: {
     macUnreachable:
       "The iPhone couldn’t reach this Mac. Check that both are on the same Wi-Fi and Ahoy is open.",
@@ -143,6 +41,4 @@ export const historyCopy = {
     offline: "The iPhone was offline.",
     other: "Ahoy couldn’t do this one. Try saying it a different way.",
   } satisfies Record<FailureReason, string>,
-  cancelledWhy:
-    "Ahoy asked you something and the question closed before an answer, so nothing was changed.",
 } as const;

@@ -1,10 +1,7 @@
+import { appearanceSchema, resolvedThemeSchema } from "@getahoy/lib";
 import { historyEntrySchema } from "@getahoy/protocol";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 import type { z } from "zod";
-import {
-  appearanceSchema,
-  resolvedThemeSchema,
-} from "./core/appearance/appearance.ts";
 import {
   type AgentBridge,
   bridgeChannels,

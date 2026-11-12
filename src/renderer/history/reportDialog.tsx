@@ -1,9 +1,9 @@
 import { Dialog } from "@base-ui/react/dialog";
+import { reportLines } from "@getahoy/lib";
 import { type HistoryEntry, MAX_REPORT_NOTE_CHARS } from "@getahoy/protocol";
 import { useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { Button } from "../components/ui/button.tsx";
-import { reportLines } from "./historyView.ts";
 
 type ReportDialogProps = {
   entry: HistoryEntry;

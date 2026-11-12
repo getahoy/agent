@@ -1,3 +1,4 @@
+import { summaryLine } from "@getahoy/lib";
 import type { HistoryEntry, HistoryPage } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { mergeFinished } from "../../core/history/finishedEntry.ts";
@@ -42,7 +43,7 @@ export function pageView(input: PageInput) {
     failure: error ? failure : null,
   });
   const noHistory = blank === "empty" || blank === "cleared" || blank === "off";
-  const line = summary ? historyCopy.summary[view.filter](summary) : null;
+  const line = summaryLine(view.filter, summary);
   return {
     entries,
     blank,

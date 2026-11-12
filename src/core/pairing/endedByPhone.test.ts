@@ -1,12 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  keepsCurrentCode,
-  NOTICE_LIFETIME_MS,
-  noticeAge,
-  noticeShown,
-  phoneEnding,
-} from "./endedByPhone.ts";
+import { NOTICE_LIFETIME_MS, noticeAge, noticeShown } from "@getahoy/lib";
+import { keepsCurrentCode, phoneEnding } from "./endedByPhone.ts";
 import type { PairedPhone } from "./pairedPhone.ts";
 
 const phone: PairedPhone = {

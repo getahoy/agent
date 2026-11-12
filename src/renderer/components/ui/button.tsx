@@ -1,7 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { useSpinnerVisible } from "@getahoy/lib";
 import { cva, type VariantProps } from "class-variance-authority";
 import { LoaderCircle } from "lucide-react";
-import { useSpinner } from "../../hooks/useSpinner.ts";
 import { cn } from "../../lib/cn.ts";
 
 const buttonVariants = cva(
@@ -41,7 +41,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const spinning = useSpinner(pending);
+  const spinning = useSpinnerVisible(pending);
   return (
     <ButtonPrimitive
       data-slot="button"

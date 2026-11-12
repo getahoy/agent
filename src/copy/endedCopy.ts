@@ -26,13 +26,7 @@ export const endedCopy: Record<PhoneEndReason, EndedMessageCopy> = {
   },
 };
 
-export const endedWhenCopy = {
-  justNow: "Just now",
-  minutes: (count: number) =>
-    count === 1 ? "1 minute ago" : `${count} minutes ago`,
-  hours: (count: number) => (count === 1 ? "1 hour ago" : `${count} hours ago`),
-  whileAsleep: (when: string) => `${when} · while this Mac was asleep`,
-};
+export const whileAsleepNote = "while this Mac was asleep";
 
 export const endedNotificationCopy: Record<
   PhoneEndReason,

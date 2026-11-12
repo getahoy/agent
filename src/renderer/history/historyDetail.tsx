@@ -1,3 +1,4 @@
+import { dayLabel, timeLabel } from "@getahoy/lib";
 import type { HistoryEntry, HistoryFollowUp } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { DetailActions, type EntryHandlers } from "./detailActions.tsx";
@@ -5,7 +6,6 @@ import { DetailEyebrow } from "./detailEyebrow.tsx";
 import { DetailFollowUp } from "./detailFollowUp.tsx";
 import { DetailOutcome } from "./detailOutcome.tsx";
 import { DetailTimings } from "./detailTimings.tsx";
-import { dayLabel, timeLabel } from "./historyView.ts";
 
 const LONG_HEARD_CHARS = 60;
 

@@ -1,5 +1,6 @@
 import { request } from "@getahoy/lib";
 import {
+  apiPaths,
   type PairingCompleteRequest,
   type PairingUnlinkRequest,
   pairingCompleteSchema,
@@ -19,17 +20,17 @@ function sessionRequest(call: SessionCall<unknown>, path: string) {
 }
 
 export function completePairing(call: SessionCall<PairingCompleteRequest>) {
-  const options = sessionRequest(call, "/api/pairing/complete");
+  const options = sessionRequest(call, apiPaths.pairingComplete);
   return request({ ...options, schema: pairingCompleteSchema });
 }
 
 export function unlinkPairing(call: SessionCall<PairingUnlinkRequest>) {
-  const options = sessionRequest(call, "/api/pairing/unlink");
+  const options = sessionRequest(call, apiPaths.pairingUnlink);
   return request({ ...options, schema: pairingUnlinkSchema });
 }
 
 export function listPairingLinks(call: SessionCall<{ device: string }>) {
-  const url = new URL("/api/pairing/links", call.apiUrl);
+  const url = new URL(apiPaths.pairingLinks, call.apiUrl);
   url.searchParams.set("device", call.body.device);
   return request({
     url: url.toString(),

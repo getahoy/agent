@@ -1,5 +1,5 @@
+import type { Appearance } from "@getahoy/lib";
 import { appearanceCopy } from "../../copy/appearanceCopy.ts";
-import type { Appearance } from "../../core/appearance/appearance.ts";
 import { cn } from "../lib/cn.ts";
 import { AppearanceTileFace } from "./appearanceTileFace.tsx";
 

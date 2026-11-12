@@ -1,9 +1,9 @@
-import type { Logger } from "@getahoy/lib";
-import { ipcMain, nativeTheme } from "electron";
 import {
   appearanceSchema,
+  type Logger,
   type ResolvedTheme,
-} from "../core/appearance/appearance.ts";
+} from "@getahoy/lib";
+import { ipcMain, nativeTheme } from "electron";
 import { bridgeChannels } from "../core/appState/agentBridge.ts";
 import type { AgentController } from "./agentController.ts";
 import { fromOwnRenderer } from "./rendererGuard.ts";

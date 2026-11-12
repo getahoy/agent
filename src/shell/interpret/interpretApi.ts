@@ -1,5 +1,6 @@
 import { type RequestError, request } from "@getahoy/lib";
 import {
+  apiPaths,
   type InterpretAction,
   interpretResponseSchema,
   MAX_INTERPRET_APPS,
@@ -46,7 +47,7 @@ export function createInterpreter(options: InterpreterOptions): Interpreter {
     const sessionToken = identity.sessionToken();
     if (!sessionToken) return { kind: "failed", reason: "signedOut" };
     const answer = await request({
-      url: new URL("/api/interpret", apiUrl).toString(),
+      url: new URL(apiPaths.interpret, apiUrl).toString(),
       method: "POST",
       body: { text, apps: apps.slice(0, MAX_INTERPRET_APPS) },
       headers: { authorization: `Bearer ${sessionToken}` },

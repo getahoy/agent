@@ -1,6 +1,8 @@
 import type { KeyPair, SecureChannel } from "@getahoy/crypto";
 import {
+  decodeJson,
   type EndReason,
+  encodeJson,
   type Frame,
   frameSchema,
   type GoodbyeReason,
@@ -9,7 +11,6 @@ import {
 import type { FrameStream } from "../../ports/frameStream.ts";
 import type { PairedPhone } from "../pairing/pairedPhone.ts";
 import { acceptHandshake } from "./acceptHandshake.ts";
-import { decodeJson, encodeJson } from "./jsonBytes.ts";
 
 type PhoneSessionOptions = {
   stream: FrameStream;

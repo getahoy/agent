@@ -1,7 +1,7 @@
+import { sectionsByDay } from "@getahoy/lib";
 import type { HistoryEntry } from "@getahoy/protocol";
 import { cn } from "../lib/cn.ts";
 import { HistoryRow } from "./historyRow.tsx";
-import { daysOf } from "./historyView.ts";
 
 type HistoryDaysProps = {
   entries: readonly HistoryEntry[];
@@ -11,7 +11,7 @@ type HistoryDaysProps = {
 
 export function HistoryDays({ entries, selected, onOpen }: HistoryDaysProps) {
   const open = selected !== null;
-  return daysOf(entries, new Date()).map((day) => (
+  return sectionsByDay(entries, new Date()).map((day) => (
     <section key={day.title} aria-label={day.title}>
       <h2
         className={cn(
@@ -22,7 +22,7 @@ export function HistoryDays({ entries, selected, onOpen }: HistoryDaysProps) {
         {day.title}
       </h2>
       <ul className="flex flex-col">
-        {day.entries.map((entry) => (
+        {day.data.map((entry) => (
           <HistoryRow
             key={entry.id}
             entry={entry}

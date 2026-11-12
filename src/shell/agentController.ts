@@ -1,4 +1,4 @@
-import type { Appearance } from "../core/appearance/appearance.ts";
+import type { Appearance } from "@getahoy/lib";
 import {
   type AgentFacts,
   type AgentState,

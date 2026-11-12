@@ -1,7 +1,7 @@
+import { timeLabel } from "@getahoy/lib";
 import type { HistoryEntry } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
-import { timeLabel } from "./historyView.ts";
 import { StatusMark } from "./statusMark.tsx";
 
 type HistoryRowProps = {

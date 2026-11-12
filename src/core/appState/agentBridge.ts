@@ -1,6 +1,6 @@
+import type { Appearance, ResolvedTheme } from "@getahoy/lib";
 import { z } from "zod";
 import type { Permission } from "../../ports/platform.ts";
-import type { Appearance, ResolvedTheme } from "../appearance/appearance.ts";
 import type { AgentState, OnboardingStep } from "./appState.ts";
 import type { HistoryBridge } from "./historyBridge.ts";
 import type { OffDuration } from "./listenOff.ts";

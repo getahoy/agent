@@ -1,5 +1,6 @@
 import { type RequestError, request } from "@getahoy/lib";
 import {
+  apiPaths,
   historyChangedSchema,
   historyPageSchema,
   historySettingsSchema,
@@ -12,9 +13,6 @@ import type {
   ReportInput,
 } from "../../core/appState/historyBridge.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-
-const HISTORY = "/api/history";
-const SETTINGS = `${HISTORY}/settings`;
 
 type HistoryApiOptions = { apiUrl: string; identity: IdentityStore };
 
@@ -53,7 +51,6 @@ function createCall({ apiUrl, identity }: HistoryApiOptions) {
   };
 }
 
-const entryPath = (id: string) => `${HISTORY}/${encodeURIComponent(id)}`;
 const changed = historyChangedSchema;
 const settings = historySettingsSchema;
 
@@ -65,33 +62,39 @@ export function createHistoryApi(options: HistoryApiOptions) {
     const schema = historyPageSchema;
     if (query.q) {
       const body = { ...query, macKey };
-      return call({ path: `${HISTORY}/search`, method: "POST", body, schema });
+      const path = apiPaths.historySearch;
+      return call({ path, method: "POST", body, schema });
     }
     const { status, cursor } = query;
     const params = { status, macKey, ...(cursor ? { cursor } : {}) };
-    return call({ path: HISTORY, query: params, schema });
+    return call({ path: apiPaths.history, query: params, schema });
   };
   const report = ({ id, note }: ReportInput) => {
     const body = note.trim() ? { note: note.trim() } : {};
-    const path = `${entryPath(id)}/report`;
+    const path = apiPaths.historyReport(id);
     return call({ path, method: "POST", body, schema: changed });
   };
   return {
     list,
     report,
     remove: (id: string) =>
-      call({ path: entryPath(id), method: "DELETE", schema: changed }),
+      call({
+        path: apiPaths.historyEntry(id),
+        method: "DELETE",
+        schema: changed,
+      }),
     restore: (id: string) =>
       call({
-        path: `${entryPath(id)}/restore`,
+        path: apiPaths.historyRestore(id),
         method: "POST",
         schema: changed,
       }),
-    clear: () => call({ path: HISTORY, method: "DELETE", schema: changed }),
-    settings: () => call({ path: SETTINGS, schema: settings }),
+    clear: () =>
+      call({ path: apiPaths.history, method: "DELETE", schema: changed }),
+    settings: () => call({ path: apiPaths.historySettings, schema: settings }),
     changeSettings: (keepHistory: boolean) =>
       call({
-        path: SETTINGS,
+        path: apiPaths.historySettings,
         method: "PATCH",
         body: { keepHistory },
         schema: settings,

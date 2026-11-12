@@ -1,8 +1,8 @@
+import { needsRunConfirm } from "@getahoy/lib";
 import type { HistoryEntry } from "@getahoy/protocol";
 import { useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { toast } from "../components/ui/toast.tsx";
-import { needsRunConfirm } from "./historyView.ts";
 
 type EntryDialog = "runAgain" | "report" | null;
 

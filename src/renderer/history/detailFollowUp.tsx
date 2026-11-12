@@ -1,8 +1,8 @@
+import { seconds } from "@getahoy/lib";
 import type { HistoryFollowUp } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
 import { DetailEyebrow } from "./detailEyebrow.tsx";
-import { seconds } from "./historyView.ts";
 
 export function DetailFollowUp({ followUp }: { followUp: HistoryFollowUp }) {
   const { waitedMs, said } = followUp;

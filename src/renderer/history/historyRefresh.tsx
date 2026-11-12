@@ -1,12 +1,12 @@
+import { useSpinnerVisible } from "@getahoy/lib";
 import { RotateCw } from "lucide-react";
 import { historyCopy } from "../../copy/historyCopy.ts";
-import { useSpinner } from "../hooks/useSpinner.ts";
 import { cn } from "../lib/cn.ts";
 
 type HistoryRefreshProps = { refreshing: boolean; onRefresh: () => void };
 
 export function HistoryRefresh({ refreshing, onRefresh }: HistoryRefreshProps) {
-  const spinning = useSpinner(refreshing);
+  const spinning = useSpinnerVisible(refreshing);
   return (
     <button
       type="button"

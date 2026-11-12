@@ -1,8 +1,8 @@
+import { seconds, totalMs, whyOf } from "@getahoy/lib";
 import type { HistoryEntry, HistoryStatus } from "@getahoy/protocol";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { cn } from "../lib/cn.ts";
 import { DetailEyebrow } from "./detailEyebrow.tsx";
-import { seconds, totalMs, whyOf } from "./historyView.ts";
 import { StatusMark } from "./statusMark.tsx";
 
 const statusTones: Record<HistoryStatus, string> = {
@@ -18,7 +18,7 @@ export function DetailOutcome({ entry }: { entry: HistoryEntry }) {
   const total = totalMs(entry.timings);
   const took = total === null ? null : seconds(total);
   const where = historyCopy.where(entry.app, took);
-  const why = whyOf(entry);
+  const why = whyOf(entry, historyCopy.why);
   return (
     <>
       <section className="flex flex-col gap-1.5">

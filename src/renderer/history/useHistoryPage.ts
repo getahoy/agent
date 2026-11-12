@@ -1,3 +1,4 @@
+import { HISTORY_SEARCH_DELAY_MS } from "@getahoy/lib";
 import type { HistoryEntry, HistoryFilter } from "@getahoy/protocol";
 import { useState } from "react";
 import { useDebounce } from "react-haiku";
@@ -10,8 +11,6 @@ import { useClearAll } from "./useClearAll.ts";
 import { useDeleteEntry } from "./useDeleteEntry.ts";
 import { useHistorySettings } from "./useHistorySettings.ts";
 import { useRefreshHistory } from "./useRefreshHistory.ts";
-
-const SEARCH_DELAY_MS = 300;
 
 function useListView() {
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -41,7 +40,7 @@ function focusRow(id: string) {
 
 export function useHistoryPage() {
   const view = useListView();
-  const search = useDebounce(view.search, SEARCH_DELAY_MS).trim();
+  const search = useDebounce(view.search, HISTORY_SEARCH_DELAY_MS).trim();
   const settled = { filter: view.filter, search };
   const query = useHistoryQuery(settled);
   const overall = useHistoryQuery({ filter: "all", search: "" });

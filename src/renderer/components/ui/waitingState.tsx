@@ -1,5 +1,4 @@
-import { useElapsedOver } from "../../hooks/useElapsedOver.ts";
-import { useSpinner } from "../../hooks/useSpinner.ts";
+import { useElapsedOver, useSpinnerVisible } from "@getahoy/lib";
 import { PennantSpinner } from "./pennantSpinner.tsx";
 
 const SLOW_AFTER_MS = 6000;
@@ -19,7 +18,7 @@ export function WaitingState({
   slowHint,
   slowAfterMs = SLOW_AFTER_MS,
 }: WaitingStateProps) {
-  const visible = useSpinner(busy);
+  const visible = useSpinnerVisible(busy);
   const slow = useElapsedOver(busy, slowAfterMs) ? slowMessage : undefined;
   if (!visible) return null;
   const line = slow ?? message;

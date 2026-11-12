@@ -1,4 +1,4 @@
-import type { ResolvedTheme } from "../../core/appearance/appearance.ts";
+import type { ResolvedTheme } from "@getahoy/lib";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 const SETTLE_LIMIT_MS = 200;
