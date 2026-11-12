@@ -1,7 +1,5 @@
-import { useElapsedOver, useSpinnerVisible } from "@getahoy/lib";
+import { SLOW_AFTER_MS, useElapsedOver, useSpinnerVisible } from "@getahoy/lib";
 import { PennantSpinner } from "./pennantSpinner.tsx";
-
-const SLOW_AFTER_MS = 6000;
 
 type WaitingStateProps = {
   busy: boolean;

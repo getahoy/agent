@@ -1,11 +1,15 @@
+import { motionDurationMs, motionEasing } from "@getahoy/lib";
 import { type Transition, useReducedMotion } from "motion/react";
 
-const durations = { fast: 0.15, base: 0.24 } as const;
+const MS_PER_SECOND = 1000;
 
-const easings = {
-  out: [0.22, 1, 0.36, 1],
-  spring: [0.34, 1.56, 0.64, 1],
+const durations = {
+  fast: motionDurationMs.fast / MS_PER_SECOND,
+  base: motionDurationMs.base / MS_PER_SECOND,
+  slow: motionDurationMs.slow / MS_PER_SECOND,
 } as const;
+
+const easings = motionEasing;
 
 const RISE_PX = 8;
 const POP_FROM_SCALE = 0.3;
@@ -39,7 +43,7 @@ const fade: Entrance = {
   transition: { duration: durations.base, ease: easings.out },
 };
 
-const MESSAGE_SECONDS = 0.48;
+const MESSAGE_SECONDS = durations.slow;
 const MESSAGE_RISE_PX = 12;
 
 const messageFade: Entrance = {

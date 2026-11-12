@@ -1,8 +1,7 @@
 import { Toast } from "@base-ui/react/toast";
+import { TOAST_MS } from "@getahoy/lib";
 import type { ReactNode } from "react";
 import { ToastViewport } from "./toastViewport.tsx";
-
-const TOAST_MS = 3000;
 
 const toastManager = Toast.createToastManager();
 let shownId: string | null = null;
