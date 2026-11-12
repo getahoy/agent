@@ -50,7 +50,8 @@ export function useHistoryPage() {
   const pages = query.data?.pages ?? [];
   const listed = pages.some((page) => page.entries.length > 0);
   const clearing = useClearAll(listed || finished.length > 0);
-  const refreshing = useRefreshHistory(settled);
+  const showing = query.data !== undefined;
+  const refreshing = useRefreshHistory({ view: settled, showing });
   const shown = pageView({
     view: settled,
     pages: query.data,

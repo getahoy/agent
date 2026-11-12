@@ -8,12 +8,13 @@ import { ClearHistoryDialog } from "./clearHistoryDialog.tsx";
 import { useClearHistory } from "./useClearHistory.ts";
 import { useHistorySettings } from "./useHistorySettings.ts";
 
-type Outcome = "kept" | "cleared" | "failed";
+type Outcome = "kept" | "cleared" | "failed" | "changeFailed";
 
 const notes: Record<Outcome, string> = {
   kept: historyCopy.keepHistoryDetail,
   cleared: historyCopy.clearedTitle,
   failed: historyCopy.couldNotClear,
+  changeFailed: historyCopy.couldNotChange,
 };
 
 export function HistorySettingsGroup() {
@@ -25,11 +26,14 @@ export function HistorySettingsGroup() {
     setOutcome((await clear()) ? "cleared" : "failed");
     setConfirming(false);
   };
+  const turn = async (on: boolean) => {
+    setOutcome((await change(on)) ? "kept" : "changeFailed");
+  };
   const toggle = (
     <Switch
       checked={keepHistory ?? true}
       disabled={changing || keepHistory === null}
-      onCheckedChange={(on) => void change(on)}
+      onCheckedChange={(on) => void turn(on)}
       aria-label={historyCopy.keepHistory}
     />
   );

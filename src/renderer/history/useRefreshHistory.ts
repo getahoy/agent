@@ -1,14 +1,17 @@
+import { HISTORY_KEY, historyKey } from "@getahoy/lib";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { historyCopy } from "../../copy/historyCopy.ts";
 import { toast } from "../components/ui/toast.tsx";
-import { HISTORY_KEY, historyKey, type ListView } from "./historyQueries.ts";
+import type { ListView } from "./historyQueries.ts";
 
 const REFRESH_KEY = "r";
 const NO_FAILURE = -1;
 
-// A failed manual refresh says so in a toast; failedAt lets the page skip the stale line for it.
-export function useRefreshHistory(view: ListView) {
+type RefreshOptions = { view: ListView; showing: boolean };
+
+// A failed manual refresh toasts only over a shown list; failedAt lets the page skip the stale line.
+export function useRefreshHistory({ view, showing }: RefreshOptions) {
   const client = useQueryClient();
   const running = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -23,7 +26,7 @@ export function useRefreshHistory(view: ListView) {
     const state = client.getQueryState(historyKey(view));
     if (state?.status !== "error") return;
     setFailedAt(state.errorUpdatedAt);
-    toast(historyCopy.couldNotRefresh);
+    if (showing) toast(historyCopy.couldNotRefresh);
   };
   useEffect(() => {
     const pressed = (event: KeyboardEvent) => {
