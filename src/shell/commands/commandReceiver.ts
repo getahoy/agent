@@ -2,10 +2,10 @@ import type { Logger } from "@getahoy/lib";
 import type { Frame, SpeakTarget } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
 import {
+  type CommandDecision,
   type CommandLog,
   type CommandOutcome,
   decideCommand,
-  decideLookup,
   done,
   emptyCommandLog,
   failed,
@@ -97,29 +97,27 @@ export class CommandReceiver {
   }
 
   #lookUp(commandId: string, reply: Reply): void {
-    const decision = decideLookup(this.#log, commandId);
-    if (decision.kind === "unknown") {
+    if (decideCommand(this.#log, commandId).kind === "run") {
       reply({ type: "command.unknown", commandId });
       return;
     }
-    reply({ type: "command.received", commandId });
-    if (decision.kind === "repeat") {
-      reply(resultFrame(commandId, decision.outcome));
-      return;
-    }
-    this.#replies.set(commandId, reply);
+    this.#follow(commandId, reply);
   }
 
-  #enqueue(queued: Queued): void {
-    const { commandId, reply } = queued;
+  #follow(commandId: string, reply: Reply): CommandDecision<Turn>["kind"] {
     reply({ type: "command.received", commandId });
     const decision = decideCommand(this.#log, commandId);
     if (decision.kind === "repeat") {
       reply(resultFrame(commandId, decision.outcome));
-      return;
+      return decision.kind;
     }
     this.#replies.set(commandId, reply);
-    if (decision.kind === "running") return;
+    return decision.kind;
+  }
+
+  #enqueue(queued: Queued): void {
+    const { commandId, reply } = queued;
+    if (this.#follow(commandId, reply) !== "run") return;
     this.#log = startCommand(this.#log, commandId);
     const receivedAt = performance.now();
     this.#queue = this.#queue

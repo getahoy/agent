@@ -10,9 +10,12 @@ const LOOPBACK_HOST = "127.0.0.1";
 const ADDRESS_SYNC_MS = 5000;
 const MAX_FRAME_BYTES = 64 * 1024;
 
-type LanListenerOptions = {
+export type LanSource = {
   port: number;
   localHostName: () => Promise<string | null>;
+};
+
+type LanListenerOptions = LanSource & {
   logger: Logger;
   onStream: (stream: FrameStream) => void;
 };

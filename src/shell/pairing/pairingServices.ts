@@ -12,6 +12,7 @@ import type { DeviceIdentity } from "../../ports/platform.ts";
 import type { AgentController } from "../agentController.ts";
 import type { CommandReceiver } from "../commands/commandReceiver.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
+import type { LanSource } from "../lan/lanListener.ts";
 import { PhoneLink } from "../lan/phoneLink.ts";
 import { createDeviceAuthClient, type DeviceAuthClient } from "./deviceFlow.ts";
 import { LinkMonitor } from "./linkMonitor.ts";
@@ -24,7 +25,7 @@ import { unpairPhone } from "./unpairPhone.ts";
 type ServiceInput = {
   apiUrl: string;
   api: ApiClient;
-  lan: { port: number; localHostName: () => Promise<string | null> };
+  lan: LanSource;
   logger: Logger;
   identity: IdentityStore;
   device: DeviceIdentity;

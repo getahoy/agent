@@ -5,12 +5,12 @@ import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { FrameStream } from "../../ports/frameStream.ts";
 import type { CommandReceiver } from "../commands/commandReceiver.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-import { LanListener } from "./lanListener.ts";
+import { LanListener, type LanSource } from "./lanListener.ts";
 
 const HANDSHAKE_TIMEOUT_MS = 10_000;
 
 type PhoneLinkOptions = {
-  lan: { port: number; localHostName: () => Promise<string | null> };
+  lan: LanSource;
   identity: IdentityStore;
   localHello: Hello;
   logger: Logger;

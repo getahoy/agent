@@ -78,18 +78,6 @@ export function decideCommand<Outcome>(
   return { kind: "run" };
 }
 
-export type LookupDecision<Outcome = CommandOutcome> =
-  | { kind: "unknown" }
-  | Exclude<CommandDecision<Outcome>, { kind: "run" }>;
-
-export function decideLookup<Outcome>(
-  log: CommandLog<Outcome>,
-  commandId: string,
-): LookupDecision<Outcome> {
-  const decision = decideCommand(log, commandId);
-  return decision.kind === "run" ? { kind: "unknown" } : decision;
-}
-
 export function startCommand<Outcome>(
   log: CommandLog<Outcome>,
   commandId: string,
