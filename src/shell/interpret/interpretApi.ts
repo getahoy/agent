@@ -1,17 +1,16 @@
-import { type FailureKind, failureKind } from "@getahoy/lib";
+import { type ApiClient, type FailureKind, failureKind } from "@getahoy/lib";
 import {
   apiPaths,
   type InterpretAction,
   interpretResponseSchema,
   MAX_INTERPRET_APPS,
 } from "@getahoy/protocol";
-import { bearerClient } from "../api/bearerClient.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 
 const INTERPRET_TIMEOUT_MS = 7000;
 const SIGNED_OUT = { kind: "failed", reason: "signedOut" } as const;
 
-type InterpreterOptions = { apiUrl: string; identity: IdentityStore };
+type InterpreterOptions = { api: ApiClient; identity: IdentityStore };
 
 export type Interpretation =
   | { kind: "actions"; actions: InterpretAction[] }
@@ -23,13 +22,12 @@ export type Interpreter = (
 ) => Promise<Interpretation>;
 
 export function createInterpreter({
-  apiUrl,
+  api,
   identity,
 }: InterpreterOptions): Interpreter {
-  const client = bearerClient(apiUrl, () => identity.sessionToken());
   return async (text, apps) => {
     if (!identity.sessionToken()) return SIGNED_OUT;
-    const answer = await client.call({
+    const answer = await api.call({
       path: apiPaths.interpret,
       body: { text, apps: apps.slice(0, MAX_INTERPRET_APPS) },
       schema: interpretResponseSchema,

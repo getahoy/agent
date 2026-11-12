@@ -1,3 +1,4 @@
+import type { ApiClient } from "@getahoy/lib";
 import { BrowserWindow } from "electron";
 import { historyChannels } from "../../core/appState/historyBridge.ts";
 import { failureReasonOf } from "../../core/commands/outcomeDetails.ts";
@@ -12,7 +13,7 @@ import { createLocalRun } from "./runLocally.ts";
 const REMEMBERED_THREADS = 50;
 
 type WiringOptions = {
-  apiUrl: string;
+  api: ApiClient;
   identity: IdentityStore;
   macName: string;
 };
@@ -38,7 +39,7 @@ function rememberHeard(
 }
 
 export function createHistoryWiring(options: WiringOptions) {
-  const { apiUrl, identity, macName } = options;
+  const { api, identity, macName } = options;
   const heardByThread = new Map<string, string>();
   const silent = new Set<object>();
 
@@ -68,7 +69,7 @@ export function createHistoryWiring(options: WiringOptions) {
   const register = (commands: CommandReceiver) => {
     const local = createLocalRun(commands);
     silent.add(local.owner);
-    registerHistoryBridge(createHistoryApi({ apiUrl, identity }), local.run);
+    registerHistoryBridge(createHistoryApi({ api, identity }), local.run);
   };
 
   return { finished, register };

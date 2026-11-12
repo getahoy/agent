@@ -1,4 +1,4 @@
-import type { Logger } from "@getahoy/lib";
+import type { ApiClient, Logger } from "@getahoy/lib";
 import {
   COMMAND_LOOKUP_CAPABILITY,
   type DeviceDescription,
@@ -23,6 +23,7 @@ import { unpairPhone } from "./unpairPhone.ts";
 
 type ServiceInput = {
   apiUrl: string;
+  api: ApiClient;
   lan: { port: number; localHostName: () => Promise<string | null> };
   logger: Logger;
   identity: IdentityStore;
@@ -102,13 +103,13 @@ function createPhoneLink(
 }
 
 export function createPairingServices(input: ServiceInput) {
-  const { apiUrl, logger, identity, controller } = input;
+  const { apiUrl, api, logger, identity, controller } = input;
   const authClient = createDeviceAuthClient(apiUrl);
   const phoneLink = createPhoneLink(input, (phone, reason) =>
     handlePhoneGoodbye(parts, phone, reason),
   );
   const monitor = new LinkMonitor({
-    apiUrl,
+    api,
     identity,
     logger,
     onPeerEnded: (phone, reason, whileAsleep) =>

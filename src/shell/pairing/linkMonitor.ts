@@ -1,19 +1,18 @@
 import {
-  failureKind,
+  type ApiClient,
+  doneOrGone,
   type Logger,
   pairingCalls,
-  type RequestResult,
 } from "@getahoy/lib";
 import type { EndReason } from "@getahoy/protocol";
 import { app } from "electron";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
-import { bearerClient } from "../api/bearerClient.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
 type LinkMonitorOptions = {
-  apiUrl: string;
+  api: ApiClient;
   identity: IdentityStore;
   logger: Logger;
   onPeerEnded: (
@@ -25,10 +24,6 @@ type LinkMonitorOptions = {
 
 export type CheckReason = "start" | "interval" | "wake" | "window" | "popover";
 
-function settled(result: RequestResult<unknown>): boolean {
-  return result.code === "success" || failureKind(result.error) === "notFound";
-}
-
 export class LinkMonitor {
   readonly #options: LinkMonitorOptions;
   readonly #calls: ReturnType<typeof pairingCalls>;
@@ -36,9 +31,7 @@ export class LinkMonitor {
 
   constructor(options: LinkMonitorOptions) {
     this.#options = options;
-    const { apiUrl, identity } = options;
-    const client = bearerClient(apiUrl, () => identity.sessionToken());
-    this.#calls = pairingCalls(client.call);
+    this.#calls = pairingCalls(options.api.call);
   }
 
   start(): void {
@@ -81,7 +74,7 @@ export class LinkMonitor {
     const devicePublicKey = identity.encodedPublicKey();
     for (const unlink of identity.pendingUnlinks()) {
       const result = await this.#calls.unlink({ devicePublicKey, ...unlink });
-      if (settled(result)) await identity.settleUnlink(unlink.peerPublicKey);
+      if (doneOrGone(result)) await identity.settleUnlink(unlink.peerPublicKey);
       else logger.warn("pairing", "Unlink queued, server not reachable");
     }
   }

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { createLogger, type Logger } from "@getahoy/lib";
+import { type ApiClient, createLogger, type Logger } from "@getahoy/lib";
 import { app, powerMonitor } from "electron";
 import { HelperClient } from "./core/helper/helperClient.ts";
 import type { HelperEvent } from "./core/helper/helperProtocol.ts";
@@ -7,6 +7,7 @@ import { parseAgentEnv } from "./env/agentEnv.ts";
 import { MacosPlatform } from "./platform/macos/macosPlatform.ts";
 import type { PlatformAdapter } from "./ports/platform.ts";
 import { AgentController } from "./shell/agentController.ts";
+import { bearerClient } from "./shell/api/bearerClient.ts";
 import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
@@ -109,13 +110,13 @@ type CommandParts = {
   controller: AgentController;
   settings: Settings;
   identity: IdentityStore;
-  apiUrl: string;
+  api: ApiClient;
   logger: Logger;
   onFinished: FinishedListener;
 };
 
 function createCommands(parts: CommandParts) {
-  const { platform, controller, settings, identity, apiUrl, logger } = parts;
+  const { platform, controller, settings, identity, api, logger } = parts;
   const helper = createHelper(platform, (event) => {
     controller.handleHelperEvent(event);
     if (event === "frontWindowChanged") choices.expire();
@@ -123,10 +124,10 @@ function createCommands(parts: CommandParts) {
   const choices = new ChoiceBook({
     clearOverlay: () => void helper.request("overlay", { marks: [] }),
   });
-  const interpret = createInterpreter({ apiUrl, identity });
+  const interpret = createInterpreter({ api, identity });
   const { blockedApps } = settings;
   const isLocked = () => controller.state().screenLocked;
-  const voice = new MacVoice({ apiUrl, identity, isLocked, logger });
+  const voice = new MacVoice({ api, identity, isLocked, logger });
   const commands = new CommandReceiver({
     isLocked,
     run: createCommandRunner({ helper, interpret, blockedApps, logger }),
@@ -148,7 +149,7 @@ function createCommands(parts: CommandParts) {
 }
 
 async function startAgent(): Promise<void> {
-  const env = parseAgentEnv();
+  const { VITE_AHOY_API_URL: apiUrl } = parseAgentEnv();
   const logger = createLogger();
   const platform = new MacosPlatform();
   platform.lifecycle.hideWindowSurface();
@@ -162,10 +163,10 @@ async function startAgent(): Promise<void> {
     : (message: string) => logger.info("state", message);
   const state = { platform, settings, pairedPhones, trace };
   const controller = new AgentController(state);
-  const apiUrl = env.VITE_AHOY_API_URL;
+  const api = bearerClient(apiUrl, () => identity.sessionToken());
   const macName = device.displayName;
-  const history = createHistoryWiring({ apiUrl, identity, macName });
-  const command = { platform, controller, settings, identity, apiUrl, logger };
+  const history = createHistoryWiring({ api, identity, macName });
+  const command = { platform, controller, settings, identity, api, logger };
   const parts = { ...command, onFinished: history.finished };
   const { helper, commands, onPhoneEnded } = createCommands(parts);
   const listen = new ListenSwitch({
@@ -175,6 +176,7 @@ async function startAgent(): Promise<void> {
   });
   const services = createPairingServices({
     apiUrl,
+    api,
     lan: { port: LAN_PORT, localHostName: () => platform.localHostName() },
     logger,
     identity,

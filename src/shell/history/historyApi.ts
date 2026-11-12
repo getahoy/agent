@@ -1,4 +1,5 @@
 import {
+  type ApiClient,
   failureKind,
   historyCalls,
   type RequestError,
@@ -10,10 +11,9 @@ import type {
   MacHistoryQuery,
   ReportInput,
 } from "../../core/appState/historyBridge.ts";
-import { bearerClient } from "../api/bearerClient.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
 
-type HistoryApiOptions = { apiUrl: string; identity: IdentityStore };
+type HistoryApiOptions = { api: ApiClient; identity: IdentityStore };
 
 const SIGNED_OUT = { kind: "failed", failure: "signedOut" } as const;
 
@@ -23,10 +23,8 @@ function failureOf(error: RequestError): HistoryFailure {
   return kind === "signedOut" ? "signedOut" : "refused";
 }
 
-export function createHistoryApi({ apiUrl, identity }: HistoryApiOptions) {
-  const calls = historyCalls(
-    bearerClient(apiUrl, () => identity.sessionToken()).call,
-  );
+export function createHistoryApi({ api, identity }: HistoryApiOptions) {
+  const calls = historyCalls(api.call);
   const reply = async <T>(
     send: () => Promise<RequestResult<T>>,
   ): Promise<HistoryReply<T>> => {

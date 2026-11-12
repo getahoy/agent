@@ -6,7 +6,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { ApiClient, Logger } from "@getahoy/lib";
 import { apiPaths } from "@getahoy/protocol";
-import { bearerClient } from "../api/bearerClient.ts";
 import type { Turn } from "../commands/commandTurns.ts";
 import { speechOf } from "../commands/resultFrame.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
@@ -16,7 +15,7 @@ const PREFERRED_SAY_VOICE = "Samantha";
 const SPEAK_TIMEOUT_MS = 5000;
 
 type MacVoiceOptions = {
-  apiUrl: string;
+  api: ApiClient;
   identity: IdentityStore;
   isLocked: () => boolean;
   logger: Logger;
@@ -26,14 +25,11 @@ type Utterance = { owner: object; abort: AbortController };
 
 export class MacVoice {
   readonly #options: MacVoiceOptions;
-  readonly #client: ApiClient;
   #current: Utterance | null = null;
   #sayVoice: Promise<string[]> | null = null;
 
   constructor(options: MacVoiceOptions) {
     this.#options = options;
-    const { apiUrl, identity } = options;
-    this.#client = bearerClient(apiUrl, () => identity.sessionToken());
   }
 
   speakTurn(turn: Turn, owner: object): void {
@@ -63,9 +59,10 @@ export class MacVoice {
   }
 
   async #fetchSpeech(text: string, signal: AbortSignal) {
-    if (!this.#options.identity.sessionToken()) return null;
-    const url = this.#client.url(apiPaths.speak);
-    const headers = await this.#client.headers();
+    const { api, identity } = this.#options;
+    if (!identity.sessionToken()) return null;
+    const url = api.url(apiPaths.speak);
+    const headers = await api.headers();
     const timeout = AbortSignal.timeout(SPEAK_TIMEOUT_MS);
     try {
       const response = await fetch(url, {
