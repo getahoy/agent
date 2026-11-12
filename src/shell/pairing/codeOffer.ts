@@ -1,8 +1,7 @@
-import type { DeviceDescription } from "@getahoy/protocol";
+import type { DeviceDescription, LanEndpoint } from "@getahoy/protocol";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
 import { pairingQr } from "../../core/pairing/pairingTerms.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-import type { LanEndpoint } from "../lan/lanAddresses.ts";
 import type { OpenCode } from "./pairingCompletion.ts";
 
 type OfferParts = {

@@ -10,6 +10,7 @@ import {
   type HandshakeReply,
   type Hello,
   helloSchema,
+  type LanEndpoint,
   PROTOCOL_VERSION,
   versionProbeSchema,
 } from "@getahoy/protocol";
@@ -29,6 +30,7 @@ type HandshakeInput = {
   firstMessage: Uint8Array;
   localKeys: KeyPair;
   localHello: Hello;
+  lan: LanEndpoint | null;
   findPhone: (publicKey: Uint8Array) => PairedPhone | null;
   findEnded: (publicKey: Uint8Array) => EndReason | null;
 };
@@ -60,7 +62,10 @@ export function acceptHandshake(input: HandshakeInput): HandshakeDecision {
     return { outcome: "closing", reply };
   }
   if (!helloSchema.safeParse(payload).success) return DROPPED;
-  const welcome: HandshakeReply = { type: "welcome", hello: input.localHello };
+  const { localHello: hello, lan } = input;
+  const welcome: HandshakeReply = lan
+    ? { type: "welcome", hello, lan }
+    : { type: "welcome", hello };
   const { message, channel } = responder.reply(encodeJson(welcome));
   return { outcome: "accepted", reply: message, channel, phone };
 }

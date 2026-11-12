@@ -1,5 +1,5 @@
 import type { Logger } from "@getahoy/lib";
-import type { GoodbyeReason, Hello } from "@getahoy/protocol";
+import type { GoodbyeReason, Hello, LanEndpoint } from "@getahoy/protocol";
 import { PhoneSession } from "../../core/connection/phoneSession.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import type { FrameStream } from "../../ports/frameStream.ts";
@@ -10,7 +10,7 @@ import { LanListener } from "./lanListener.ts";
 const HANDSHAKE_TIMEOUT_MS = 10_000;
 
 type PhoneLinkOptions = {
-  port: number;
+  lan: { port: number; localHostName: () => Promise<string | null> };
   identity: IdentityStore;
   localHello: Hello;
   logger: Logger;
@@ -30,10 +30,14 @@ export class PhoneLink {
   constructor(options: PhoneLinkOptions) {
     this.#options = options;
     this.#listener = new LanListener({
-      port: options.port,
+      ...options.lan,
       logger: options.logger,
       onStream: (stream) => this.#accept(stream),
     });
+  }
+
+  lanEndpoint(): LanEndpoint | null {
+    return this.#listener.endpoint();
   }
 
   start(): void {
@@ -62,6 +66,7 @@ export class PhoneLink {
       stream,
       localKeys: identity.keyPair(),
       localHello,
+      lanEndpoint: () => this.lanEndpoint(),
       findPhone: (publicKey) => identity.pairedPhone(publicKey),
       findEnded: (publicKey) => identity.endReason(publicKey),
       isLocked: this.#options.isLocked,

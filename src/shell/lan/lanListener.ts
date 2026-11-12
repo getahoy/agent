@@ -1,8 +1,9 @@
 import type { Logger } from "@getahoy/lib";
+import type { LanEndpoint } from "@getahoy/protocol";
 import { WebSocketServer } from "ws";
 import type { FrameStream } from "../../ports/frameStream.ts";
 import { HandshakeRateLimit } from "./handshakeRateLimit.ts";
-import { lanAddresses } from "./lanAddresses.ts";
+import { lanAddresses, lanEndpoint } from "./lanAddresses.ts";
 import { WebSocketFrameStream } from "./webSocketFrameStream.ts";
 
 const LOOPBACK_HOST = "127.0.0.1";
@@ -11,6 +12,7 @@ const MAX_FRAME_BYTES = 64 * 1024;
 
 type LanListenerOptions = {
   port: number;
+  localHostName: () => Promise<string | null>;
   logger: Logger;
   onStream: (stream: FrameStream) => void;
 };
@@ -20,6 +22,7 @@ export class LanListener {
   readonly #servers = new Map<string, WebSocketServer>();
   readonly #rateLimit = new HandshakeRateLimit();
   #syncTimer: ReturnType<typeof setInterval> | null = null;
+  #localHost: string | null = null;
 
   constructor(options: LanListenerOptions) {
     this.#options = options;
@@ -37,7 +40,14 @@ export class LanListener {
     for (const host of [...this.#servers.keys()]) this.#unbind(host);
   }
 
+  endpoint(): LanEndpoint | null {
+    return lanEndpoint(this.#options.port, this.#localHost);
+  }
+
   #sync(): void {
+    void this.#options.localHostName().then((name) => {
+      this.#localHost = name;
+    });
     const wanted = new Set([LOOPBACK_HOST, ...lanAddresses()]);
     for (const host of this.#servers.keys()) {
       if (!wanted.has(host)) this.#unbind(host);

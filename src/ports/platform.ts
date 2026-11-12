@@ -36,4 +36,5 @@ export interface PlatformAdapter {
   settingsFilePath(): string;
   identityFilePath(): string;
   deviceIdentity(): Promise<DeviceIdentity>;
+  localHostName(): Promise<string | null>;
 }

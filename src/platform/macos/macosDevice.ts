@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { hostname } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { localHostSchema } from "@getahoy/protocol";
 import { app, type NativeImage, nativeImage } from "electron";
 import type { DeviceIdentity, MenubarStatus } from "../../ports/platform.ts";
 
@@ -32,6 +33,15 @@ async function computerName(): Promise<string> {
   );
   const name = named?.stdout.trim();
   return name ? name : hostname().replace(/\.local$/, "");
+}
+
+export async function macosLocalHostName(): Promise<string | null> {
+  const named = await runFile("scutil", ["--get", "LocalHostName"]).catch(
+    () => null,
+  );
+  if (!named) return null;
+  const parsed = localHostSchema.safeParse(`${named.stdout.trim()}.local`);
+  return parsed.success ? parsed.data : null;
 }
 
 export async function macosDeviceIdentity(): Promise<DeviceIdentity> {

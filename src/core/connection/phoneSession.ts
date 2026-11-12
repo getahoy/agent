@@ -7,6 +7,7 @@ import {
   frameSchema,
   type GoodbyeReason,
   type Hello,
+  type LanEndpoint,
 } from "@getahoy/protocol";
 import type { FrameStream } from "../../ports/frameStream.ts";
 import type { PairedPhone } from "../pairing/pairedPhone.ts";
@@ -16,6 +17,7 @@ type PhoneSessionOptions = {
   stream: FrameStream;
   localKeys: KeyPair;
   localHello: Hello;
+  lanEndpoint: () => LanEndpoint | null;
   findPhone: (publicKey: Uint8Array) => PairedPhone | null;
   findEnded: (publicKey: Uint8Array) => EndReason | null;
   isLocked: () => boolean;
@@ -126,6 +128,7 @@ export class PhoneSession {
       firstMessage,
       localKeys,
       localHello,
+      lan: this.#options.lanEndpoint(),
       findPhone,
       findEnded,
     });

@@ -1,7 +1,6 @@
 import { type NetworkInterfaceInfo, networkInterfaces } from "node:os";
+import { type LanEndpoint, MAX_LAN_HOSTS } from "@getahoy/protocol";
 import ipaddr from "ipaddr.js";
-
-export type LanEndpoint = { hosts: string[]; port: number };
 
 function isPrivateIpv4(entry: NetworkInterfaceInfo): boolean {
   if (entry.family !== "IPv4" || entry.internal) return false;
@@ -15,7 +14,11 @@ export function lanAddresses(): string[] {
     .map((entry) => entry.address);
 }
 
-export function lanEndpoint(port: number): LanEndpoint | null {
-  const hosts = lanAddresses();
-  return hosts.length > 0 ? { hosts, port } : null;
+export function lanEndpoint(
+  port: number,
+  localHost: string | null,
+): LanEndpoint | null {
+  const hosts = lanAddresses().slice(0, MAX_LAN_HOSTS);
+  if (hosts.length === 0) return null;
+  return localHost ? { hosts, port, local: localHost } : { hosts, port };
 }

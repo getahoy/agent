@@ -11,7 +11,6 @@ import type { DeviceIdentity } from "../../ports/platform.ts";
 import type { AgentController } from "../agentController.ts";
 import type { CommandReceiver } from "../commands/commandReceiver.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-import { lanEndpoint } from "../lan/lanAddresses.ts";
 import { PhoneLink } from "../lan/phoneLink.ts";
 import { createDeviceAuthClient, type DeviceAuthClient } from "./deviceFlow.ts";
 import { LinkMonitor } from "./linkMonitor.ts";
@@ -23,7 +22,7 @@ import { unpairPhone } from "./unpairPhone.ts";
 
 type ServiceInput = {
   apiUrl: string;
-  port: number;
+  lan: { port: number; localHostName: () => Promise<string | null> };
   logger: Logger;
   identity: IdentityStore;
   device: DeviceIdentity;
@@ -59,13 +58,13 @@ function createPairingSession(
   authClient: DeviceAuthClient,
   phoneLink: PhoneLink,
 ): PairingSession {
-  const { apiUrl, port, logger, identity, device, controller } = input;
+  const { apiUrl, logger, identity, device, controller } = input;
   return new PairingSession({
     apiUrl,
     authClient,
     identity,
     device: () => desktopDescription(identity, device),
-    lanEndpoint: () => lanEndpoint(port),
+    lanEndpoint: () => phoneLink.lanEndpoint(),
     lanListening: () => controller.state().lanEnabled,
     isOnline: () => net.isOnline(),
     logger,
@@ -83,9 +82,9 @@ function createPhoneLink(
   input: ServiceInput,
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void,
 ): PhoneLink {
-  const { port, logger, identity, device, controller, commands } = input;
+  const { lan, logger, identity, device, controller, commands } = input;
   return new PhoneLink({
-    port,
+    lan,
     identity,
     localHello: localHello(device),
     logger,

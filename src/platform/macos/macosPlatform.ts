@@ -10,7 +10,7 @@ import type {
   PlatformAdapter,
 } from "../../ports/platform.ts";
 import { macosHelperBinary, packagedHelperBinary } from "./helperBinary.ts";
-import { macosDeviceIdentity } from "./macosDevice.ts";
+import { macosDeviceIdentity, macosLocalHostName } from "./macosDevice.ts";
 
 const SETTINGS_FILE_NAME = "settings.json";
 const IDENTITY_FILE_NAME = "identity.bin";
@@ -72,5 +72,9 @@ export class MacosPlatform implements PlatformAdapter {
 
   deviceIdentity(): Promise<DeviceIdentity> {
     return macosDeviceIdentity();
+  }
+
+  localHostName(): Promise<string | null> {
+    return macosLocalHostName();
   }
 }

@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { randomSecret } from "@getahoy/crypto";
 import type { Logger } from "@getahoy/lib";
-import type { DeviceDescription } from "@getahoy/protocol";
+import type { DeviceDescription, LanEndpoint } from "@getahoy/protocol";
 import { keepsCurrentCode } from "../../core/pairing/endedByPhone.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
 import {
@@ -14,7 +14,6 @@ import {
 } from "../../core/pairing/pairingCode.ts";
 import type { PairingStatus } from "../../core/pairing/pairingStatus.ts";
 import type { IdentityStore } from "../identity/identityStore.ts";
-import type { LanEndpoint } from "../lan/lanAddresses.ts";
 import { codeOffer } from "./codeOffer.ts";
 import {
   type DeviceAuthClient,

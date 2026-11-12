@@ -175,7 +175,7 @@ async function startAgent(): Promise<void> {
   });
   const services = createPairingServices({
     apiUrl,
-    port: LAN_PORT,
+    lan: { port: LAN_PORT, localHostName: () => platform.localHostName() },
     logger,
     identity,
     device,
