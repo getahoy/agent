@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { randomSecret } from "@getahoy/crypto";
-import type { Logger } from "@getahoy/lib";
+import { type Logger, SLOW_AFTER_MS } from "@getahoy/lib";
 import type { DeviceDescription, LanEndpoint } from "@getahoy/protocol";
 import { keepsCurrentCode } from "../../core/pairing/endedByPhone.ts";
 import type { PairedPhone } from "../../core/pairing/pairedPhone.ts";
@@ -24,7 +24,6 @@ import { completeClaim, type OpenCode } from "./pairingCompletion.ts";
 
 const SLOW_DOWN_STEP_MS = 2000;
 const MS_PER_SECOND = 1000;
-const SLOW_AFTER_MS = 6000;
 const NETWORK_CHECK_MS = 2000;
 
 const refusedByServer: CodeEvent = { kind: "refused", reason: "server" };

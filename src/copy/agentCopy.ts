@@ -1,3 +1,4 @@
+import { historyCopy } from "@getahoy/lib";
 import type { HelperStatus } from "../core/appState/appState.ts";
 
 export const agentCopy = {
@@ -17,8 +18,9 @@ export const agentCopy = {
   "welcome.titleEmphasis": "Ahoy",
   "welcome.body":
     "Talk to your Mac from your phone. Ahoy reads what is on screen and does what you ask.",
-  "welcome.history":
-    "Ahoy keeps a history of what you said and what it did in your account for 90 days. You can clear it or turn it off in Settings. Speech audio is never stored.",
+  "welcome.history": historyCopy.keepHistoryDisclosure(
+    "You can clear it or turn it off in Settings.",
+  ),
   "welcome.continue": "Get started",
   "setup.progress": "Setup progress",
   "permissions.title": "Allow Ahoy to see and use",
