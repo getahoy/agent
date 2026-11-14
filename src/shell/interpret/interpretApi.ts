@@ -1,6 +1,7 @@
 import { type ApiClient, type FailureKind, failureKind } from "@getahoy/lib";
 import {
   apiPaths,
+  INTERPRET_ACTION_KINDS,
   type InterpretAction,
   interpretResponseSchema,
   MAX_INTERPRET_APPS,
@@ -29,7 +30,11 @@ export function createInterpreter({
     if (!identity.sessionToken()) return SIGNED_OUT;
     const answer = await api.call({
       path: apiPaths.interpret,
-      body: { text, apps: apps.slice(0, MAX_INTERPRET_APPS) },
+      body: {
+        text,
+        apps: apps.slice(0, MAX_INTERPRET_APPS),
+        supports: INTERPRET_ACTION_KINDS,
+      },
       schema: interpretResponseSchema,
       timeoutMs: INTERPRET_TIMEOUT_MS,
     });

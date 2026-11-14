@@ -4,11 +4,12 @@ import {
   done,
   failed,
 } from "../../core/commands/commandLog.ts";
-import type { Intent } from "../../core/commands/intent.ts";
+import type { RunnableIntent } from "../../core/commands/intent.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import { runClick } from "./clickIntent.ts";
 import { pressKeys, typeText } from "./helperIntents.ts";
 import { openWith, osaScript } from "./osaScript.ts";
+import { isSystemIntent, runSystemIntent } from "./systemIntents.ts";
 import { runTabIntent } from "./tabIntents.ts";
 import { runWebIntent } from "./webIntents.ts";
 
@@ -72,9 +73,10 @@ async function scripted(
 }
 
 export async function runIntent(
-  intent: Intent,
+  intent: RunnableIntent,
   helper: HelperClient,
 ): Promise<CommandOutcome> {
+  if (isSystemIntent(intent)) return runSystemIntent(intent, helper);
   switch (intent.kind) {
     case "open":
       await openWith(["-a", intent.app]);

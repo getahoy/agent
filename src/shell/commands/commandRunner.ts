@@ -1,6 +1,7 @@
 import type { Logger } from "@getahoy/lib";
 import type { UnderstoodBy } from "@getahoy/protocol";
 import { commandCopy } from "../../copy/commandCopy.ts";
+import { systemCopy } from "../../copy/systemCopy.ts";
 import {
   because,
   type CommandOutcome,
@@ -8,9 +9,18 @@ import {
   failed,
   refused,
 } from "../../core/commands/commandLog.ts";
-import type { Intent, ParsedCommand } from "../../core/commands/intent.ts";
+import type {
+  Intent,
+  ParsedCommand,
+  RunnableIntent,
+} from "../../core/commands/intent.ts";
 import { appOfIntent } from "../../core/commands/outcomeDetails.ts";
 import { parseCommand } from "../../core/commands/parseCommand.ts";
+import {
+  type LastStep,
+  rememberStep,
+  repeatStep,
+} from "../../core/commands/stepMemory.ts";
 import { validateActions } from "../../core/commands/validateActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import {
@@ -29,10 +39,17 @@ type CommandRunnerOptions = {
   logger: Logger;
 };
 
+type StepBox = { last: LastStep | null };
+
 const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
   "click",
   "keys",
   "type",
+  "scroll",
+]);
+const FRONT_APP_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
+  "navigate",
+  "window",
 ]);
 
 function withApp(outcome: CommandOutcome, app: string | null) {
@@ -45,9 +62,13 @@ function understood(outcome: CommandOutcome, via: UnderstoodBy) {
 
 // Not knowing which app is in front counts as blocked: the list must fail closed.
 async function runGuarded(
-  intent: Intent,
+  intent: RunnableIntent,
   options: CommandRunnerOptions,
 ): Promise<CommandOutcome> {
+  if (FRONT_APP_INTENTS.has(intent.kind)) {
+    const frontName = await frontAppName();
+    return withApp(await runIntent(intent, options.helper), frontName);
+  }
   if (!SCREEN_INTENTS.has(intent.kind)) {
     const outcome = await runIntent(intent, options.helper);
     return withApp(outcome, appOfIntent(intent));
@@ -61,6 +82,21 @@ async function runGuarded(
     return withApp(blocked, frontName);
   }
   return withApp(await runIntent(intent, options.helper), frontName);
+}
+
+async function runStep(
+  intent: Intent,
+  options: CommandRunnerOptions,
+  steps: StepBox,
+): Promise<CommandOutcome> {
+  const now = Date.now();
+  const runnable =
+    intent.kind === "again" ? repeatStep(steps.last, intent, now) : intent;
+  steps.last = null;
+  if (!runnable) return failed(systemCopy.moreOfWhat);
+  const outcome = await runGuarded(runnable, options);
+  if (outcome.status === "done") steps.last = rememberStep(runnable, now);
+  return outcome;
 }
 
 type Unmatched = Extract<ParsedCommand, { kind: "unknownApp" | "unsupported" }>;
@@ -81,12 +117,13 @@ function appBeforeInput(intent: Intent, next: Intent | undefined) {
 async function runInOrder(
   intents: readonly Intent[],
   options: CommandRunnerOptions,
+  steps: StepBox,
 ): Promise<CommandOutcome> {
   const messages: string[] = [];
   let actedOn: string | null = null;
   for (const [index, intent] of intents.entries()) {
-    const outcome = await runGuarded(intent, options);
-    if (outcome.status !== "done") return outcome;
+    const outcome = await runStep(intent, options, steps);
+    if (intents.length === 1 || outcome.status !== "done") return outcome;
     actedOn = outcome.app ?? actedOn;
     messages.push(outcome.message);
     const app = appBeforeInput(intent, intents[index + 1]);
@@ -97,11 +134,12 @@ async function runInOrder(
   return withApp(done(messages.join(", ")), actedOn);
 }
 
+type Heard = { text: string; apps: readonly string[]; parsed: Unmatched };
+
 async function viaInterpreter(
-  text: string,
-  apps: readonly string[],
-  parsed: Unmatched,
+  { text, apps, parsed }: Heard,
   options: CommandRunnerOptions,
+  steps: StepBox,
 ): Promise<CommandOutcome> {
   const { interpret, logger } = options;
   const interpretation = await interpret(text, apps);
@@ -118,23 +156,30 @@ async function viaInterpreter(
     logger.warn("command", "Smart commands rejected");
     return failed(commandCopy.cannotDoYet);
   }
-  return runInOrder(validation.intents, options);
+  return runInOrder(validation.intents, options, steps);
 }
 
 export function createCommandRunner(options: CommandRunnerOptions) {
-  return async (text: string): Promise<CommandOutcome> => {
+  const steps: StepBox = { last: null };
+  const run = async (text: string): Promise<CommandOutcome> => {
     const apps = await installedApps();
     const parsed = parseCommand(text, apps);
     switch (parsed.kind) {
-      case "intent":
-        return understood(await runGuarded(parsed.intent, options), "rules");
+      case "intent": {
+        const outcome = await runStep(parsed.intent, options, steps);
+        return understood(outcome, "rules");
+      }
       case "ambiguous": {
         const message = commandCopy.which(parsed.apps);
         return understood({ status: "needsChoice", message }, "rules");
       }
+      case "refuse":
+        steps.last = null;
+        return understood(failed(systemCopy.refused(parsed.reason)), "rules");
       case "unknownApp":
       case "unsupported": {
-        const outcome = await viaInterpreter(text, apps, parsed, options);
+        const context = { text, apps, parsed };
+        const outcome = await viaInterpreter(context, options, steps);
         return understood(outcome, "ai");
       }
       default: {
@@ -143,4 +188,8 @@ export function createCommandRunner(options: CommandRunnerOptions) {
       }
     }
   };
+  const forgetStep = () => {
+    steps.last = null;
+  };
+  return { run, forgetStep };
 }

@@ -32,6 +32,7 @@ type ServiceInput = {
   controller: AgentController;
   commands: CommandReceiver;
   onPhoneEnded: () => void;
+  onPhoneGone: () => void;
   onPhoneRefused: () => void;
 };
 
@@ -95,6 +96,7 @@ function createPhoneLink(
     isListening: () => controller.state().lanEnabled,
     onRefused: input.onPhoneRefused,
     onConnectedPhones: (keys) => controller.setConnectedPhones(keys),
+    onDisconnected: input.onPhoneGone,
     onGoodbye: (phone, reason) => {
       if (!app.isPackaged) logger.info("lan", `Goodbye received (${reason})`);
       onGoodbye(phone, reason);

@@ -128,9 +128,15 @@ function createCommands(parts: CommandParts) {
   const { blockedApps } = settings;
   const isLocked = () => controller.state().screenLocked;
   const voice = new MacVoice({ api, identity, isLocked, logger });
+  const runner = createCommandRunner({
+    helper,
+    interpret,
+    blockedApps,
+    logger,
+  });
   const commands = new CommandReceiver({
     isLocked,
-    run: createCommandRunner({ helper, interpret, blockedApps, logger }),
+    run: runner.run,
     onHeard: (text) => controller.showLastHeard(text),
     onResult: (turn, owner, heard) => {
       voice.speakTurn(turn, owner);
@@ -143,9 +149,11 @@ function createCommands(parts: CommandParts) {
   const onPhoneEnded = () => {
     choices.expire();
     voice.stop();
+    runner.forgetStep();
     void helper.request("overlay", { marks: [] });
   };
-  return { helper, commands, onPhoneEnded };
+  const phoneHooks = { onPhoneEnded, onPhoneGone: runner.forgetStep };
+  return { helper, commands, phoneHooks };
 }
 
 async function startAgent(): Promise<void> {
@@ -168,7 +176,7 @@ async function startAgent(): Promise<void> {
   const history = createHistoryWiring({ api, identity, macName });
   const command = { platform, controller, settings, identity, api, logger };
   const parts = { ...command, onFinished: history.finished };
-  const { helper, commands, onPhoneEnded } = createCommands(parts);
+  const { helper, commands, phoneHooks } = createCommands(parts);
   const listen = new ListenSwitch({
     controller,
     endSessions: (reason) => services.phoneLink.endAll(reason),
@@ -183,7 +191,7 @@ async function startAgent(): Promise<void> {
     device,
     controller,
     commands,
-    onPhoneEnded,
+    ...phoneHooks,
     onPhoneRefused: () => listen.phoneRefused(),
   });
   history.register(commands);
