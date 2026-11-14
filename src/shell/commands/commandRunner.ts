@@ -39,7 +39,8 @@ type CommandRunnerOptions = {
   logger: Logger;
 };
 
-type StepBox = { last: LastStep | null };
+// "More" repeats the step of the command just before, so each command starts from a clean slate.
+type StepBox = { previous: LastStep | null; last: LastStep | null };
 
 const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
   "click",
@@ -91,11 +92,10 @@ async function runStep(
 ): Promise<CommandOutcome> {
   const now = Date.now();
   const runnable =
-    intent.kind === "again" ? repeatStep(steps.last, intent, now) : intent;
-  steps.last = null;
+    intent.kind === "again" ? repeatStep(steps.previous, intent, now) : intent;
   if (!runnable) return failed(systemCopy.moreOfWhat);
   const outcome = await runGuarded(runnable, options);
-  if (outcome.status === "done") steps.last = rememberStep(runnable, now);
+  steps.last = outcome.status === "done" ? rememberStep(runnable, now) : null;
   return outcome;
 }
 
@@ -160,8 +160,10 @@ async function viaInterpreter(
 }
 
 export function createCommandRunner(options: CommandRunnerOptions) {
-  const steps: StepBox = { last: null };
+  const steps: StepBox = { previous: null, last: null };
   const run = async (text: string): Promise<CommandOutcome> => {
+    steps.previous = steps.last;
+    steps.last = null;
     const apps = await installedApps();
     const parsed = parseCommand(text, apps);
     switch (parsed.kind) {
@@ -174,7 +176,6 @@ export function createCommandRunner(options: CommandRunnerOptions) {
         return understood({ status: "needsChoice", message }, "rules");
       }
       case "refuse":
-        steps.last = null;
         return understood(failed(systemCopy.refused(parsed.reason)), "rules");
       case "unknownApp":
       case "unsupported": {

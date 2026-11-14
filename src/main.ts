@@ -146,14 +146,15 @@ function createCommands(parts: CommandParts) {
     choices,
     logger,
   });
+  controller.onChange(({ connectedPhoneKeys }) => {
+    if (connectedPhoneKeys.length === 0) runner.forgetStep();
+  });
   const onPhoneEnded = () => {
     choices.expire();
     voice.stop();
-    runner.forgetStep();
     void helper.request("overlay", { marks: [] });
   };
-  const phoneHooks = { onPhoneEnded, onPhoneGone: runner.forgetStep };
-  return { helper, commands, phoneHooks };
+  return { helper, commands, onPhoneEnded };
 }
 
 async function startAgent(): Promise<void> {
@@ -176,7 +177,7 @@ async function startAgent(): Promise<void> {
   const history = createHistoryWiring({ api, identity, macName });
   const command = { platform, controller, settings, identity, api, logger };
   const parts = { ...command, onFinished: history.finished };
-  const { helper, commands, phoneHooks } = createCommands(parts);
+  const { helper, commands, onPhoneEnded } = createCommands(parts);
   const listen = new ListenSwitch({
     controller,
     endSessions: (reason) => services.phoneLink.endAll(reason),
@@ -191,7 +192,7 @@ async function startAgent(): Promise<void> {
     device,
     controller,
     commands,
-    ...phoneHooks,
+    onPhoneEnded,
     onPhoneRefused: () => listen.phoneRefused(),
   });
   history.register(commands);

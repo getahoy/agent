@@ -18,18 +18,18 @@ import { runBrightness, runVolume } from "./levelIntents.ts";
 
 type SystemIntent = MacAction | { kind: "lock" };
 
-const SYSTEM_KINDS: ReadonlySet<RunnableIntent["kind"]> = new Set([
-  "scroll",
-  "navigate",
-  "media",
-  "volume",
-  "brightness",
-  "window",
-  "lock",
-]);
+const SYSTEM_KINDS: Readonly<Record<SystemIntent["kind"], true>> = {
+  scroll: true,
+  navigate: true,
+  media: true,
+  volume: true,
+  brightness: true,
+  window: true,
+  lock: true,
+};
 
 export function isSystemIntent(intent: RunnableIntent): intent is SystemIntent {
-  return SYSTEM_KINDS.has(intent.kind);
+  return Object.hasOwn(SYSTEM_KINDS, intent.kind);
 }
 
 const MAX_SCROLL_TIMES = 10;
@@ -39,16 +39,6 @@ const WINDOW_HEIGHTS: Readonly<Record<ScrollAmount, number>> = {
   large: 2.4,
 };
 const NAVIGATE_KEYS = { back: "[", forward: "]", reload: "r" } as const;
-const NAVIGATE_LINES = {
-  back: systemCopy.wentBack,
-  forward: systemCopy.wentForward,
-  reload: systemCopy.reloaded,
-} as const;
-const MEDIA_LINES = {
-  playPause: systemCopy.playPause,
-  next: systemCopy.nextTrack,
-  previous: systemCopy.previousTrack,
-} as const;
 const COMMAND: readonly Modifier[] = ["command"];
 const LOCK_MODIFIERS: readonly Modifier[] = ["control", "command"];
 
@@ -91,7 +81,7 @@ export async function runSystemIntent(
     case "navigate": {
       const key = NAVIGATE_KEYS[intent.to];
       const pressed = await helper.request("key", { key, modifiers: COMMAND });
-      return replied(pressed, () => done(NAVIGATE_LINES[intent.to]));
+      return replied(pressed, () => done(systemCopy.navigated[intent.to]));
     }
     case "volume":
       return runVolume(intent);
@@ -100,7 +90,7 @@ export async function runSystemIntent(
     case "media": {
       const key = intent.action;
       const pressed = await helper.request("systemKey", { key });
-      return replied(pressed, () => quietly(MEDIA_LINES[key]));
+      return replied(pressed, () => quietly(systemCopy.media[key]));
     }
     case "window": {
       const { action } = intent;

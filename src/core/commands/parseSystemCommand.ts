@@ -1,6 +1,6 @@
 import type { ScrollAmount, WindowAction } from "@getahoy/protocol";
 import type { Intent, MacAction, ParsedCommand, StepScale } from "./intent.ts";
-import { parseLevelCommand } from "./parseLevelCommand.ts";
+import { parseLevelCommand, SIZE_WORDS } from "./parseLevelCommand.ts";
 
 type Direction = "up" | "down";
 
@@ -47,14 +47,6 @@ const AGAIN: Readonly<Record<string, StepScale>> = {
   "thoda aur": "small",
   "a lot more": "large",
   "much more": "large",
-};
-const TOWARD_SIZES: Readonly<Record<string, StepScale>> = {
-  "a little": "small",
-  "a bit": "small",
-  slightly: "small",
-  "a lot": "large",
-  much: "large",
-  way: "large",
 };
 
 const SCROLL = /^(?:scroll|page) (?:(way) )?(up|down)(?: (.+))?$/;
@@ -130,7 +122,7 @@ function again(command: string): Intent | null {
   if (amount) return { kind: "again", amount, toward: null };
   const [, size, word] = TOWARD.exec(command) ?? [];
   if (!word) return null;
-  const scale = size === undefined ? "normal" : TOWARD_SIZES[size];
+  const scale = size === undefined ? "normal" : SIZE_WORDS[size];
   if (!scale) return null;
   const toward = word === "louder" ? "up" : "down";
   return { kind: "again", amount: scale, toward };

@@ -32,12 +32,12 @@ export const systemCopy = {
   scrolled: (direction: string, amount: ScrollAmount, times: number) =>
     `Scrolled ${direction}${scrollSizes[amount]}${times > 1 ? ` ${times} times` : ""}`,
   atEdge: (edge: "top" | "bottom") => `At the ${edge}`,
-  wentBack: "Went back",
-  wentForward: "Went forward",
-  reloaded: "Reloaded",
-  playPause: "Pressed play/pause",
-  nextTrack: "Next track",
-  previousTrack: "Previous track",
+  navigated: { back: "Went back", forward: "Went forward", reload: "Reloaded" },
+  media: {
+    playPause: "Pressed play/pause",
+    next: "Next track",
+    previous: "Previous track",
+  },
   arranged: (action: WindowAction, app: string) => windowLines[action](app),
   notResizable: "That window can’t be resized.",
   oneScreen: "There’s only one screen.",

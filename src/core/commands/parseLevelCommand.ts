@@ -1,10 +1,18 @@
 import type { MacAction, ParsedCommand, Refusal } from "./intent.ts";
+import { LITTLE_STEP, LOT_STEP } from "./levelChange.ts";
 
 type LevelKind = "volume" | "brightness";
 type Change = { action: "up" | "down" | "set"; percent: number | null };
 
-const LITTLE_STEP = 5;
-const LOT_STEP = 25;
+export const SIZE_WORDS: Readonly<Record<string, "small" | "large">> = {
+  "a little": "small",
+  "a bit": "small",
+  slightly: "small",
+  "a lot": "large",
+  much: "large",
+  way: "large",
+};
+const SIZE_STEPS = { small: LITTLE_STEP, large: LOT_STEP } as const;
 const FULL = 100;
 const HALF = 50;
 const TENTHS = 10;
@@ -13,8 +21,6 @@ const NOUNS: Readonly<Record<LevelKind, string>> = {
   volume: "(?:the )?(?:volume|sound)",
   brightness: "(?:the )?(?:brightness|screen)",
 };
-const LITTLE = /^(?:a little|a bit|slightly)$/;
-const LOT = /^(?:a lot|way|much)$/;
 const NUMBER = /^(?:by )?(\d+)(?: ?%| percent)?$/;
 const OUT_OF_TEN = /^(\d+) out of 10$/;
 const TOP_WORDS = /^(?:full|max|maximum|all the way up)$/;
@@ -34,8 +40,8 @@ const HINDI_VOLUME: Readonly<Record<string, "up" | "down">> = {
 
 function step(rest: string | undefined): number | null | undefined {
   if (rest === undefined) return null;
-  if (LITTLE.test(rest)) return LITTLE_STEP;
-  if (LOT.test(rest)) return LOT_STEP;
+  const size = SIZE_WORDS[rest];
+  if (size) return SIZE_STEPS[size];
   const number = NUMBER.exec(rest)?.[1];
   return number === undefined ? undefined : Number(number);
 }

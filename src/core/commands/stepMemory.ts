@@ -5,7 +5,7 @@ import type {
   RunnableIntent,
   StepScale,
 } from "./intent.ts";
-import { DEFAULT_STEP } from "./levelChange.ts";
+import { DEFAULT_STEP, LITTLE_STEP, LOT_STEP } from "./levelChange.ts";
 
 export const STEP_MEMORY_MS = 60_000;
 
@@ -21,9 +21,9 @@ const LEVEL_SCALE: Readonly<Record<StepScale, number>> = {
   large: 2,
 };
 const TOWARD_STEPS: Readonly<Record<StepScale, number>> = {
-  small: 5,
+  small: LITTLE_STEP,
   normal: DEFAULT_STEP,
-  large: 25,
+  large: LOT_STEP,
 };
 
 type ScrollStep = Extract<MacAction, { kind: "scroll" }>;

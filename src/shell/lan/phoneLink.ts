@@ -18,7 +18,6 @@ type PhoneLinkOptions = {
   isListening: () => boolean;
   onRefused: (phone: PairedPhone) => void;
   onConnectedPhones: (publicKeys: string[]) => void;
-  onDisconnected: () => void;
   onGoodbye: (phone: PairedPhone, reason: GoodbyeReason) => void;
   commands: CommandReceiver;
 };
@@ -87,7 +86,6 @@ export class PhoneLink {
         if (this.#sessions.get(phone.publicKey) === session) {
           this.#sessions.delete(phone.publicKey);
         }
-        this.#options.onDisconnected();
         this.#emit();
       },
       onGoodbye,
