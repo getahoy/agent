@@ -15,6 +15,9 @@ struct RequestArguments: Decodable {
   let text: String?
   let displayId: UInt32?
   let marks: [OverlayMark]?
+  let direction: String?
+  let windowHeights: Double?
+  let action: String?
 }
 
 enum HelperError: Error {
@@ -23,6 +26,8 @@ enum HelperError: Error {
   case secureInput
   case unknownRef
   case noFocusedWindow
+  case notResizable
+  case oneDisplay
   case notImplemented(String)
   case invalidRequest(String)
   case actionFailed(String)
@@ -34,6 +39,8 @@ enum HelperError: Error {
     case .secureInput: "secure_input"
     case .unknownRef: "unknown_ref"
     case .noFocusedWindow: "no_focused_window"
+    case .notResizable: "not_resizable"
+    case .oneDisplay: "one_display"
     case .notImplemented: "not_implemented"
     case .invalidRequest: "invalid_request"
     case .actionFailed: "action_failed"
@@ -47,6 +54,8 @@ enum HelperError: Error {
     case .secureInput: "A password field or secure input is active"
     case .unknownRef: "That element is not in the latest snapshot"
     case .noFocusedWindow: "No focused window"
+    case .notResizable: "The window does not allow that change"
+    case .oneDisplay: "There is only one display"
     case .notImplemented(let detail), .invalidRequest(let detail), .actionFailed(let detail):
       detail
     }

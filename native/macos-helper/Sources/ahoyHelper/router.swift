@@ -16,6 +16,12 @@ func route(_ line: String) {
   case "capture":
     Task { await respondLater(request.id) { try await captureDisplay(arguments?.displayId) } }
   case "overlay": respond(request.id) { showOverlay(arguments?.marks) }
+  case "scroll":
+    respond(request.id) {
+      try scrollFrontWindow(arguments?.direction, windowHeights: arguments?.windowHeights)
+    }
+  case "systemKey": respond(request.id) { try pressSystemKey(arguments?.key) }
+  case "window": respond(request.id) { try arrangeFrontWindow(arguments?.action) }
   default: fail(request.id, .invalidRequest("Unknown verb \(request.verb)"))
   }
 }

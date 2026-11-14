@@ -27,13 +27,8 @@ struct SnapshotOutput: Encodable {
 func takeSnapshot() throws -> SnapshotOutput {
   guard AXIsProcessTrusted() else { throw HelperError.accessibilityDenied }
   let started = ContinuousClock.now
-  guard let app = NSWorkspace.shared.frontmostApplication else {
-    throw HelperError.noFocusedWindow
-  }
-  let appElement = AXUIElementCreateApplication(app.processIdentifier)
-  AXUIElementSetMessagingTimeout(appElement, elementMessagingTimeoutSeconds)
-  guard let window = focusedWindow(of: appElement), let bounds = Accessibility.frame(window)
-  else { throw HelperError.noFocusedWindow }
+  let front = try frontWindow()
+  let (app, appElement, window, bounds) = (front.app, front.appElement, front.window, front.frame)
   var outcome = walkWindow(window, visibleBounds: bounds)
   if outcome.elements.count < sparseTreeThreshold {
     outcome = rewalkWithManualAccessibility(appElement, window: window, bounds: bounds)
@@ -45,6 +40,24 @@ func takeSnapshot() throws -> SnapshotOutput {
     window: WindowSummary(title: Accessibility.string(window, kAXTitleAttribute), frame: Rect(bounds)),
     displays: activeDisplays(), elements: outcome.elements, truncated: outcome.truncated,
     elapsedMs: milliseconds(since: started))
+}
+
+struct FrontWindow {
+  let app: NSRunningApplication
+  let appElement: AXUIElement
+  let window: AXUIElement
+  let frame: CGRect
+}
+
+func frontWindow() throws -> FrontWindow {
+  guard let app = NSWorkspace.shared.frontmostApplication else {
+    throw HelperError.noFocusedWindow
+  }
+  let appElement = AXUIElementCreateApplication(app.processIdentifier)
+  AXUIElementSetMessagingTimeout(appElement, elementMessagingTimeoutSeconds)
+  guard let window = focusedWindow(of: appElement), let frame = Accessibility.frame(window)
+  else { throw HelperError.noFocusedWindow }
+  return FrontWindow(app: app, appElement: appElement, window: window, frame: frame)
 }
 
 private func focusedWindow(of app: AXUIElement) -> AXUIElement? {
