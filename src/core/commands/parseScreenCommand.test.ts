@@ -37,22 +37,22 @@ test("press with a key name presses the key", () => {
 test("scroll and page move a page at a time", () => {
   assert.deepEqual(parsed("scroll down"), {
     kind: "intent",
-    intent: { kind: "keys", key: "pageDown", modifiers: [] },
+    intent: { kind: "scroll", direction: "down", amount: "page", times: 1 },
   });
   assert.deepEqual(parsed("page up"), {
     kind: "intent",
-    intent: { kind: "keys", key: "pageUp", modifiers: [] },
+    intent: { kind: "scroll", direction: "up", amount: "page", times: 1 },
   });
 });
 
 test("go to top and bottom jump to the ends", () => {
   assert.deepEqual(parsed("go to the top"), {
     kind: "intent",
-    intent: { kind: "keys", key: "up", modifiers: ["mod"] },
+    intent: { kind: "scroll", direction: "top", amount: "page", times: 1 },
   });
   assert.deepEqual(parsed("scroll to bottom"), {
     kind: "intent",
-    intent: { kind: "keys", key: "down", modifiers: ["mod"] },
+    intent: { kind: "scroll", direction: "bottom", amount: "page", times: 1 },
   });
 });
 
