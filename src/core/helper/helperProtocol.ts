@@ -1,3 +1,4 @@
+import type { WindowAction } from "@getahoy/protocol";
 import { z } from "zod";
 
 const rectSchema = z.object({
@@ -54,10 +55,20 @@ export const outputSchemaByVerb = {
     displayId: z.number(),
   }),
   overlay: z.object({ shown: z.number() }),
+  scroll: z.object({ pixels: z.number() }),
+  systemKey: z.object({ key: z.string() }),
+  window: z.object({ app: z.string() }),
+  brightness: z.object({ level: z.number() }),
 } as const;
 
 export type HelperVerb = keyof typeof outputSchemaByVerb;
 export type Modifier = "command" | "shift" | "option" | "control";
+export type SystemKey =
+  | "playPause"
+  | "next"
+  | "previous"
+  | "brightnessUp"
+  | "brightnessDown";
 export type Rect = z.infer<typeof rectSchema>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
 
@@ -68,6 +79,10 @@ export type HelperArgs = {
   type: { text: string };
   capture: { displayId?: number };
   overlay: { marks: readonly { number: number; frame: Rect }[] };
+  scroll: { direction: "up" | "down"; windowHeights: number };
+  systemKey: { key: SystemKey };
+  window: { action: WindowAction };
+  brightness: { level?: number };
 };
 
 export type HelperOutput<Verb extends HelperVerb> = z.infer<
@@ -93,6 +108,10 @@ export const outputParsers: OutputParsers = {
   type: (output) => parseOrNull(outputSchemaByVerb.type, output),
   capture: (output) => parseOrNull(outputSchemaByVerb.capture, output),
   overlay: (output) => parseOrNull(outputSchemaByVerb.overlay, output),
+  scroll: (output) => parseOrNull(outputSchemaByVerb.scroll, output),
+  systemKey: (output) => parseOrNull(outputSchemaByVerb.systemKey, output),
+  window: (output) => parseOrNull(outputSchemaByVerb.window, output),
+  brightness: (output) => parseOrNull(outputSchemaByVerb.brightness, output),
 };
 
 const helperErrorCodeSchema = z.enum([
@@ -101,6 +120,10 @@ const helperErrorCodeSchema = z.enum([
   "secure_input",
   "unknown_ref",
   "no_focused_window",
+  "not_resizable",
+  "one_display",
+  "no_built_in_display",
+  "unavailable",
   "not_implemented",
   "invalid_request",
   "action_failed",

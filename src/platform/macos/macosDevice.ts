@@ -6,7 +6,17 @@ import { localHostSchema } from "@getahoy/protocol";
 import { app, type NativeImage, nativeImage } from "electron";
 import type { DeviceIdentity, MenubarStatus } from "../../ports/platform.ts";
 
-const HELPER_CAPABILITIES = ["snapshot", "click", "key", "type", "capture"];
+const HELPER_CAPABILITIES = [
+  "snapshot",
+  "click",
+  "key",
+  "type",
+  "capture",
+  "scroll",
+  "systemKey",
+  "window",
+  "brightness",
+];
 const MENUBAR_ICON_FOLDER = "menubar";
 
 const menubarIconFiles: Record<MenubarStatus, string> = {

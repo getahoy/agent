@@ -18,6 +18,7 @@ struct RequestArguments: Decodable {
   let direction: String?
   let windowHeights: Double?
   let action: String?
+  let level: Int?
 }
 
 enum HelperError: Error {
@@ -28,6 +29,8 @@ enum HelperError: Error {
   case noFocusedWindow
   case notResizable
   case oneDisplay
+  case noBuiltInDisplay
+  case unavailable(String)
   case notImplemented(String)
   case invalidRequest(String)
   case actionFailed(String)
@@ -41,6 +44,8 @@ enum HelperError: Error {
     case .noFocusedWindow: "no_focused_window"
     case .notResizable: "not_resizable"
     case .oneDisplay: "one_display"
+    case .noBuiltInDisplay: "no_built_in_display"
+    case .unavailable: "unavailable"
     case .notImplemented: "not_implemented"
     case .invalidRequest: "invalid_request"
     case .actionFailed: "action_failed"
@@ -56,7 +61,9 @@ enum HelperError: Error {
     case .noFocusedWindow: "No focused window"
     case .notResizable: "The window does not allow that change"
     case .oneDisplay: "There is only one display"
-    case .notImplemented(let detail), .invalidRequest(let detail), .actionFailed(let detail):
+    case .noBuiltInDisplay: "No built-in display is on"
+    case .unavailable(let detail), .notImplemented(let detail), .invalidRequest(let detail),
+      .actionFailed(let detail):
       detail
     }
   }
