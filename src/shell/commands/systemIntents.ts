@@ -3,7 +3,6 @@ import { commandCopy } from "../../copy/commandCopy.ts";
 import { systemCopy } from "../../copy/systemCopy.ts";
 import {
   type CommandOutcome,
-  done,
   failed,
   quietly,
 } from "../../core/commands/commandLog.ts";
@@ -81,7 +80,7 @@ export async function runSystemIntent(
     case "navigate": {
       const key = NAVIGATE_KEYS[intent.to];
       const pressed = await helper.request("key", { key, modifiers: COMMAND });
-      return replied(pressed, () => done(systemCopy.navigated[intent.to]));
+      return replied(pressed, () => quietly(systemCopy.navigated[intent.to]));
     }
     case "volume":
       return runVolume(intent);

@@ -16,8 +16,9 @@ import type { HelperClient } from "../../core/helper/helperClient.ts";
 import { osaScript } from "./osaScript.ts";
 
 type LevelName = "Volume" | "Brightness";
-type Moved = Exclude<LevelPlan, { kind: "atLimit" }>;
+type Moved = Extract<LevelPlan, { kind: "move" }>;
 type VolumeIntent = Extract<MacAction, { kind: "volume" }>;
+type VolumeReading = { level: number; muted: boolean };
 
 const FAILED = failed(commandCopy.failed);
 const READ_VOLUME = [
@@ -45,14 +46,13 @@ function already(name: LevelName, level: number): CommandOutcome {
   return quietly(systemCopy.levelAlready(name, level));
 }
 
-// Muted reads as 0 so the reply and the step start where the person hears it.
-async function readVolume(): Promise<number | null> {
+async function readVolume(): Promise<VolumeReading | null> {
   const script = await osaScript("AppleScript", READ_VOLUME, []);
   if (script.kind !== "answered") return null;
   const [level, muted] = script.answer.split(",");
   const value = Number(level);
   if (!Number.isInteger(value)) return null;
-  return muted === "true" ? 0 : value;
+  return { level: value, muted: muted === "true" };
 }
 
 export async function runVolume(intent: VolumeIntent): Promise<CommandOutcome> {
@@ -62,13 +62,16 @@ export async function runVolume(intent: VolumeIntent): Promise<CommandOutcome> {
     if (script.kind !== "answered") return FAILED;
     return quietly(action === "mute" ? systemCopy.muted : systemCopy.unmuted);
   }
-  const from = await readVolume();
-  if (from === null) return failed(systemCopy.noVolumeControl);
-  const plan = planLevel(from, { action, percent: intent.percent });
-  if (plan.kind === "atLimit") return already("Volume", plan.level);
-  const level = String(plan.to);
-  const set = await osaScript("AppleScript", SET_VOLUME, [level]);
-  return set.kind === "answered" ? landed("Volume", plan, plan.to) : FAILED;
+  const reading = await readVolume();
+  if (!reading) return failed(systemCopy.noVolumeControl);
+  const plan = planLevel(reading.level, { action, percent: intent.percent });
+  const to = plan.kind === "move" ? plan.to : plan.level;
+  // Any level command unmutes, so an unchanged level is still set when muted.
+  if (plan.kind === "unchanged" && !reading.muted) return already("Volume", to);
+  const set = await osaScript("AppleScript", SET_VOLUME, [String(to)]);
+  if (set.kind !== "answered") return FAILED;
+  if (plan.kind === "unchanged") return already("Volume", to);
+  return landed("Volume", plan, to);
 }
 
 async function pressBrightnessKeys(
@@ -102,7 +105,7 @@ export async function runBrightness(
     return FAILED;
   }
   const plan = planLevel(reading.output.level, change);
-  if (plan.kind === "atLimit") return already("Brightness", plan.level);
+  if (plan.kind === "unchanged") return already("Brightness", plan.level);
   const set = await helper.request("brightness", { level: plan.to });
   if (!set.ok) return pressBrightnessKeys(change, helper);
   return landed("Brightness", plan, set.output.level);

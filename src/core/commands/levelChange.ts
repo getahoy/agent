@@ -12,7 +12,7 @@ export type LevelChange = {
 
 export type LevelPlan =
   | { kind: "move"; from: number; to: number; clamped: "max" | "min" | null }
-  | { kind: "atLimit"; level: number };
+  | { kind: "unchanged"; level: number };
 
 export type KeyPress = { direction: "up" | "down"; presses: number };
 
@@ -35,9 +35,8 @@ function clampedEdge(wanted: number): "max" | "min" | null {
 export function planLevel(from: number, change: LevelChange): LevelPlan {
   const wanted = wantedLevel(from, change);
   const to = clamp(wanted);
-  const clamped = clampedEdge(wanted);
-  if (clamped && to === from) return { kind: "atLimit", level: from };
-  return { kind: "move", from, to, clamped };
+  if (to === from) return { kind: "unchanged", level: from };
+  return { kind: "move", from, to, clamped: clampedEdge(wanted) };
 }
 
 // The brightness keys only step, so a level is reached from the bottom: all the way down, then up.

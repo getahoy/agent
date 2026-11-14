@@ -51,7 +51,7 @@ export const systemCopy = {
   levelMax: (name: LevelName) => `${name} is at the maximum, 100%.`,
   levelMin: (name: LevelName) => `${name} is at the minimum, 0%.`,
   levelAlready: (name: LevelName, level: number) =>
-    `${name} is already at ${level}%.`,
+    `${name} is already ${level}%.`,
   brightnessStepped: (direction: "up" | "down") => `Brightness ${direction}`,
   brightnessAbout: (level: number) => `Brightness about ${level}%`,
   noVolumeControl: "This sound output has no volume control.",
