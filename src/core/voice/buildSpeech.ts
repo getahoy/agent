@@ -27,7 +27,8 @@ export type SpeechCase =
   | { kind: "cancelled" }
   | { kind: "startOver" }
   | { kind: "screenChanged" }
-  | { kind: "choiceExpired" };
+  | { kind: "choiceExpired" }
+  | { kind: "silent" };
 
 const MAX_LISTED_CHOICES = 3;
 
@@ -98,6 +99,8 @@ function line(speech: SpeechCase): string {
       return "That screen changed. Ask again.";
     case "choiceExpired":
       return "That choice timed out. Say it again.";
+    case "silent":
+      return "";
     default: {
       const unhandled: never = speech;
       throw new Error(`Unhandled speech ${JSON.stringify(unhandled)}`);
@@ -107,5 +110,5 @@ function line(speech: SpeechCase): string {
 
 export function buildSpeech(speech: SpeechCase): string | undefined {
   const spoken = withinSpeechLimit(line(speech));
-  return spoken === "." ? undefined : spoken;
+  return spoken === "." || spoken === "" ? undefined : spoken;
 }

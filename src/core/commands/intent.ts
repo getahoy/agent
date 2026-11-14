@@ -1,4 +1,9 @@
-import type { EmailApp, KeyModifier, KeyName } from "@getahoy/protocol";
+import type {
+  EmailApp,
+  InterpretAction,
+  KeyModifier,
+  KeyName,
+} from "@getahoy/protocol";
 
 export type TabIntent = {
   kind: "closeTab" | "switchTab";
@@ -15,7 +20,20 @@ export type EmailDraft = {
   browser: string | null;
 };
 
-export type Intent =
+export type MacAction = Extract<
+  InterpretAction,
+  { kind: "scroll" | "navigate" | "media" | "volume" | "brightness" | "window" }
+>;
+
+export type StepScale = "small" | "normal" | "large";
+
+export type AgainIntent = {
+  kind: "again";
+  amount: StepScale;
+  toward: "up" | "down" | null;
+};
+
+export type RunnableIntent =
   | { kind: "open"; app: string }
   | { kind: "quit"; app: string }
   | { kind: "hide"; app: string }
@@ -26,10 +44,21 @@ export type Intent =
   | { kind: "type"; text: string }
   | { kind: "click"; label: string }
   | TabIntent
-  | EmailDraft;
+  | EmailDraft
+  | MacAction
+  | { kind: "lock" };
+
+export type Intent = RunnableIntent | AgainIntent;
+
+export type Refusal =
+  | "oneAppVolume"
+  | "keyboardLight"
+  | "externalDisplay"
+  | "autoScroll";
 
 export type ParsedCommand =
   | { kind: "intent"; intent: Intent }
   | { kind: "ambiguous"; apps: readonly string[] }
   | { kind: "unknownApp"; name: string }
+  | { kind: "refuse"; reason: Refusal }
   | { kind: "unsupported" };

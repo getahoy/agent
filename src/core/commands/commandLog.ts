@@ -31,6 +31,10 @@ export function spoken(outcome: CommandOutcome, speech: SpeechCase) {
   return { ...outcome, speech };
 }
 
+// You hear or see these results; a voice over music it just started is worse.
+export const quietly = (message: string): CommandOutcome =>
+  spoken(done(message), { kind: "silent" });
+
 // Reasons the Mac tells apart before they reach the wire's closed set.
 type OutcomeReason = FailureReason | "choiceExpired";
 

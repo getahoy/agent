@@ -2,6 +2,7 @@ import { installedBrowser } from "./browsers.ts";
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
 import { parseScreenCommand } from "./parseScreenCommand.ts";
+import { parseSystemCommand } from "./parseSystemCommand.ts";
 import { parseTabCommand } from "./parseTabCommand.ts";
 import { SITE_HOST } from "./siteHost.ts";
 
@@ -92,6 +93,8 @@ export function parseCommand(
   installedApps: readonly string[],
 ): ParsedCommand {
   const command = normaliseCommand(text);
+  const system = parseSystemCommand(command, installedApps);
+  if (system) return system;
   const tab = parseTabCommand(command, installedApps);
   if (tab) return tab;
   const screen = parseScreenCommand(command);

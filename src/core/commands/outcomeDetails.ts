@@ -1,6 +1,6 @@
 import type { FailureReason } from "@getahoy/protocol";
 import type { CommandOutcome } from "./commandLog.ts";
-import type { Intent } from "./intent.ts";
+import type { RunnableIntent } from "./intent.ts";
 
 const MAIL_APP = "Mail";
 const GMAIL = "Gmail";
@@ -24,7 +24,7 @@ export function failureReasonOf(
   }
 }
 
-export function appOfIntent(intent: Intent): string | null {
+export function appOfIntent(intent: RunnableIntent): string | null {
   switch (intent.kind) {
     case "open":
     case "quit":
@@ -41,6 +41,13 @@ export function appOfIntent(intent: Intent): string | null {
     case "keys":
     case "type":
     case "click":
+    case "scroll":
+    case "navigate":
+    case "media":
+    case "volume":
+    case "brightness":
+    case "window":
+    case "lock":
       return null;
     default: {
       const unhandled: never = intent;

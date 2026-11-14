@@ -1,8 +1,8 @@
 import type { InterpretAction } from "@getahoy/protocol";
 import { installedBrowser } from "./browsers.ts";
 import { spokenRecipient } from "./emailRules.ts";
-import type { Intent } from "./intent.ts";
-import { allowsShortcut } from "./shortcutRules.ts";
+import type { Intent, MacAction } from "./intent.ts";
+import { allowsShortcut, isKeyName } from "./shortcutRules.ts";
 import { isSiteHost } from "./siteHost.ts";
 
 export type Validation =
@@ -39,8 +39,26 @@ function withBrowser<Action extends { browser: string | null }>(
   return browser ? { ...action, browser } : null;
 }
 
-function intentFor(action: InterpretAction, context: Context): Intent | null {
-  const { transcript, installedApps } = context;
+function shortcutIntent(
+  { key, modifiers }: Extract<InterpretAction, { kind: "keys" }>,
+  transcript: string,
+): Intent | null {
+  if (!isKeyName(key)) return null;
+  const shortcut = { kind: "keys", key, modifiers } as const;
+  return allowsShortcut(shortcut, transcript) ? shortcut : null;
+}
+
+// A level to set needs the level; up and down without a number take the usual step.
+function macIntent(action: MacAction): Intent | null {
+  const level = action.kind === "volume" || action.kind === "brightness";
+  if (level && action.action === "set" && action.percent === null) return null;
+  return action;
+}
+
+function intentFor(
+  action: InterpretAction,
+  { transcript, installedApps }: Context,
+): Intent | null {
   switch (action.kind) {
     case "open":
     case "quit":
@@ -58,7 +76,14 @@ function intentFor(action: InterpretAction, context: Context): Intent | null {
       return withBrowser({ ...action, host }, installedApps);
     }
     case "keys":
-      return allowsShortcut(action, transcript) ? action : null;
+      return shortcutIntent(action, transcript);
+    case "scroll":
+    case "navigate":
+    case "media":
+    case "window":
+    case "volume":
+    case "brightness":
+      return macIntent(action);
     case "type":
       return said(action.text, transcript) ? action : null;
     case "click":

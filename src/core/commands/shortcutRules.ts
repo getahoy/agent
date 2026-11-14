@@ -1,5 +1,5 @@
 import type { KeyModifier, KeyName } from "@getahoy/protocol";
-import { NAMED_KEYS } from "@getahoy/protocol";
+import { CHARACTER_KEYS, NAMED_KEYS } from "@getahoy/protocol";
 
 const RETURN_WORDS = /\b(?:enter|send|submit|return)\b/i;
 const DELETE_KEYS: readonly string[] = ["delete", "forwardDelete"];
@@ -10,6 +10,15 @@ const SYSTEM_KEYS: readonly string[] = ["power", "eject"];
 export type Shortcut = { key: KeyName; modifiers: readonly KeyModifier[] };
 
 type AnyShortcut = { key: string; modifiers: readonly KeyModifier[] };
+
+const KNOWN_KEYS: ReadonlySet<string> = new Set([
+  ...NAMED_KEYS,
+  ...CHARACTER_KEYS,
+]);
+
+export function isKeyName(key: string): key is KeyName {
+  return KNOWN_KEYS.has(key);
+}
 
 function isNamedKey(key: KeyName): boolean {
   return NAMED_KEYS.some((named) => named === key);
