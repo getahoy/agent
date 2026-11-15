@@ -1,5 +1,5 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
-import { chooseBrowser } from "../../core/commands/browsers.ts";
+import { chooseBrowser, draftOpensIn } from "../../core/commands/browsers.ts";
 import {
   type CommandOutcome,
   done,
@@ -10,6 +10,7 @@ import { draftUrl } from "../../core/commands/draftUrl.ts";
 import type { EmailDraft, Intent } from "../../core/commands/intent.ts";
 import { nameOfAddress } from "../../core/voice/spokenWords.ts";
 import { installedApps } from "./installedApps.ts";
+import { defaultMailtoApp } from "./mailtoHandler.ts";
 import { openWith } from "./osaScript.ts";
 
 const SEARCH_URL = "https://www.google.com/search?q=";
@@ -36,13 +37,21 @@ function browserOpener(
   return { kind: "open", args };
 }
 
-function draftOpener(intent: EmailDraft, apps: readonly string[]): Opener {
-  const url = draftUrl(intent);
-  if (intent.via === "gmail") return browserOpener(url, intent.browser, apps);
+async function draftOpener(
+  intent: EmailDraft,
+  apps: readonly string[],
+): Promise<Opener> {
+  const gmail = () =>
+    browserOpener(draftUrl({ ...intent, via: "gmail" }), intent.browser, apps);
+  if (intent.via === "gmail") return gmail();
   const { mailApp } = intent;
-  if (!mailApp) return { kind: "open", args: [url] };
-  if (!mailApp.installed) return { kind: "missing", name: mailApp.name };
-  return { kind: "open", args: ["-a", mailApp.name, url] };
+  if (mailApp && !mailApp.installed) {
+    return { kind: "missing", name: mailApp.name };
+  }
+  const mailto = draftUrl(intent);
+  if (mailApp) return { kind: "open", args: ["-a", mailApp.name, mailto] };
+  const opensIn = draftOpensIn(await defaultMailtoApp());
+  return opensIn === "gmail" ? gmail() : { kind: "open", args: [mailto] };
 }
 
 function draftMessage(intent: EmailDraft): string {
@@ -62,7 +71,7 @@ async function opened(opener: Opener, message: string) {
 
 async function runDraft(intent: EmailDraft, apps: readonly string[]) {
   const message = draftMessage(intent);
-  const outcome = await opened(draftOpener(intent, apps), message);
+  const outcome = await opened(await draftOpener(intent, apps), message);
   if (outcome.status !== "done") return outcome;
   if (intent.sending) return spoken(outcome, { kind: "say", message });
   const name = intent.to ? nameOfAddress(intent.to) : null;

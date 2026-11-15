@@ -17,6 +17,15 @@ export type BrowserChoice =
   | { kind: "open"; browser: string | null }
   | { kind: "notInstalled"; browser: string };
 
+// A browser set as the email app opens mailto links empty unless a web mail site registered
+// itself, so a browser or an unknown handler gets Gmail compose instead.
+export function draftOpensIn(
+  mailtoHandler: string | null,
+): "mailApp" | "gmail" {
+  if (mailtoHandler === null) return "gmail";
+  return KNOWN_BROWSERS.includes(mailtoHandler) ? "gmail" : "mailApp";
+}
+
 export function knownBrowser(spoken: string): string | null {
   const match = matchApp(spoken, KNOWN_BROWSERS);
   return match.kind === "one" ? match.app : null;
