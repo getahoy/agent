@@ -70,15 +70,25 @@ export function draftRecipients(
   return { to: accountEmail, recipient: "self" };
 }
 
+// The interpreter sometimes adds a dot between spoken words; one that was never said is dropped.
+function withSaidSeparators(address: string, written: string): string {
+  if (written.includes(address.toLowerCase())) return address;
+  const [localPart = "", domainPart = ""] = address.split("@");
+  const bare = `${localPart.replace(/[._-]/g, "")}@${domainPart}`;
+  return written.includes(bare.toLowerCase()) ? bare : address;
+}
+
 function heardRecipients(
   to: string | null,
   transcript: string,
 ): HeardRecipients {
   if (to === null) return NONE;
-  const heard = compactForm(writtenForm(transcript));
+  const written = writtenForm(transcript).replace(/\s/g, "");
+  const heard = compactForm(written);
   const checked = to
     .split(/[,;\s]+/)
     .filter((address) => address !== "")
+    .map((address) => withSaidSeparators(address, written))
     .map((address) => ({ address, check: heardAddress(address, heard) }))
     .filter(({ check }) => check !== "none");
   if (checked.length === 0) return NONE;
