@@ -50,7 +50,8 @@ function heardAddress(address: string, heard: string): RecipientCheck {
   return at > 0 && isClose(local, heard.slice(0, at)) ? "close" : "none";
 }
 
-const MYSELF = /\b(?:myself|to me|my (?:own )?email)\b/i;
+// "Me" counts only right after email or mail, so "what she said to me" never means myself.
+const MYSELF = /\b(?:myself|(?:email|mail) (?:to )?me)\b/i;
 const OWN_EMAIL = /^(?:type|write|enter) my (?:own )?email(?: address)?$/;
 
 export function asksForOwnEmail(command: string): boolean {
@@ -83,7 +84,7 @@ function heardRecipients(
   transcript: string,
 ): HeardRecipients {
   if (to === null) return NONE;
-  const written = writtenForm(transcript).replace(/\s/g, "");
+  const written = writtenForm(transcript);
   const heard = compactForm(written);
   const checked = to
     .split(/[,;\s]+/)

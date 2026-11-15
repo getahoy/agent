@@ -49,10 +49,7 @@ const AT_PHRASES: readonly (readonly string[])[] = [
   ["at", "the", "rate"],
   ["at", "sign"],
 ];
-const SINGLE_LETTER = /^[a-z]$/;
 const DIGITS = /^\d+$/;
-
-type Piece = { text: string; glue: boolean };
 
 function digitWord(word: string | undefined, next: string | undefined) {
   if (word === undefined) return undefined;
@@ -87,33 +84,17 @@ function atPhrase(words: readonly string[], at: number): number {
   return phrase?.length ?? 0;
 }
 
-function pieces(words: readonly string[]): Piece[] {
-  const found: Piece[] = [];
+function pieces(words: readonly string[]): string[] {
+  const found: string[] = [];
   let at = 0;
   while (at < words.length) {
     const word = words[at] ?? "";
     const phrase = atPhrase(words, at);
     const digits = phrase ? null : number(words, at);
-    if (phrase) found.push({ text: "@", glue: true });
-    else if (digits) found.push({ text: digits[0], glue: true });
-    else found.push({ text: SYMBOLS[word] ?? word, glue: word in SYMBOLS });
+    found.push(phrase ? "@" : (digits?.[0] ?? SYMBOLS[word] ?? word));
     at += phrase || (digits?.[1] ?? 1);
   }
   return found;
-}
-
-// Glued pieces (digits, symbols, spelled letters) join their neighbours, as in a written address.
-function joined(found: readonly Piece[]): string {
-  let text = "";
-  let previous: Piece | null = null;
-  for (const piece of found) {
-    const letters = SINGLE_LETTER.test(piece.text);
-    const glue = piece.glue || (letters && previous?.text.length === 1);
-    const joins = text === "" || glue || previous?.glue;
-    text += joins ? piece.text : ` ${piece.text}`;
-    previous = { text: piece.text, glue: piece.glue || letters };
-  }
-  return text;
 }
 
 const WRITTEN_TEXT =
@@ -131,6 +112,7 @@ export function compactForm(text: string): string {
   return text.toLowerCase().replace(/[\s._-]/g, "");
 }
 
+// Spaces are dropped too: a spoken address has none, and the checks only look for it inside.
 export function writtenForm(transcript: string): string {
   const words = transcript
     .toLowerCase()
@@ -138,5 +120,5 @@ export function writtenForm(transcript: string): string {
     .replace(/\.(?=\s|$)/g, " ")
     .split(/\s+/)
     .filter((word) => word !== "");
-  return joined(pieces(words));
+  return pieces(words).join("");
 }
