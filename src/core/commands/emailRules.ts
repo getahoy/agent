@@ -45,8 +45,8 @@ function heardAddress(address: string, heard: string): RecipientCheck {
   const local = compactForm(localPart);
   const domain = compactForm(domainPart);
   if (local === "" || !heard.includes(domain)) return "none";
-  if (heard.includes(local)) return "exact";
   const at = heard.indexOf(`@${domain}`);
+  if (heard.includes(`${local}@${domain}`)) return "exact";
   return at > 0 && isClose(local, heard.slice(0, at)) ? "close" : "none";
 }
 
