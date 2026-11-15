@@ -2,7 +2,9 @@ import type { EmailDraft } from "./intent.ts";
 
 const GMAIL_COMPOSE = "https://mail.google.com/mail/?view=cm&fs=1";
 
-export function draftUrl({ to, subject, body, via }: EmailDraft): string {
+type DraftFields = Pick<EmailDraft, "to" | "subject" | "body" | "via">;
+
+export function draftUrl({ to, subject, body, via }: DraftFields): string {
   const recipient = encodeURIComponent(to ?? "");
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);

@@ -1,15 +1,20 @@
 import type { InterpretAction } from "@getahoy/protocol";
 import { installedBrowser } from "./browsers.ts";
-import { spokenRecipient } from "./emailRules.ts";
+import { draftRecipients } from "./emailRules.ts";
 import type { Intent, MacAction } from "./intent.ts";
 import { allowsShortcut, isKeyName } from "./shortcutRules.ts";
 import { isSiteHost } from "./siteHost.ts";
+import { saidAsWritten } from "./spokenForm.ts";
 
 export type Validation =
   | { kind: "valid"; intents: Intent[] }
   | { kind: "rejected" };
 
-type Context = { transcript: string; installedApps: readonly string[] };
+type Context = {
+  transcript: string;
+  installedApps: readonly string[];
+  accountEmail: string | null;
+};
 
 const CLOSE_WORDS = /\b(?:close|shut|kill|remove|get rid of|band)\b/i;
 
@@ -23,6 +28,10 @@ function plainWords(text: string): string {
 
 function said(words: string, transcript: string): boolean {
   return plainWords(transcript).includes(plainWords(words));
+}
+
+function typedAsSaid(text: string, transcript: string): boolean {
+  return said(text, transcript) || saidAsWritten(text, transcript);
 }
 
 function installedName(app: string, installedApps: readonly string[]) {
@@ -57,7 +66,7 @@ function macIntent(action: MacAction): Intent | null {
 
 function intentFor(
   action: InterpretAction,
-  { transcript, installedApps }: Context,
+  { transcript, installedApps, accountEmail }: Context,
 ): Intent | null {
   switch (action.kind) {
     case "open":
@@ -85,7 +94,7 @@ function intentFor(
     case "brightness":
       return macIntent(action);
     case "type":
-      return said(action.text, transcript) ? action : null;
+      return typedAsSaid(action.text, transcript) ? action : null;
     case "click":
       return said(action.label, transcript) ? action : null;
     case "closeTab":
@@ -96,8 +105,8 @@ function intentFor(
       if (!said(action.match, transcript)) return null;
       return withBrowser(action, installedApps);
     case "draftEmail": {
-      const to = spokenRecipient(action, transcript);
-      return withBrowser({ ...action, to }, installedApps);
+      const heard = draftRecipients(action.to, transcript, accountEmail);
+      return withBrowser({ ...action, ...heard }, installedApps);
     }
     default: {
       const unhandled: never = action;
@@ -116,13 +125,15 @@ export function validateActions(
   actions: readonly InterpretAction[],
   transcript: string,
   installedApps: readonly string[],
+  accountEmail: string | null = null,
 ): Validation {
   if (actions.length === 0 || !draftsAlone(actions)) {
     return { kind: "rejected" };
   }
+  const context = { transcript, installedApps, accountEmail };
   const intents: Intent[] = [];
   for (const action of actions) {
-    const intent = intentFor(action, { transcript, installedApps });
+    const intent = intentFor(action, context);
     if (!intent) return { kind: "rejected" };
     intents.push(intent);
   }

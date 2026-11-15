@@ -132,6 +132,7 @@ function createCommands(parts: CommandParts) {
     helper,
     interpret,
     blockedApps,
+    accountEmail: () => identity.pairedPhones()[0]?.accountEmail ?? null,
     logger,
   });
   const commands = new CommandReceiver({

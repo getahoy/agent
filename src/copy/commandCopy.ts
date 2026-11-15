@@ -113,6 +113,8 @@ export const commandCopy = {
     to
       ? `Drafted an email to ${to}. Check it and press Send.`
       : "Drafted an email. Add who it goes to, then press Send.",
+  checkAddress: (to: string) =>
+    `Drafted an email to ${to}. Check the address, then press Send.`,
   clicked: (label: string) => `Clicked ${capitalised(label)}`,
   noTarget: (label: string) => `I couldn’t find ${capitalised(label)}.`,
   manyTargets: (label: string) =>

@@ -7,14 +7,8 @@ import {
   type CommandOutcome,
   done,
   failed,
-  refused,
 } from "../../core/commands/commandLog.ts";
-import type {
-  Intent,
-  ParsedCommand,
-  RunnableIntent,
-} from "../../core/commands/intent.ts";
-import { appOfIntent } from "../../core/commands/outcomeDetails.ts";
+import type { Intent, ParsedCommand } from "../../core/commands/intent.ts";
 import { parseCommand } from "../../core/commands/parseCommand.ts";
 import {
   type LastStep,
@@ -23,66 +17,25 @@ import {
 } from "../../core/commands/stepMemory.ts";
 import { validateActions } from "../../core/commands/validateActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
-import {
-  type BlockedApp,
-  isBlockedApp,
-} from "../../core/safety/blockedApps.ts";
+import type { BlockedApp } from "../../core/safety/blockedApps.ts";
 import type { Interpreter } from "../interpret/interpretApi.ts";
-import { frontAppName, frontBundleId, waitUntilFrontmost } from "./frontApp.ts";
+import { waitUntilFrontmost } from "./frontApp.ts";
+import { runGuarded, withApp } from "./guardedRun.ts";
 import { installedApps } from "./installedApps.ts";
-import { runIntent } from "./runIntent.ts";
 
 type CommandRunnerOptions = {
   helper: HelperClient;
   interpret: Interpreter;
   blockedApps: readonly BlockedApp[];
+  accountEmail: () => string | null;
   logger: Logger;
 };
 
 // "More" repeats the step of the command just before, so each command starts from a clean slate.
 type StepBox = { previous: LastStep | null; last: LastStep | null };
 
-const SCREEN_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
-  "click",
-  "keys",
-  "type",
-  "scroll",
-]);
-const FRONT_APP_INTENTS: ReadonlySet<Intent["kind"]> = new Set([
-  "navigate",
-  "window",
-]);
-
-function withApp(outcome: CommandOutcome, app: string | null) {
-  return app ? { ...outcome, app } : outcome;
-}
-
 function understood(outcome: CommandOutcome, via: UnderstoodBy) {
   return { ...outcome, via };
-}
-
-// Not knowing which app is in front counts as blocked: the list must fail closed.
-async function runGuarded(
-  intent: RunnableIntent,
-  options: CommandRunnerOptions,
-): Promise<CommandOutcome> {
-  if (FRONT_APP_INTENTS.has(intent.kind)) {
-    const frontName = await frontAppName();
-    return withApp(await runIntent(intent, options.helper), frontName);
-  }
-  if (!SCREEN_INTENTS.has(intent.kind)) {
-    const outcome = await runIntent(intent, options.helper);
-    return withApp(outcome, appOfIntent(intent));
-  }
-  const [front, frontName] = await Promise.all([
-    frontBundleId(),
-    frontAppName(),
-  ]);
-  if (!front || isBlockedApp(front, options.blockedApps)) {
-    const blocked = because(refused(commandCopy.blockedApp), "blockedApp");
-    return withApp(blocked, frontName);
-  }
-  return withApp(await runIntent(intent, options.helper), frontName);
 }
 
 async function runStep(
@@ -151,10 +104,16 @@ async function viaInterpreter(
     logger.info("command", "Smart commands none");
     return notUnderstood(parsed);
   }
-  const validation = validateActions(interpretation.actions, text, apps);
+  const { actions } = interpretation;
+  const email = options.accountEmail();
+  const validation = validateActions(actions, text, apps, email);
   if (validation.kind === "rejected") {
     logger.warn("command", "Smart commands rejected");
     return failed(commandCopy.cannotDoYet);
+  }
+  for (const intent of validation.intents) {
+    if (intent.kind !== "draftEmail") continue;
+    logger.info("command", `Draft recipient ${intent.recipient}`);
   }
   return runInOrder(validation.intents, options, steps);
 }
@@ -165,7 +124,7 @@ export function createCommandRunner(options: CommandRunnerOptions) {
     steps.previous = steps.last;
     steps.last = null;
     const apps = await installedApps();
-    const parsed = parseCommand(text, apps);
+    const parsed = parseCommand(text, apps, options.accountEmail());
     switch (parsed.kind) {
       case "intent": {
         const outcome = await runStep(parsed.intent, options, steps);

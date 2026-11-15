@@ -14,6 +14,7 @@ export type TabIntent = {
 export type EmailDraft = {
   kind: "draftEmail";
   to: string | null;
+  recipient: "exact" | "close" | "self" | "none";
   subject: string;
   body: string;
   via: EmailApp;

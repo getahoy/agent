@@ -1,27 +1,88 @@
-import type { EmailDraft } from "./intent.ts";
+import { compactForm, writtenForm } from "./spokenForm.ts";
+
+export type RecipientCheck = "exact" | "close" | "none";
+export type HeardRecipients = { to: string | null; check: RecipientCheck };
 
 const EMAIL_ADDRESS =
   /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+const CLOSE_EDITS = 2;
+const CLOSE_SIMILARITY = 0.85;
+const NONE: HeardRecipients = { to: null, check: "none" };
 
-function lettersOf(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]/g, "");
+function editDistance(left: string, right: string): number {
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (const [row, leftCharacter] of [...left].entries()) {
+    const current = [row + 1];
+    for (const [column, rightCharacter] of [...right].entries()) {
+      const same = leftCharacter === rightCharacter;
+      const replace = (previous[column] ?? 0) + (same ? 0 : 1);
+      const insert = (current[column] ?? 0) + 1;
+      const remove = (previous[column + 1] ?? 0) + 1;
+      current.push(Math.min(replace, insert, remove));
+    }
+    previous = current;
+  }
+  return previous[right.length] ?? 0;
 }
 
-function spokenDomain(domain: string): string {
-  return lettersOf(domain.replace(/\./g, " dot "));
+function isClose(local: string, spokenBefore: string): boolean {
+  for (let extra = -CLOSE_EDITS; extra <= CLOSE_EDITS; extra += 1) {
+    const length = local.length + extra;
+    if (length <= 0 || length > spokenBefore.length) continue;
+    const spoken = spokenBefore.slice(-length);
+    const edits = editDistance(local, spoken);
+    const similarity = 1 - edits / Math.max(local.length, spoken.length);
+    if (edits <= CLOSE_EDITS || similarity >= CLOSE_SIMILARITY) return true;
+  }
+  return false;
 }
 
-// The interpreter can guess a full address from a bare name, so both halves must have been said.
-export function spokenRecipient(
-  draft: EmailDraft,
+// The interpreter can guess a full address from a bare name, so the domain must have been said,
+// and a local part that was not said exactly must at least follow a spoken "at".
+function heardAddress(address: string, heard: string): RecipientCheck {
+  if (!EMAIL_ADDRESS.test(address)) return "none";
+  const [localPart = "", domainPart = ""] = address.split("@");
+  const local = compactForm(localPart);
+  const domain = compactForm(domainPart);
+  if (local === "" || !heard.includes(domain)) return "none";
+  if (heard.includes(local)) return "exact";
+  const at = heard.indexOf(`@${domain}`);
+  return at > 0 && isClose(local, heard.slice(0, at)) ? "close" : "none";
+}
+
+const MYSELF = /\b(?:myself|to me|my (?:own )?email)\b/i;
+const OWN_EMAIL = /^(?:type|write|enter) my (?:own )?email(?: address)?$/;
+
+export function asksForOwnEmail(command: string): boolean {
+  return OWN_EMAIL.test(command);
+}
+
+// The account email never reaches the AI: a draft "to myself" comes back empty and is filled here.
+export function draftRecipients(
+  to: string | null,
   transcript: string,
-): string | null {
-  if (draft.to === null || !EMAIL_ADDRESS.test(draft.to)) return null;
-  const [localPart = "", domain = ""] = draft.to.split("@");
-  const heard = lettersOf(transcript);
-  const local = lettersOf(localPart);
-  const saidLocal = local !== "" && heard.includes(local);
-  const saidDomain =
-    heard.includes(spokenDomain(domain)) || heard.includes(lettersOf(domain));
-  return saidLocal && saidDomain ? draft.to : null;
+  accountEmail: string | null,
+): { to: string | null; recipient: RecipientCheck | "self" } {
+  const heard = heardRecipients(to, transcript);
+  if (heard.to || !accountEmail || !MYSELF.test(transcript)) {
+    return { to: heard.to, recipient: heard.check };
+  }
+  return { to: accountEmail, recipient: "self" };
+}
+
+function heardRecipients(
+  to: string | null,
+  transcript: string,
+): HeardRecipients {
+  if (to === null) return NONE;
+  const heard = compactForm(writtenForm(transcript));
+  const checked = to
+    .split(/[,;\s]+/)
+    .filter((address) => address !== "")
+    .map((address) => ({ address, check: heardAddress(address, heard) }))
+    .filter(({ check }) => check !== "none");
+  if (checked.length === 0) return NONE;
+  const close = checked.some(({ check }) => check === "close");
+  const addresses = checked.map(({ address }) => address).join(", ");
+  return { to: addresses, check: close ? "close" : "exact" };
 }

@@ -91,9 +91,10 @@ function webIntent(command: string, installedApps: readonly string[]) {
 export function parseCommand(
   text: string,
   installedApps: readonly string[],
+  accountEmail: string | null = null,
 ): ParsedCommand {
   const command = normaliseCommand(text);
-  const system = parseSystemCommand(command, installedApps);
+  const system = parseSystemCommand(command, installedApps, accountEmail);
   if (system) return system;
   const tab = parseTabCommand(command, installedApps);
   if (tab) return tab;
