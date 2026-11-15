@@ -1,12 +1,15 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
+import { chooseBrowser } from "../../core/commands/browsers.ts";
 import {
   type CommandOutcome,
   done,
+  failed,
   spoken,
 } from "../../core/commands/commandLog.ts";
 import { draftUrl } from "../../core/commands/draftUrl.ts";
-import type { Intent } from "../../core/commands/intent.ts";
+import type { EmailDraft, Intent } from "../../core/commands/intent.ts";
 import { nameOfAddress } from "../../core/voice/spokenWords.ts";
+import { installedApps } from "./installedApps.ts";
 import { openWith } from "./osaScript.ts";
 
 const SEARCH_URL = "https://www.google.com/search?q=";
@@ -16,39 +19,74 @@ type WebIntent = Extract<
   { kind: "search" | "openSite" | "draftEmail" }
 >;
 
-function inBrowser(url: string, browser: string | null): string[] {
-  return browser ? ["-a", browser, url] : [url];
+type Opener =
+  | { kind: "open"; args: string[] }
+  | { kind: "missing"; name: string };
+
+function browserOpener(
+  url: string,
+  named: string | null,
+  apps: readonly string[],
+): Opener {
+  const choice = chooseBrowser(named, apps);
+  if (choice.kind === "notInstalled") {
+    return { kind: "missing", name: choice.browser };
+  }
+  const args = choice.browser ? ["-a", choice.browser, url] : [url];
+  return { kind: "open", args };
 }
 
-async function openUrl(url: string, browser: string | null, message: string) {
-  await openWith(inBrowser(url, browser));
+function draftOpener(intent: EmailDraft, apps: readonly string[]): Opener {
+  const url = draftUrl(intent);
+  if (intent.via === "gmail") return browserOpener(url, intent.browser, apps);
+  const { mailApp } = intent;
+  if (!mailApp) return { kind: "open", args: [url] };
+  if (!mailApp.installed) return { kind: "missing", name: mailApp.name };
+  return { kind: "open", args: ["-a", mailApp.name, url] };
+}
+
+function draftMessage(intent: EmailDraft): string {
+  if (intent.sending) return commandCopy.draftedNotSent;
+  const close = intent.recipient === "close" && intent.to;
+  if (close) return commandCopy.checkAddress(close);
+  return commandCopy.drafted(intent.to);
+}
+
+async function opened(opener: Opener, message: string) {
+  if (opener.kind === "missing") {
+    return failed(commandCopy.notInstalled(opener.name));
+  }
+  await openWith(opener.args);
   return done(message);
 }
 
+async function runDraft(intent: EmailDraft, apps: readonly string[]) {
+  const message = draftMessage(intent);
+  const outcome = await opened(draftOpener(intent, apps), message);
+  if (outcome.status !== "done") return outcome;
+  if (intent.sending) return spoken(outcome, { kind: "say", message });
+  const name = intent.to ? nameOfAddress(intent.to) : null;
+  return spoken(outcome, { kind: "draft", name });
+}
+
 export async function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
+  const apps = await installedApps();
   const { browser } = intent;
   switch (intent.kind) {
     case "search": {
       const url = `${SEARCH_URL}${encodeURIComponent(intent.query)}`;
       const searched = commandCopy.searched(intent.query);
-      return openUrl(url, browser, commandCopy.inBrowser(searched, browser));
+      const message = commandCopy.inBrowser(searched, browser);
+      return opened(browserOpener(url, browser, apps), message);
     }
     case "openSite": {
-      const opened = commandCopy.opened(intent.host);
-      const message = commandCopy.inBrowser(opened, browser);
-      return openUrl(`https://${intent.host}`, browser, message);
+      const url = `https://${intent.host}`;
+      const site = commandCopy.opened(intent.host);
+      const message = commandCopy.inBrowser(site, browser);
+      return opened(browserOpener(url, browser, apps), message);
     }
-    case "draftEmail": {
-      const gmailIn = intent.via === "gmail" ? browser : null;
-      const close = intent.recipient === "close" && intent.to;
-      const message = close
-        ? commandCopy.checkAddress(close)
-        : commandCopy.drafted(intent.to);
-      const opened = await openUrl(draftUrl(intent), gmailIn, message);
-      if (opened.status !== "done") return opened;
-      const name = intent.to ? nameOfAddress(intent.to) : null;
-      return spoken(opened, { kind: "draft", name });
-    }
+    case "draftEmail":
+      return runDraft(intent, apps);
     default: {
       const unhandled: never = intent;
       throw new Error(`Unhandled web intent ${JSON.stringify(unhandled)}`);

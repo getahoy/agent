@@ -1,4 +1,4 @@
-import { installedBrowser } from "./browsers.ts";
+import { knownBrowser } from "./browsers.ts";
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
 import { parseScreenCommand } from "./parseScreenCommand.ts";
@@ -74,14 +74,14 @@ function appIntent(
   return { kind: "intent", intent: { kind: verb, app: match.app } };
 }
 
-function inBrowser(command: string, installedApps: readonly string[]) {
+function inBrowser(command: string) {
   const [, rest = command, spoken] = IN_BROWSER.exec(command) ?? [];
-  const browser = spoken ? installedBrowser(spoken, installedApps) : null;
+  const browser = spoken ? knownBrowser(spoken) : null;
   return browser ? { rest, browser } : { rest: command, browser: null };
 }
 
-function webIntent(command: string, installedApps: readonly string[]) {
-  const { rest, browser } = inBrowser(command, installedApps);
+function webIntent(command: string) {
+  const { rest, browser } = inBrowser(command);
   const query = SEARCH.exec(rest)?.[1];
   if (query) return { kind: "search", query, browser } as const;
   const host = SITE.exec(rest)?.[1];
@@ -100,7 +100,7 @@ export function parseCommand(
   if (tab) return tab;
   const screen = parseScreenCommand(command);
   if (screen) return screen;
-  const web = webIntent(command, installedApps);
+  const web = webIntent(command);
   if (web) return { kind: "intent", intent: web };
   for (const [pattern, verb] of APP_VERBS) {
     const spoken = pattern.exec(command)?.[1];

@@ -1,4 +1,5 @@
 import { commandCopy } from "../../copy/commandCopy.ts";
+import { tabSearchOrder } from "../../core/commands/browsers.ts";
 import {
   because,
   type CommandOutcome,
@@ -13,6 +14,7 @@ import {
   listTabs,
   type TabList,
 } from "./browserScripts.ts";
+import { frontAppName } from "./frontApp.ts";
 import type { ScriptAnswer } from "./osaScript.ts";
 
 const TAB_BROWSERS = new Map<string, BrowserFamily>([
@@ -57,8 +59,19 @@ async function listAll(browsers: readonly string[]): Promise<Listed[]> {
   );
 }
 
-function openTabs(listed: readonly Listed[]): BrowserTab[] {
-  return listed.flatMap(({ list }) => (list.kind === "tabs" ? list.tabs : []));
+// The first browser in search order with a matching tab wins, so a tab is found where it is.
+function firstMatch(listed: readonly Listed[], match: string) {
+  for (const { list } of listed) {
+    const tabs: BrowserTab[] = list.kind === "tabs" ? list.tabs : [];
+    const found = matchTabs(tabs, match);
+    if (found.kind !== "none") return found;
+  }
+  return matchTabs([], match);
+}
+
+async function searchOrder(named: string | null): Promise<string[]> {
+  if (named) return [named];
+  return tabSearchOrder([...TAB_BROWSERS.keys()], await frontAppName());
 }
 
 function nothingFound(intent: TabIntent, listed: readonly Listed[]) {
@@ -83,8 +96,8 @@ export async function runTabIntent(intent: TabIntent): Promise<CommandOutcome> {
   if (named && !TAB_BROWSERS.has(named)) {
     return failed(commandCopy.noTabControl(named));
   }
-  const listed = await listAll(named ? [named] : [...TAB_BROWSERS.keys()]);
-  const found = matchTabs(openTabs(listed), intent.match);
+  const listed = await listAll(await searchOrder(named));
+  const found = firstMatch(listed, intent.match);
   if (found.kind === "none") return nothingFound(intent, listed);
   if (found.kind === "many") {
     const titles = found.tabs.map((tab) => tab.title);

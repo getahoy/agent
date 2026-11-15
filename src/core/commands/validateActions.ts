@@ -1,6 +1,6 @@
 import type { InterpretAction } from "@getahoy/protocol";
-import { installedBrowser } from "./browsers.ts";
-import { draftRecipients } from "./emailRules.ts";
+import { knownBrowser } from "./browsers.ts";
+import { draftFor } from "./emailDraft.ts";
 import type { Intent, MacAction } from "./intent.ts";
 import { allowsShortcut, isKeyName } from "./shortcutRules.ts";
 import { isSiteHost } from "./siteHost.ts";
@@ -39,12 +39,12 @@ function installedName(app: string, installedApps: readonly string[]) {
   return installedApps.find((installed) => installed.toLowerCase() === wanted);
 }
 
+// A known browser that is not installed is kept, so the Mac can say so instead of refusing.
 function withBrowser<Action extends { browser: string | null }>(
   action: Action,
-  installedApps: readonly string[],
 ): Action | null {
   if (action.browser === null) return action;
-  const browser = installedBrowser(action.browser, installedApps);
+  const browser = knownBrowser(action.browser);
   return browser ? { ...action, browser } : null;
 }
 
@@ -78,11 +78,11 @@ function intentFor(
       return { kind: action.kind === "switch" ? "activate" : action.kind, app };
     }
     case "search":
-      return withBrowser(action, installedApps);
+      return withBrowser(action);
     case "openSite": {
       const host = action.host.toLowerCase();
       if (!isSiteHost(host)) return null;
-      return withBrowser({ ...action, host }, installedApps);
+      return withBrowser({ ...action, host });
     }
     case "keys":
       return shortcutIntent(action, transcript);
@@ -100,13 +100,13 @@ function intentFor(
     case "closeTab":
       if (!CLOSE_WORDS.test(transcript)) return null;
       if (!said(action.match, transcript)) return null;
-      return withBrowser(action, installedApps);
+      return withBrowser(action);
     case "switchTab":
       if (!said(action.match, transcript)) return null;
-      return withBrowser(action, installedApps);
+      return withBrowser(action);
     case "draftEmail": {
-      const heard = draftRecipients(action.to, transcript, accountEmail);
-      return withBrowser({ ...action, ...heard }, installedApps);
+      const context = { transcript, installedApps, accountEmail };
+      return withBrowser(draftFor(action, context));
     }
     default: {
       const unhandled: never = action;

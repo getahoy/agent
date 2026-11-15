@@ -11,10 +11,14 @@ export type TabIntent = {
   browser: string | null;
 };
 
+export type MailApp = { name: string; installed: boolean };
+
 export type EmailDraft = {
   kind: "draftEmail";
   to: string | null;
   recipient: "exact" | "close" | "self" | "none";
+  mailApp: MailApp | null;
+  sending: boolean;
   subject: string;
   body: string;
   via: EmailApp;

@@ -115,6 +115,9 @@ export const commandCopy = {
       : "Drafted an email. Add who it goes to, then press Send.",
   checkAddress: (to: string) =>
     `Drafted an email to ${to}. Check the address, then press Send.`,
+  draftedNotSent:
+    "I drafted it. I don’t send emails yet. Check it and press Send.",
+  notInstalled: (app: string) => `${app} isn’t installed.`,
   clicked: (label: string) => `Clicked ${capitalised(label)}`,
   noTarget: (label: string) => `I couldn’t find ${capitalised(label)}.`,
   manyTargets: (label: string) =>
