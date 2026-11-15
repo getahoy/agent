@@ -9,6 +9,7 @@ import {
 import { draftUrl } from "../../core/commands/draftUrl.ts";
 import type { EmailDraft, Intent } from "../../core/commands/intent.ts";
 import { nameOfAddress } from "../../core/voice/spokenWords.ts";
+import { browserOpenArgs } from "./chromeLaunch.ts";
 import { installedApps } from "./installedApps.ts";
 import { defaultMailtoApp } from "./mailtoHandler.ts";
 import { openWith } from "./osaScript.ts";
@@ -24,17 +25,17 @@ type Opener =
   | { kind: "open"; args: string[] }
   | { kind: "missing"; name: string };
 
-function browserOpener(
+async function browserOpener(
   url: string,
   named: string | null,
   apps: readonly string[],
-): Opener {
+): Promise<Opener> {
   const choice = chooseBrowser(named, apps);
   if (choice.kind === "notInstalled") {
     return { kind: "missing", name: choice.browser };
   }
-  const args = choice.browser ? ["-a", choice.browser, url] : [url];
-  return { kind: "open", args };
+  if (!choice.browser) return { kind: "open", args: [url] };
+  return { kind: "open", args: await browserOpenArgs(choice.browser, url) };
 }
 
 async function draftOpener(
@@ -86,13 +87,13 @@ export async function runWebIntent(intent: WebIntent): Promise<CommandOutcome> {
       const url = `${SEARCH_URL}${encodeURIComponent(intent.query)}`;
       const searched = commandCopy.searched(intent.query);
       const message = commandCopy.inBrowser(searched, browser);
-      return opened(browserOpener(url, browser, apps), message);
+      return opened(await browserOpener(url, browser, apps), message);
     }
     case "openSite": {
       const url = `https://${intent.host}`;
       const site = commandCopy.opened(intent.host);
       const message = commandCopy.inBrowser(site, browser);
-      return opened(browserOpener(url, browser, apps), message);
+      return opened(await browserOpener(url, browser, apps), message);
     }
     case "draftEmail":
       return runDraft(intent, apps);
