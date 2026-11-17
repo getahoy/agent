@@ -4,6 +4,7 @@ import type {
   KeyModifier,
   KeyName,
 } from "@getahoy/protocol";
+import type { RecipientCheck } from "./emailRules.ts";
 
 export type TabIntent = {
   kind: "closeTab" | "switchTab";
@@ -16,7 +17,7 @@ export type MailApp = { name: string; installed: boolean };
 export type EmailDraft = {
   kind: "draftEmail";
   to: string | null;
-  recipient: "exact" | "close" | "self" | "none";
+  recipient: RecipientCheck | "self";
   mailApp: MailApp | null;
   sending: boolean;
   subject: string;

@@ -1,7 +1,7 @@
 import { compactForm, writtenForm } from "./spokenForm.ts";
 
 export type RecipientCheck = "exact" | "close" | "none";
-export type HeardRecipients = { to: string | null; check: RecipientCheck };
+type HeardRecipients = { to: string | null; check: RecipientCheck };
 
 const EMAIL_ADDRESS =
   /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
@@ -45,9 +45,12 @@ function heardAddress(address: string, heard: string): RecipientCheck {
   const local = compactForm(localPart);
   const domain = compactForm(domainPart);
   if (local === "" || !heard.includes(domain)) return "none";
-  const at = heard.indexOf(`@${domain}`);
   if (heard.includes(`${local}@${domain}`)) return "exact";
-  return at > 0 && isClose(local, heard.slice(0, at)) ? "close" : "none";
+  const spokenBefore = heard.split(`@${domain}`).slice(0, -1);
+  const close = spokenBefore.some(
+    (said) => said !== "" && isClose(local, said),
+  );
+  return close ? "close" : "none";
 }
 
 // "Me" counts only right after email or mail, so "what she said to me" never means myself.
