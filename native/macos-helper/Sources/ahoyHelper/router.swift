@@ -23,6 +23,7 @@ func route(_ line: String) {
   case "systemKey": respond(request.id) { try pressSystemKey(arguments?.key) }
   case "window": respond(request.id) { try arrangeFrontWindow(arguments?.action) }
   case "brightness": respond(request.id) { try displayBrightness(setTo: arguments?.level) }
+  case "webPages": respond(request.id) { try setWebPages(arguments?.on) }
   default: fail(request.id, .invalidRequest("Unknown verb \(request.verb)"))
   }
 }

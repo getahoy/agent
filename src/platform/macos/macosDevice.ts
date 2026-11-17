@@ -12,10 +12,12 @@ const HELPER_CAPABILITIES = [
   "key",
   "type",
   "capture",
+  "overlay",
   "scroll",
   "systemKey",
   "window",
   "brightness",
+  "webPages",
 ];
 const MENUBAR_ICON_FOLDER = "menubar";
 

@@ -19,6 +19,7 @@ struct RequestArguments: Decodable {
   let windowHeights: Double?
   let action: String?
   let level: Int?
+  let on: Bool?
 }
 
 enum HelperError: Error {

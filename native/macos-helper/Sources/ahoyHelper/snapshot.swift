@@ -3,6 +3,8 @@ import ApplicationServices
 
 let sparseTreeThreshold = 10
 let manualAccessibilityWaitSeconds = 0.3
+let webTreeWaitSeconds = 0.4
+let webTreeWalks = 2
 
 struct AppIdentity: Encodable {
   let name: String
@@ -30,7 +32,11 @@ func takeSnapshot() throws -> SnapshotOutput {
   let front = try frontWindow()
   let (app, appElement, window, bounds) = (front.app, front.appElement, front.window, front.frame)
   var outcome = walkWindow(window, visibleBounds: bounds)
-  if outcome.elements.count < sparseTreeThreshold {
+  if wantsWebTree(app), !showsWebPage(outcome) {
+    outcome = walkUntilWebPage(app, window: window, bounds: bounds, first: outcome)
+  }
+  // AXManualAccessibility is Electron's switch; Chromium browsers ignore it.
+  if outcome.elements.count < sparseTreeThreshold, !isChromiumBrowser(app) {
     outcome = rewalkWithManualAccessibility(appElement, window: window, bounds: bounds)
   }
   replaceRegisteredElements(outcome.elementsByRef)
@@ -71,6 +77,24 @@ private func rewalkWithManualAccessibility(
   AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
   Thread.sleep(forTimeInterval: manualAccessibilityWaitSeconds)
   return walkWindow(window, visibleBounds: bounds)
+}
+
+private func showsWebPage(_ outcome: WalkOutcome) -> Bool {
+  outcome.elements.contains { $0.role == "AXWebArea" }
+}
+
+// The page tree builds asynchronously after it is turned on.
+private func walkUntilWebPage(
+  _ app: NSRunningApplication, window: AXUIElement, bounds: CGRect, first: WalkOutcome
+) -> WalkOutcome {
+  askForWebTree(app)
+  var outcome = first
+  for _ in 0..<webTreeWalks {
+    Thread.sleep(forTimeInterval: webTreeWaitSeconds)
+    outcome = walkWindow(window, visibleBounds: bounds)
+    if showsWebPage(outcome) { return outcome }
+  }
+  return outcome
 }
 
 private func milliseconds(since start: ContinuousClock.Instant) -> Int {

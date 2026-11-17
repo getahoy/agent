@@ -59,6 +59,7 @@ export const outputSchemaByVerb = {
   systemKey: z.object({ key: z.string() }),
   window: z.object({ app: z.string() }),
   brightness: z.object({ level: z.number() }),
+  webPages: z.object({ on: z.boolean() }),
 } as const;
 
 export type HelperVerb = keyof typeof outputSchemaByVerb;
@@ -83,6 +84,7 @@ export type HelperArgs = {
   systemKey: { key: SystemKey };
   window: { action: WindowAction };
   brightness: { level?: number };
+  webPages: { on: boolean };
 };
 
 export type HelperOutput<Verb extends HelperVerb> = z.infer<
@@ -112,6 +114,7 @@ export const outputParsers: OutputParsers = {
   systemKey: (output) => parseOrNull(outputSchemaByVerb.systemKey, output),
   window: (output) => parseOrNull(outputSchemaByVerb.window, output),
   brightness: (output) => parseOrNull(outputSchemaByVerb.brightness, output),
+  webPages: (output) => parseOrNull(outputSchemaByVerb.webPages, output),
 };
 
 const helperErrorCodeSchema = z.enum([

@@ -11,6 +11,7 @@ import { bearerClient } from "./shell/api/bearerClient.ts";
 import { ChoiceBook } from "./shell/commands/choiceBook.ts";
 import { CommandReceiver } from "./shell/commands/commandReceiver.ts";
 import { createCommandRunner } from "./shell/commands/commandRunner.ts";
+import { switchWebPages } from "./shell/commands/webPagesSwitch.ts";
 import {
   createHistoryWiring,
   type FinishedListener,
@@ -120,7 +121,9 @@ function createCommands(parts: CommandParts) {
   const helper = createHelper(platform, (event) => {
     controller.handleHelperEvent(event);
     if (event === "frontWindowChanged") choices.expire();
+    if (event === "ready") webPages.helperStarted();
   });
+  const webPages = switchWebPages(helper, controller);
   const choices = new ChoiceBook({
     clearOverlay: () => void helper.request("overlay", { marks: [] }),
   });
