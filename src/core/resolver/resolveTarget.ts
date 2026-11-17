@@ -1,9 +1,11 @@
 import {
   type Frame,
+  isControl,
   pressable,
   type ScreenElement,
   subroleName,
   textsOf,
+  withoutShortcutHint,
 } from "./screenElement.ts";
 
 export type Resolution =
@@ -20,7 +22,7 @@ const tiers: readonly Tier[] = [
 ];
 
 export function normaliseLabel(text: string): string {
-  return text
+  return withoutShortcutHint(text)
     .toLowerCase()
     .replace(/…|\.{3}/g, " ")
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
@@ -58,10 +60,17 @@ export function fieldsOf(element: ScreenElement): string[] {
     .filter((field) => field !== "");
 }
 
+const pressableControl = (element: ScreenElement) =>
+  pressable(element) && isControl(element);
+
 // A titled group and the button inside it match together: the button is the one to press.
+// Chrome marks clickable web groups pressable too, so a pressable control beats them.
 function preferPressable(found: readonly ScreenElement[]): ScreenElement[] {
-  const pressed = found.filter(pressable);
-  return pressed.length > 0 ? pressed : [...found];
+  for (const keep of [pressableControl, pressable]) {
+    const kept = found.filter(keep);
+    if (kept.length > 0) return kept;
+  }
+  return [...found];
 }
 
 function onePerFrame(found: readonly ScreenElement[]): ScreenElement[] {

@@ -14,8 +14,8 @@ import { elementArea } from "../../core/resolver/elementArea.ts";
 import { nearestTargets } from "../../core/resolver/nearestTargets.ts";
 import { resolveTarget } from "../../core/resolver/resolveTarget.ts";
 import {
-  labelOf,
   type ScreenElement,
+  shownLabel,
 } from "../../core/resolver/screenElement.ts";
 import { sameScreen, stillThere } from "../../core/resolver/stableTarget.ts";
 import type { SpeechCase } from "../../core/voice/buildSpeech.ts";
@@ -34,8 +34,6 @@ const SETTLE_MS = 100;
 
 const NONE_CHOSEN = spoken(done(commandCopy.noneChosen), { kind: "cancelled" });
 
-const labelText = (target: ScreenElement) => labelOf(target) ?? "";
-
 async function clickSafely({ helper, before }: Screen, target: ScreenElement) {
   await sleep(SETTLE_MS);
   const after = (await takeScreen(helper))?.before ?? null;
@@ -45,7 +43,7 @@ async function clickSafely({ helper, before }: Screen, target: ScreenElement) {
   }
   const clicked = await helper.request("click", { ref: current.ref });
   if (!clicked.ok) return failed(commandCopy.failed);
-  return done(commandCopy.clicked(labelText(target)));
+  return done(commandCopy.clicked(shownLabel(target)));
 }
 
 type Words = { message: string; speech: SpeechCase | null };
@@ -74,7 +72,7 @@ function offerWords(kind: OfferKind, label: string): Words {
 function optionsFor(shown: readonly ScreenElement[], confirm: boolean) {
   const options = shown.map((target, index) => ({
     number: index + 1,
-    label: labelText(target).slice(0, MAX_CHOICE_LABEL_CHARS),
+    label: shownLabel(target).slice(0, MAX_CHOICE_LABEL_CHARS),
   }));
   if (confirm) return options;
   const none = { number: shown.length + 1, label: commandCopy.noneOfThese };
@@ -112,7 +110,7 @@ const offerTargets: OfferTargets = async (screen, targets, offer) => {
 
 function clickOrConfirm(screen: Screen, target: ScreenElement) {
   if (!isDestructiveElement(target)) return clickSafely(screen, target);
-  const label = labelText(target);
+  const label = shownLabel(target);
   return offerTargets(screen, [target], { kind: "confirm", label });
 }
 

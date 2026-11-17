@@ -16,6 +16,22 @@ export type ScreenElement = {
 
 const PRESS_ACTION = "AXPress";
 
+const CONTROL_ROLES: ReadonlySet<string> = new Set([
+  "AXButton",
+  "AXLink",
+  "AXMenuItem",
+  "AXMenuButton",
+  "AXPopUpButton",
+  "AXCheckBox",
+  "AXRadioButton",
+  "AXTextField",
+  "AXTextArea",
+  "AXComboBox",
+]);
+
+const DIRECTION_MARKS = /[‎‏‪-‮⁦-⁩]/g;
+const SHORTCUT_HINT = /\s*\([⌘⌥⇧⌃][^)]*\)/g;
+
 // Window buttons often have no title, only a subrole; people call them by these names.
 const SUBROLE_NAMES: Readonly<Record<string, string>> = {
   AXCloseButton: "Close button",
@@ -26,6 +42,15 @@ const SUBROLE_NAMES: Readonly<Record<string, string>> = {
 
 export function pressable(element: ScreenElement): boolean {
   return element.actions.includes(PRESS_ACTION);
+}
+
+export function isControl(element: ScreenElement): boolean {
+  return CONTROL_ROLES.has(element.role);
+}
+
+// Web pages append the shortcut to a label ("Send (⌘Enter)"); people say only the name.
+export function withoutShortcutHint(label: string): string {
+  return label.replace(DIRECTION_MARKS, "").replace(SHORTCUT_HINT, "").trim();
 }
 
 export function subroleName(element: ScreenElement): string | undefined {
@@ -41,6 +66,10 @@ export function textsOf(element: ScreenElement): string[] {
 
 export function labelOf(element: ScreenElement): string | null {
   return textsOf(element)[0] ?? subroleName(element) ?? null;
+}
+
+export function shownLabel(element: ScreenElement): string {
+  return withoutShortcutHint(labelOf(element) ?? "");
 }
 
 export function sameFrame(first: Frame, second: Frame): boolean {

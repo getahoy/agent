@@ -19,6 +19,8 @@ const DESTRUCTIVE_LABELS = [
   "Buy",
   "Purchase",
   "Place Order",
+  "Confirm Payment",
+  "Submit",
   "Transfer",
   "Move to Trash",
   "Delete Forever",

@@ -12,8 +12,8 @@ import {
   type SeenApp,
 } from "../../core/resolver/refindTarget.ts";
 import {
-  labelOf,
   type ScreenElement,
+  shownLabel,
 } from "../../core/resolver/screenElement.ts";
 import type { ScreenState } from "../../core/resolver/stableTarget.ts";
 
@@ -39,8 +39,6 @@ export async function takeScreen(helper: HelperClient): Promise<Screen | null> {
   return { helper, before, app: { pid: app.pid, name: app.name } };
 }
 
-const labelText = (target: ScreenElement) => labelOf(target) ?? "";
-
 function gone(label: string): CommandOutcome {
   return because(failed(commandCopy.targetGone(label)), "screenChanged");
 }
@@ -52,7 +50,7 @@ export async function clickPicked(
   pick: PickKind,
   offerTargets: OfferTargets,
 ): Promise<CommandOutcome> {
-  const label = labelText(target);
+  const label = shownLabel(target);
   const fresh = await takeScreen(screen.helper);
   if (!fresh) return gone(label);
   const was = screen.app;
