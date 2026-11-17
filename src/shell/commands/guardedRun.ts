@@ -6,6 +6,7 @@ import {
 } from "../../core/commands/commandLog.ts";
 import type { RunnableIntent } from "../../core/commands/intent.ts";
 import { appOfIntent } from "../../core/commands/outcomeDetails.ts";
+import { screenReach } from "../../core/commands/screenActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import {
   type BlockedApp,
@@ -16,17 +17,6 @@ import { runIntent } from "./runIntent.ts";
 
 type Guard = { helper: HelperClient; blockedApps: readonly BlockedApp[] };
 
-const SCREEN_INTENTS: ReadonlySet<RunnableIntent["kind"]> = new Set([
-  "click",
-  "keys",
-  "type",
-  "scroll",
-]);
-const FRONT_APP_INTENTS: ReadonlySet<RunnableIntent["kind"]> = new Set([
-  "navigate",
-  "window",
-]);
-
 export function withApp(outcome: CommandOutcome, app: string | null) {
   return app ? { ...outcome, app } : outcome;
 }
@@ -36,11 +26,12 @@ export async function runGuarded(
   intent: RunnableIntent,
   { helper, blockedApps }: Guard,
 ): Promise<CommandOutcome> {
-  if (FRONT_APP_INTENTS.has(intent.kind)) {
+  const reach = screenReach(intent);
+  if (reach === "window") {
     const frontName = await frontAppName();
     return withApp(await runIntent(intent, helper), frontName);
   }
-  if (!SCREEN_INTENTS.has(intent.kind)) {
+  if (reach !== "input") {
     return withApp(await runIntent(intent, helper), appOfIntent(intent));
   }
   const [front, frontName] = await Promise.all([

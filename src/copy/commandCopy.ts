@@ -98,6 +98,9 @@ export const commandCopy = {
   typed: (text: string) => `Typed “${text}”`,
   secureInput: "I won’t type into a password field.",
   smartUnavailable: "Smart commands aren’t working right now.",
+  tookTooLong: "That took too long. Try again.",
+  screenMovedOn: "The screen changed, so I didn’t do it.",
+  cancelled: "Cancelled.",
   notInFront: (app: string) => `${app} didn’t come to the front, so I stopped.`,
   closedTab: (match: string) => `Closed the ${capitalised(match)} tab`,
   switchedTab: (match: string) => `Switched to the ${capitalised(match)} tab`,
@@ -120,6 +123,7 @@ export const commandCopy = {
   notInstalled: (app: string) => `${app} isn’t installed.`,
   clicked: (label: string) => `Clicked ${capitalised(label)}`,
   noTarget: (label: string) => `I couldn’t find ${capitalised(label)}.`,
+  noButton: "I don’t see a button for that.",
   manyTargets: (label: string) =>
     `More than one ${capitalised(label)} on the screen. Pick a number.`,
   missedTarget: (label: string) =>

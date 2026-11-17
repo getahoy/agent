@@ -42,7 +42,8 @@ export type PhoneRequest = Extract<
       | "command.choose"
       | "command.lookup"
       | "choice.extend"
-      | "speech.stop";
+      | "speech.stop"
+      | "command.cancel";
   }
 >;
 
@@ -114,6 +115,7 @@ export class PhoneSession {
       case "command.lookup":
       case "choice.extend":
       case "speech.stop":
+      case "command.cancel":
         if (this.#phase.kind !== "connected") return;
         this.#options.onCommand(frame, (reply) => this.#send(reply), this);
         return;

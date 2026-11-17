@@ -6,7 +6,6 @@ import {
   type CommandLog,
   type CommandOutcome,
   decideCommand,
-  done,
   emptyCommandLog,
   failed,
   finishCommand,
@@ -21,6 +20,7 @@ import {
 } from "../../core/safety/breaker.ts";
 import type { ChoiceBook } from "./choiceBook.ts";
 import { choiceTurn, commandTurn, type Turn } from "./commandTurns.ts";
+import { pausedTurn } from "./pausedTurn.ts";
 import { resultFrame } from "./resultFrame.ts";
 
 type Reply = (frame: Frame) => void;
@@ -31,6 +31,7 @@ type Queued = {
   speakOn: SpeakTarget;
   heard: string | null;
   work: () => Promise<Turn>;
+  cancel: AbortController;
 };
 
 function exitCode(error: unknown): string {
@@ -42,7 +43,7 @@ const LOCKED = refused(commandCopy.unlockFirst);
 
 type CommandReceiverOptions = {
   isLocked: () => boolean;
-  run: (text: string) => Promise<CommandOutcome>;
+  run: (text: string, cancel: AbortSignal) => Promise<CommandOutcome>;
   onHeard: (text: string) => void;
   onResult: (turn: Turn, owner: object, heard: string | null) => void;
   onStopSpeech: (owner: object) => void;
@@ -53,6 +54,7 @@ type CommandReceiverOptions = {
 export class CommandReceiver {
   readonly #options: CommandReceiverOptions;
   readonly #replies = new Map<string, Reply>();
+  readonly #cancels = new Map<string, AbortController>();
   #log: CommandLog<Turn> = emptyCommandLog();
   #breaker: Breaker = closedBreaker;
   #queue: Promise<void> = Promise.resolve();
@@ -67,19 +69,27 @@ export class CommandReceiver {
       case "command": {
         this.#options.onStopSpeech(owner);
         const { commandId, text, speakOn } = request;
+        const cancel = new AbortController();
         const context = { commandId, owner, speakOn, choices };
-        const work = () => commandTurn(text, run, context);
-        this.#enqueue({ commandId, reply, owner, speakOn, heard: text, work });
+        const runCancelable = (said: string) => run(said, cancel.signal);
+        const work = () => commandTurn(text, runCancelable, context);
+        const queued = { commandId, reply, owner, speakOn, work, cancel };
+        this.#enqueue({ ...queued, heard: text });
         return;
       }
       case "command.choose": {
         const { commandId, parentId, number } = request;
         const speakOn = choices.openFor(owner)?.speakOn ?? "phone";
+        const cancel = new AbortController();
         const context = { commandId, owner, speakOn, choices };
         const work = () => choiceTurn(parentId, number, context);
-        this.#enqueue({ commandId, reply, owner, speakOn, heard: null, work });
+        const queued = { commandId, reply, owner, speakOn, work, cancel };
+        this.#enqueue({ ...queued, heard: null });
         return;
       }
+      case "command.cancel":
+        this.#cancels.get(request.commandId)?.abort();
+        return;
       case "command.lookup":
         this.#lookUp(request.commandId, reply);
         return;
@@ -118,6 +128,7 @@ export class CommandReceiver {
   #enqueue(queued: Queued): void {
     const { commandId, reply } = queued;
     if (this.#follow(commandId, reply) !== "run") return;
+    this.#cancels.set(commandId, queued.cancel);
     this.#log = startCommand(this.#log, commandId);
     const receivedAt = performance.now();
     this.#queue = this.#queue
@@ -126,11 +137,14 @@ export class CommandReceiver {
   }
 
   async #execute(queued: Queued, receivedAt: number): Promise<void> {
-    const { commandId, owner, heard } = queued;
+    const { commandId, owner, heard, cancel } = queued;
     const { choices, onHeard, onResult, logger } = this.#options;
+    if (cancel.signal.aborted) return this.#dropCancelled(queued);
     if (heard) onHeard(heard);
     const paused = this.#breaker.tripped && heard !== null;
     const ran = paused ? this.#pausedTurn(queued) : await this.#turnFor(queued);
+    if (cancel.signal.aborted) return this.#dropCancelled(queued);
+    this.#cancels.delete(commandId);
     const onMacMs = Math.round(performance.now() - receivedAt);
     const turn = { ...ran, onMacMs };
     if (!paused) this.#recordForBreaker(turn);
@@ -166,19 +180,18 @@ export class CommandReceiver {
   }
 
   #pausedTurn({ commandId, speakOn }: Queued): Turn {
-    const resume = () => {
+    return pausedTurn(commandId, speakOn, () => {
       this.#breaker = closedBreaker;
-      return Promise.resolve(done(commandCopy.resumed));
-    };
-    const options = [{ number: 1, label: commandCopy.resume }];
-    const choice = {
-      options,
-      areas: [null],
-      confirm: false,
-      destructive: false,
-      pick: resume,
-    };
-    const paused = refused(commandCopy.breakerTripped);
-    return { ...paused, choice, threadId: commandId, round: 0, speakOn };
+    });
+  }
+
+  // The phone has moved on: nothing is said, offered or recorded for this command.
+  #dropCancelled({ commandId, speakOn }: Queued): void {
+    const thread = { threadId: commandId, round: 0, speakOn };
+    const turn = { ...failed(commandCopy.cancelled), ...thread };
+    this.#log = finishCommand(this.#log, commandId, turn);
+    this.#replies.delete(commandId);
+    this.#cancels.delete(commandId);
+    this.#options.logger.info("command", `${commandId} cancelled`);
   }
 }

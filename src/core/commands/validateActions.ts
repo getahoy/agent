@@ -1,4 +1,5 @@
 import type { InterpretAction } from "@getahoy/protocol";
+import { onScreen } from "../resolver/screenLabels.ts";
 import { knownBrowser } from "./browsers.ts";
 import { draftFor } from "./emailDraft.ts";
 import type { Intent, MacAction } from "./intent.ts";
@@ -8,12 +9,14 @@ import { saidAsWritten } from "./spokenForm.ts";
 
 export type Validation =
   | { kind: "valid"; intents: Intent[] }
+  | { kind: "noButton" }
   | { kind: "rejected" };
 
-type Context = {
+export type ValidationContext = {
   transcript: string;
   installedApps: readonly string[];
   accountEmail: string | null;
+  screen: readonly string[];
 };
 
 const CLOSE_WORDS = /\b(?:close|shut|kill|remove|get rid of|band)\b/i;
@@ -28,6 +31,14 @@ function plainWords(text: string): string {
 
 function said(words: string, transcript: string): boolean {
   return plainWords(transcript).includes(plainWords(words));
+}
+
+function saidOrShown(
+  label: string,
+  transcript: string,
+  screen: readonly string[],
+): boolean {
+  return said(label, transcript) || onScreen(label, screen);
 }
 
 function typedAsSaid(text: string, transcript: string): boolean {
@@ -66,7 +77,7 @@ function macIntent(action: MacAction): Intent | null {
 
 function intentFor(
   action: InterpretAction,
-  { transcript, installedApps, accountEmail }: Context,
+  { transcript, installedApps, accountEmail, screen }: ValidationContext,
 ): Intent | null {
   switch (action.kind) {
     case "open":
@@ -96,7 +107,7 @@ function intentFor(
     case "type":
       return typedAsSaid(action.text, transcript) ? action : null;
     case "click":
-      return said(action.label, transcript) ? action : null;
+      return saidOrShown(action.label, transcript, screen) ? action : null;
     case "closeTab":
       if (!CLOSE_WORDS.test(transcript)) return null;
       if (!said(action.match, transcript)) return null;
@@ -121,21 +132,23 @@ function draftsAlone(actions: readonly InterpretAction[]): boolean {
   return !drafts || actions.length === 1;
 }
 
+// A click on a label that is neither said nor shown is a control the window does not have.
 export function validateActions(
   actions: readonly InterpretAction[],
-  transcript: string,
-  installedApps: readonly string[],
-  accountEmail: string | null = null,
+  context: ValidationContext,
 ): Validation {
   if (actions.length === 0 || !draftsAlone(actions)) {
     return { kind: "rejected" };
   }
-  const context = { transcript, installedApps, accountEmail };
   const intents: Intent[] = [];
   for (const action of actions) {
     const intent = intentFor(action, context);
-    if (!intent) return { kind: "rejected" };
-    intents.push(intent);
+    if (intent) {
+      intents.push(intent);
+      continue;
+    }
+    const looked = action.kind === "click" && context.screen.length > 0;
+    return looked ? { kind: "noButton" } : { kind: "rejected" };
   }
   return { kind: "valid", intents };
 }

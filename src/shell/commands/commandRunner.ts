@@ -18,10 +18,12 @@ import {
 import { validateActions } from "../../core/commands/validateActions.ts";
 import type { HelperClient } from "../../core/helper/helperClient.ts";
 import type { BlockedApp } from "../../core/safety/blockedApps.ts";
-import type { Interpreter } from "../interpret/interpretApi.ts";
+import type { Interpretation, Interpreter } from "../interpret/interpretApi.ts";
 import { waitUntilFrontmost } from "./frontApp.ts";
 import { runGuarded, withApp } from "./guardedRun.ts";
 import { installedApps } from "./installedApps.ts";
+import { screenMovedOn, unlessCancelled } from "./lateAnswer.ts";
+import { screenAtStart } from "./screenControls.ts";
 
 type CommandRunnerOptions = {
   helper: HelperClient;
@@ -87,40 +89,76 @@ async function runInOrder(
   return withApp(done(messages.join(", ")), actedOn);
 }
 
-type Heard = { text: string; apps: readonly string[]; parsed: Unmatched };
+type Heard = {
+  text: string;
+  apps: readonly string[];
+  parsed: Unmatched;
+  cancel: AbortSignal;
+};
+
+const NO_BUTTON = because(failed(commandCopy.noButton), "targetNotFound");
+const MOVED_ON = because(failed(commandCopy.screenMovedOn), "screenChanged");
+
+type FailedReason = Extract<Interpretation, { kind: "failed" }>["reason"];
+
+function smartFailure(reason: FailedReason, logger: Logger): CommandOutcome {
+  logger.warn("command", `Smart commands ${reason}`);
+  const timedOut = reason === "timedOut";
+  return failed(
+    timedOut ? commandCopy.tookTooLong : commandCopy.smartUnavailable,
+  );
+}
+
+function logDrafts(intents: readonly Intent[], logger: Logger): void {
+  for (const intent of intents) {
+    if (intent.kind !== "draftEmail") continue;
+    logger.info("command", `Draft recipient ${intent.recipient}`);
+  }
+}
 
 async function viaInterpreter(
-  { text, apps, parsed }: Heard,
+  { text, apps, parsed, cancel }: Heard,
   options: CommandRunnerOptions,
   steps: StepBox,
 ): Promise<CommandOutcome> {
-  const { interpret, logger } = options;
-  const interpretation = await interpret(text, apps);
+  const { interpret, logger, helper, blockedApps } = options;
+  const startedAt = Date.now();
+  const start = await screenAtStart(helper, blockedApps);
+  const screen = start.labels;
+  const asked = interpret(text, apps, screen);
+  const interpretation = await unlessCancelled(asked, cancel);
+  if (!interpretation) return failed(commandCopy.cancelled);
   if (interpretation.kind === "failed") {
-    logger.warn("command", `Smart commands ${interpretation.reason}`);
-    return failed(commandCopy.smartUnavailable);
+    return smartFailure(interpretation.reason, logger);
   }
   if (interpretation.actions.length === 0) {
     logger.info("command", "Smart commands none");
     return notUnderstood(parsed);
   }
-  const { actions } = interpretation;
-  const email = options.accountEmail();
-  const validation = validateActions(actions, text, apps, email);
+  const validation = validateActions(interpretation.actions, {
+    transcript: text,
+    installedApps: apps,
+    accountEmail: options.accountEmail(),
+    screen,
+  });
+  if (validation.kind === "noButton") return NO_BUTTON;
   if (validation.kind === "rejected") {
     logger.warn("command", "Smart commands rejected");
     return failed(commandCopy.cannotDoYet);
   }
-  for (const intent of validation.intents) {
-    if (intent.kind !== "draftEmail") continue;
-    logger.info("command", `Draft recipient ${intent.recipient}`);
-  }
-  return runInOrder(validation.intents, options, steps);
+  const { intents } = validation;
+  const late = { intents, startedAt, helper, start: start.state };
+  if (await screenMovedOn(late)) return MOVED_ON;
+  logDrafts(intents, logger);
+  return runInOrder(intents, options, steps);
 }
 
 export function createCommandRunner(options: CommandRunnerOptions) {
   const steps: StepBox = { previous: null, last: null };
-  const run = async (text: string): Promise<CommandOutcome> => {
+  const run = async (
+    text: string,
+    cancel: AbortSignal,
+  ): Promise<CommandOutcome> => {
     steps.previous = steps.last;
     steps.last = null;
     const apps = await installedApps();
@@ -138,7 +176,7 @@ export function createCommandRunner(options: CommandRunnerOptions) {
         return understood(failed(systemCopy.refused(parsed.reason)), "rules");
       case "unknownApp":
       case "unsupported": {
-        const context = { text, apps, parsed };
+        const context = { text, apps, parsed, cancel };
         const outcome = await viaInterpreter(context, options, steps);
         return understood(outcome, "ai");
       }
