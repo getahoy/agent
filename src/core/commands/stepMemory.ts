@@ -7,7 +7,7 @@ import type {
 } from "./intent.ts";
 import { DEFAULT_STEP, LITTLE_STEP, LOT_STEP } from "./levelChange.ts";
 
-export const STEP_MEMORY_MS = 60_000;
+const STEP_MEMORY_MS = 60_000;
 
 const SCROLL_ORDER: readonly ScrollAmount[] = ["small", "page", "large"];
 const SCROLL_SHIFT: Readonly<Record<StepScale, number>> = {

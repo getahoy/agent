@@ -1,8 +1,8 @@
 export const DEFAULT_STEP = 10;
 export const LITTLE_STEP = 5;
 export const LOT_STEP = 25;
-export const LEVEL_MAX = 100;
-export const BRIGHTNESS_KEY_STEPS = 16;
+const LEVEL_MAX = 100;
+const BRIGHTNESS_KEY_STEPS = 16;
 const KEY_STEP_PERCENT = LEVEL_MAX / BRIGHTNESS_KEY_STEPS;
 
 export type LevelChange = {

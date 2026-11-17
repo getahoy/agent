@@ -7,7 +7,11 @@ import {
   failed,
 } from "../../core/commands/commandLog.ts";
 import type { TabIntent } from "../../core/commands/intent.ts";
-import { type BrowserTab, matchTabs } from "../../core/commands/matchTabs.ts";
+import {
+  type BrowserTab,
+  matchTabs,
+  type TabMatch,
+} from "../../core/commands/matchTabs.ts";
 import {
   actOnTab,
   type BrowserFamily,
@@ -60,13 +64,13 @@ async function listAll(browsers: readonly string[]): Promise<Listed[]> {
 }
 
 // The first browser in search order with a matching tab wins, so a tab is found where it is.
-function firstMatch(listed: readonly Listed[], match: string) {
+function firstMatch(listed: readonly Listed[], match: string): TabMatch {
   for (const { list } of listed) {
     const tabs: BrowserTab[] = list.kind === "tabs" ? list.tabs : [];
     const found = matchTabs(tabs, match);
     if (found.kind !== "none") return found;
   }
-  return matchTabs([], match);
+  return { kind: "none" };
 }
 
 async function searchOrder(named: string | null): Promise<string[]> {

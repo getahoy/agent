@@ -99,8 +99,8 @@ export async function runSystemIntent(
       );
     }
     case "lock": {
-      const modifiers = LOCK_MODIFIERS;
-      const pressed = await helper.request("key", { key: "q", modifiers });
+      const lockKeys = { key: "q", modifiers: LOCK_MODIFIERS };
+      const pressed = await helper.request("key", lockKeys);
       return replied(pressed, () => quietly(systemCopy.locked));
     }
     default: {

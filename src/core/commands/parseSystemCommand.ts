@@ -1,5 +1,4 @@
 import type { ScrollAmount, WindowAction } from "@getahoy/protocol";
-import { asksForOwnEmail } from "./emailRules.ts";
 import type { Intent, MacAction, ParsedCommand, StepScale } from "./intent.ts";
 import { parseLevelCommand, SIZE_WORDS } from "./parseLevelCommand.ts";
 
@@ -132,11 +131,7 @@ function again(command: string): Intent | null {
 export function parseSystemCommand(
   command: string,
   installedApps: readonly string[],
-  accountEmail: string | null,
 ): ParsedCommand | null {
-  if (accountEmail && asksForOwnEmail(command)) {
-    return { kind: "intent", intent: { kind: "type", text: accountEmail } };
-  }
   if (AUTO_SCROLL.test(command)) {
     return { kind: "refuse", reason: "autoScroll" };
   }

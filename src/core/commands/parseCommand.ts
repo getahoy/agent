@@ -1,4 +1,5 @@
 import { knownBrowser } from "./browsers.ts";
+import { asksForOwnEmail } from "./emailRules.ts";
 import type { Intent, ParsedCommand } from "./intent.ts";
 import { matchApp } from "./matchApp.ts";
 import { parseScreenCommand } from "./parseScreenCommand.ts";
@@ -94,7 +95,10 @@ export function parseCommand(
   accountEmail: string | null = null,
 ): ParsedCommand {
   const command = normaliseCommand(text);
-  const system = parseSystemCommand(command, installedApps, accountEmail);
+  if (accountEmail && asksForOwnEmail(command)) {
+    return { kind: "intent", intent: { kind: "type", text: accountEmail } };
+  }
+  const system = parseSystemCommand(command, installedApps);
   if (system) return system;
   const tab = parseTabCommand(command, installedApps);
   if (tab) return tab;
